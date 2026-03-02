@@ -178,7 +178,7 @@ function NuevoProductoModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden max-h-[95vh] overflow-y-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 sticky top-0 z-10">
+                <div className="flex items-center justify-between px-6 py-4 bg-[#FF9DAA] sticky top-0 z-10">
                     <h2 className="text-lg font-bold text-white">Agregar nuevo producto - Ropa</h2>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white">
                         <X className="w-4 h-4" />
@@ -193,7 +193,7 @@ function NuevoProductoModal({
                         onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
                         className={cn(
                             "w-48 shrink-0 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors overflow-hidden",
-                            preview ? "border-emerald-300" : "border-pink-300 hover:border-pink-400 hover:bg-pink-50/30"
+                            preview ? "border-primary" : "border-primary hover:border-primary/80 hover:bg-primary/5"
                         )}
                         style={{ minHeight: 200 }}
                     >
@@ -276,7 +276,7 @@ function NuevoProductoModal({
                                         className={cn(
                                             "flex flex-col items-start px-4 py-3 rounded-xl border-2 text-left transition-all",
                                             form.tipoVenta === opt.key
-                                                ? "border-emerald-500 bg-emerald-50"
+                                                ? "border-[#40C4AA] bg-[#40C4AA]/5"
                                                 : "border-slate-200 hover:border-slate-300"
                                         )}
                                     >
@@ -308,7 +308,7 @@ function NuevoProductoModal({
                     <button
                         onClick={handleSave}
                         disabled={!form.nombre || !form.lote || !form.subcategoria}
-                        className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         Guardar producto
                     </button>
@@ -403,10 +403,10 @@ export default function ProductosRopaPage() {
     const nextCodigo = `BIZ-${String(productos.length + 1).padStart(3, '0')}`;
 
     const TAB_STYLE: Record<FilterTab, string> = {
-        'Todos': 'bg-emerald-500 text-white',
-        'Disponible': 'bg-emerald-500 text-white',
-        'En subasta': 'bg-yellow-400 text-yellow-900',
-        'Vendido': 'bg-slate-500 text-white',
+        'Todos': 'bg-primary text-white border-primary shadow-sm shadow-primary/20',
+        'Disponible': 'bg-emerald-500 text-white border-emerald-500 shadow-sm',
+        'En subasta': 'bg-amber-400 text-white border-amber-400 shadow-sm',
+        'Vendido': 'bg-slate-500 text-white border-slate-500 shadow-sm',
     };
 
     return (
@@ -420,108 +420,120 @@ export default function ProductosRopaPage() {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
                         <h1 className="text-2xl font-bold text-slate-800">Productos - Ropa</h1>
-                        <button
-                            onClick={() => setShowNuevo(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-200 transition-colors"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Nuevo Producto
-                        </button>
                     </div>
 
-                    {/* Search */}
-                    <div className="relative mb-5">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 shadow-sm placeholder-slate-300"
-                            placeholder="Buscar por nombre o código..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Filters + view toggle */}
-                    <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {tabs.map(tab => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setFilterTab(tab)}
-                                    className={cn(
-                                        "px-4 py-2 rounded-xl text-sm font-semibold transition-all",
-                                        filterTab === tab
-                                            ? TAB_STYLE[tab]
-                                            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                                    )}
-                                >
-                                    {tab}
-                                </button>
-                            ))}
+                    {/* Search & Filters Card */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-6 flex flex-col gap-4">
+                        {/* Search */}
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder-slate-400 transition-all"
+                                placeholder="Buscar producto por nombre o código..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
                         </div>
 
-                        {/* View toggle */}
-                        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={cn("p-2 rounded-lg transition-colors", viewMode === 'grid' ? "bg-emerald-500 text-white" : "text-slate-400 hover:text-slate-600")}
-                            >
-                                <LayoutGrid className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={cn("p-2 rounded-lg transition-colors", viewMode === 'list' ? "bg-emerald-500 text-white" : "text-slate-400 hover:text-slate-600")}
-                            >
-                                <List className="w-4 h-4" />
-                            </button>
+                        {/* Filters + view toggle */}
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {tabs.map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setFilterTab(tab)}
+                                        className={cn(
+                                            "px-4 py-2 rounded-xl text-sm font-semibold transition-all",
+                                            filterTab === tab
+                                                ? TAB_STYLE[tab]
+                                                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                                        )}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                {/* View toggle */}
+                                <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl p-1">
+                                    <button
+                                        onClick={() => setViewMode('grid')}
+                                        className={cn("p-2 rounded-lg transition-colors", viewMode === 'grid' ? "bg-primary text-white" : "text-slate-400 hover:text-slate-600")}
+                                    >
+                                        <LayoutGrid className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={cn("p-2 rounded-lg transition-colors", viewMode === 'list' ? "bg-primary text-white" : "text-slate-400 hover:text-slate-600")}
+                                    >
+                                        <List className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={() => setShowNuevo(true)}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Nuevo Producto
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     {/* Product results */}
-                    {filtered.length === 0 ? (
-                        <div className="flex flex-col items-center gap-3 py-20 text-slate-400">
-                            <Tag className="w-10 h-10 opacity-30" />
-                            <p className="text-sm">No hay productos con los filtros seleccionados.</p>
-                        </div>
-                    ) : viewMode === 'grid' ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-                            {filtered.map(p => (
-                                <ProductCard key={p.id} producto={p} onClick={() => setSelectedProducto(p)} />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                            <table className="w-full">
-                                <thead className="bg-slate-50/60 border-b border-slate-100">
-                                    <tr>
-                                        <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase">Producto</th>
-                                        <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase">Subcategoría</th>
-                                        <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase">Lote</th>
-                                        <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase">Precio</th>
-                                        <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase">Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filtered.map(p => (
-                                        <ProductRow key={p.id} producto={p} onClick={() => setSelectedProducto(p)} />
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </main>
-            </div>
+                    {
+                        filtered.length === 0 ? (
+                            <div className="flex flex-col items-center gap-3 py-20 text-slate-400">
+                                <Tag className="w-10 h-10 opacity-30" />
+                                <p className="text-sm">No hay productos con los filtros seleccionados.</p>
+                            </div>
+                        ) : viewMode === 'grid' ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                                {filtered.map(p => (
+                                    <ProductCard key={p.id} producto={p} onClick={() => setSelectedProducto(p)} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                <table className="w-full">
+                                    <thead className="bg-slate-50/60 border-b border-slate-100">
+                                        <tr>
+                                            <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase">Producto</th>
+                                            <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase">Subcategoría</th>
+                                            <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase">Lote</th>
+                                            <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase">Precio</th>
+                                            <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filtered.map(p => (
+                                            <ProductRow key={p.id} producto={p} onClick={() => setSelectedProducto(p)} />
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )
+                    }
+                </main >
+            </div >
 
             {/* Modals */}
-            {selectedProducto && (
-                <DetalleProductoModal producto={selectedProducto} onClose={() => setSelectedProducto(null)} />
-            )}
-            {showNuevo && (
-                <NuevoProductoModal
-                    nextCodigo={nextCodigo}
-                    onClose={() => setShowNuevo(false)}
-                    onSave={(p) => { setProductos(prev => [...prev, p]); setShowNuevo(false); }}
-                />
-            )}
-        </div>
+            {
+                selectedProducto && (
+                    <DetalleProductoModal producto={selectedProducto} onClose={() => setSelectedProducto(null)} />
+                )
+            }
+            {
+                showNuevo && (
+                    <NuevoProductoModal
+                        nextCodigo={nextCodigo}
+                        onClose={() => setShowNuevo(false)}
+                        onSave={(p) => { setProductos(prev => [...prev, p]); setShowNuevo(false); }}
+                    />
+                )
+            }
+        </div >
     );
 }

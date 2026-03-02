@@ -421,118 +421,126 @@ export default function LotesPage() {
                     ))}
 
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-                        <div className="flex items-center gap-3 flex-wrap">
-                            {/* Search */}
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <input
-                                    className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm w-52 placeholder-slate-300"
-                                    placeholder="Buscar lote..."
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                />
-                            </div>
+                    <div className="flex items-center justify-between mb-6">
+                        <h1 className="text-2xl font-bold text-slate-800">Lotes - Primavera</h1>
+                    </div>
 
-                            {/* Date filter */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setShowDateFilter(!showDateFilter)}
-                                    className={cn(
-                                        "flex items-center gap-2 px-4 py-2 bg-white border rounded-lg text-sm font-medium transition-colors shadow-sm",
-                                        (fechaDesde || fechaHasta)
-                                            ? "border-primary text-primary"
-                                            : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                                    )}
-                                >
-                                    <Calendar className="w-4 h-4" />
-                                    Filtrar por fecha
-                                    {(fechaDesde || fechaHasta) && (
-                                        <span className="ml-1 w-2 h-2 rounded-full bg-primary" />
-                                    )}
-                                </button>
-
-                                {showDateFilter && (
-                                    <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl border border-slate-100 shadow-xl p-4 z-20 flex flex-col gap-3 min-w-[260px]">
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase">Desde</label>
-                                            <input
-                                                type="date"
-                                                min={EARLIEST_DATE}
-                                                max={TODAY}
-                                                value={fechaDesde}
-                                                onChange={e => setFechaDesde(e.target.value)}
-                                                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase">Hasta</label>
-                                            <input
-                                                type="date"
-                                                min={fechaDesde || EARLIEST_DATE}
-                                                max={TODAY}
-                                                value={fechaHasta}
-                                                onChange={e => setFechaHasta(e.target.value)}
-                                                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                            />
-                                        </div>
-                                        <div className="flex gap-2 mt-1">
-                                            <button
-                                                onClick={() => { setFechaDesde(''); setFechaHasta(''); setShowDateFilter(false); }}
-                                                className="flex-1 text-xs py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
-                                            >
-                                                Limpiar
-                                            </button>
-                                            <button
-                                                onClick={() => setShowDateFilter(false)}
-                                                className="flex-1 text-xs py-1.5 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90"
-                                            >
-                                                Aplicar
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Estado filter */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
-                                >
-                                    <Filter className="w-4 h-4 text-primary" />
-                                    {estadoFilter}
-                                    <ChevronDown className={cn("w-3 h-3 transition-transform", showEstadoDropdown && "rotate-180")} />
-                                </button>
-
-                                {showEstadoDropdown && (
-                                    <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-10">
-                                        {estadoOptions.map(option => (
-                                            <button
-                                                key={option}
-                                                onClick={() => { setEstadoFilter(option); setShowEstadoDropdown(false); }}
-                                                className={cn(
-                                                    "w-full text-left px-4 py-2.5 text-sm transition-colors",
-                                                    estadoFilter === option
-                                                        ? "bg-primary/10 text-primary font-semibold"
-                                                        : "text-slate-600 hover:bg-slate-50"
-                                                )}
-                                            >
-                                                {option}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                    {/* Search & Filters Card */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-6 flex flex-col gap-4">
+                        {/* Search */}
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder-slate-400 transition-all"
+                                placeholder="Buscar lote por nombre o código..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
                         </div>
 
-                        <Button
-                            onClick={() => setShowNuevoLote(true)}
-                            className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Nuevo Lote
-                        </Button>
+                        {/* Filters & Actions */}
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                            <div className="flex items-center gap-3 flex-wrap">
+                                {/* Date filter */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowDateFilter(!showDateFilter)}
+                                        className={cn(
+                                            "flex items-center gap-2 px-4 py-2 bg-white border rounded-lg text-sm font-medium transition-colors shadow-sm",
+                                            (fechaDesde || fechaHasta)
+                                                ? "border-primary text-primary"
+                                                : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                                        )}
+                                    >
+                                        <Calendar className="w-4 h-4" />
+                                        Filtrar por fecha
+                                        {(fechaDesde || fechaHasta) && (
+                                            <span className="ml-1 w-2 h-2 rounded-full bg-primary" />
+                                        )}
+                                    </button>
+
+                                    {showDateFilter && (
+                                        <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl border border-slate-100 shadow-xl p-4 z-20 flex flex-col gap-3 min-w-[260px]">
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-xs font-semibold text-slate-500 uppercase">Desde</label>
+                                                <input
+                                                    type="date"
+                                                    min={EARLIEST_DATE}
+                                                    max={TODAY}
+                                                    value={fechaDesde}
+                                                    onChange={e => setFechaDesde(e.target.value)}
+                                                    className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-xs font-semibold text-slate-500 uppercase">Hasta</label>
+                                                <input
+                                                    type="date"
+                                                    min={fechaDesde || EARLIEST_DATE}
+                                                    max={TODAY}
+                                                    value={fechaHasta}
+                                                    onChange={e => setFechaHasta(e.target.value)}
+                                                    className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                                />
+                                            </div>
+                                            <div className="flex gap-2 mt-1">
+                                                <button
+                                                    onClick={() => { setFechaDesde(''); setFechaHasta(''); setShowDateFilter(false); }}
+                                                    className="flex-1 text-xs py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+                                                >
+                                                    Limpiar
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowDateFilter(false)}
+                                                    className="flex-1 text-xs py-1.5 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90"
+                                                >
+                                                    Aplicar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Estado filter */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                                    >
+                                        <Filter className="w-4 h-4 text-primary" />
+                                        {estadoFilter}
+                                        <ChevronDown className={cn("w-3 h-3 transition-transform", showEstadoDropdown && "rotate-180")} />
+                                    </button>
+
+                                    {showEstadoDropdown && (
+                                        <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-10">
+                                            {estadoOptions.map(option => (
+                                                <button
+                                                    key={option}
+                                                    onClick={() => { setEstadoFilter(option); setShowEstadoDropdown(false); }}
+                                                    className={cn(
+                                                        "w-full text-left px-4 py-2.5 text-sm transition-colors",
+                                                        estadoFilter === option
+                                                            ? "bg-primary/10 text-primary font-semibold"
+                                                            : "text-slate-600 hover:bg-slate-50"
+                                                    )}
+                                                >
+                                                    {option}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <Button
+                                onClick={() => setShowNuevoLote(true)}
+                                className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20 px-5 py-2.5"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Nuevo Lote
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Table */}
