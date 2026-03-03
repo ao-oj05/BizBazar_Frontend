@@ -5,13 +5,18 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 
+import { usePathname } from "next/navigation";
+
 export function Topbar() {
     const [showProfile, setShowProfile] = useState(false);
+    const pathname = usePathname();
 
     return (
         <header className="h-20 bg-white flex items-center justify-between px-8 sticky top-0 z-10">
             <div className="flex items-center gap-4">
-                <h2 className="text-xl font-bold text-slate-800">Dashboard</h2>
+                {pathname === '/dashboard' && (
+                    <h2 className="text-xl font-bold text-slate-800">Dashboard</h2>
+                )}
             </div>
 
             <div className="flex items-center gap-6">
