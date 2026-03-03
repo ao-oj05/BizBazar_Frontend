@@ -21,23 +21,11 @@ export default function LoginPage() {
         setError('');
 
         try {
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
+            // Simular petición de red para bypass del API por ahora
+            await new Promise(resolve => setTimeout(resolve, 800));
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError(data.message ?? 'Credenciales incorrectas');
-                return;
-            }
-
-            // Guardar token si viene en la respuesta
-            if (data.token) {
-                localStorage.setItem('auth_token', data.token);
-            }
+            // Guardar token falso para simular sesión iniciada
+            localStorage.setItem('auth_token', 'mock_token_for_development');
 
             router.push("/dashboard");
         } catch (err) {
