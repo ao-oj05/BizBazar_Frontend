@@ -11,20 +11,38 @@ import { Loader2 } from "lucide-react";
 export default function LoginPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setError('');
 
         try {
-            // TODO: Conectar con la API de login aquí
-            // const response = await fetch('/api/auth/login', { ... });
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
 
-            // Simulación de delay de red
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.message ?? 'Credenciales incorrectas');
+                return;
+            }
+
+            // Guardar token si viene en la respuesta
+            if (data.token) {
+                localStorage.setItem('auth_token', data.token);
+            }
+
             router.push("/dashboard");
-        } catch (error) {
-            console.error("Login error:", error);
+        } catch (err) {
+            console.error("Login error:", err);
+            setError('No se pudo conectar con el servidor. Intenta de nuevo.');
         } finally {
             setIsLoading(false);
         }
@@ -43,13 +61,31 @@ export default function LoginPage() {
                 <form className="w-full space-y-6" onSubmit={handleSubmit}>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-slate-700 ml-1">Correo electrónico</label>
-                        <Input type="email" placeholder="tu@email.com" required />
+                        <Input
+                            type="email"
+                            placeholder="tu@email.com"
+                            required
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                        />
                     </div>
 
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-slate-700 ml-1">Contraseña</label>
-                        <Input type="password" placeholder="••••••••" required />
+                        <Input
+                            type="password"
+                            placeholder="••••••••"
+                            required
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                        />
                     </div>
+
+                    {error && (
+                        <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-center">
+                            {error}
+                        </p>
+                    )}
 
                     <Button
                         type="submit"

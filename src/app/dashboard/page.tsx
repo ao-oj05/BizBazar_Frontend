@@ -1,11 +1,11 @@
 'use client';
-import { Sidebar } from "./components/Sidebar";
-import { Topbar } from "./components/Topbar";
-import { StatCard } from "./components/StatCard";
-import { Shirt, Gem, ShoppingBag, DollarSign, TrendingUp, Package, Plus, Eye, AlertCircle, Loader2 } from "lucide-react";
-import { Button } from "@/src/shared/components/ui/button";
-import { cn } from "@/src/shared/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
+import { Sidebar } from './components/Sidebar';
+import { Topbar } from './components/Topbar';
+import { StatCard } from './components/StatCard';
+import { Shirt, Gem, ShoppingBag, DollarSign, TrendingUp, Package, Plus, Eye, AlertCircle, Loader2 } from 'lucide-react';
+import { Button } from '@/src/shared/components/ui/button';
+import { cn } from '@/src/shared/utils';
 
 interface Sale {
     id: string;
@@ -40,42 +40,35 @@ export default function DashboardPage() {
         clothingProducts: 0,
         jewelryProducts: 0,
         soldToday: 0,
-        dailyProfit: "$0",
-        accumulatedProfit: "$0",
-        activeLots: 0
+        dailyProfit: '$0',
+        accumulatedProfit: '$0',
+        activeLots: 0,
     });
     const [alerts, setAlerts] = useState<Alert[]>([]);
 
     useEffect(() => {
-        // TODO: Conectar con la API aquí
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                // Simulación de carga de API (reemplazar con fetch real)
-                // const response = await fetch('/api/dashboard');
-                // const data = await response.json();
-                // setSales(data.sales);
-                // setStats(data.stats);
-                // setAlerts(data.alerts);
-
-                // Por ahora lo dejamos vacío como solicitó el usuario
-                setSales([]);
-                setStats({
+                const res = await fetch('/api/dashboard');
+                if (!res.ok) throw new Error('Error al cargar el dashboard');
+                const data = await res.json();
+                setSales(data.sales ?? []);
+                setStats(data.stats ?? {
                     clothingProducts: 0,
                     jewelryProducts: 0,
                     soldToday: 0,
-                    dailyProfit: "$0",
-                    accumulatedProfit: "$0",
-                    activeLots: 0
+                    dailyProfit: '$0',
+                    accumulatedProfit: '$0',
+                    activeLots: 0,
                 });
-                setAlerts([]);
+                setAlerts(data.alerts ?? []);
             } catch (error) {
-                console.error("Error fetching dashboard data:", error);
+                console.error('Error fetching dashboard data:', error);
             } finally {
                 setIsLoading(false);
             }
         };
-
         fetchData();
     }, []);
 
@@ -84,8 +77,8 @@ export default function DashboardPage() {
             <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
             <div className={cn(
-                "flex-1 transition-all duration-300",
-                isCollapsed ? "ml-20" : "ml-64"
+                'flex-1 transition-all duration-300',
+                isCollapsed ? 'ml-20' : 'ml-64'
             )}>
                 <Topbar />
 
@@ -161,8 +154,8 @@ export default function DashboardPage() {
                                                             <td className="py-5 text-sm text-slate-600">{sale.product}</td>
                                                             <td className="py-5">
                                                                 <span className={cn(
-                                                                    "px-3 py-1 rounded-lg text-[10px] font-bold uppercase",
-                                                                    sale.type === "Ropa" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                                                                    'px-3 py-1 rounded-lg text-[10px] font-bold uppercase',
+                                                                    sale.type === 'Ropa' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'
                                                                 )}>
                                                                     {sale.type}
                                                                 </span>
@@ -213,16 +206,16 @@ export default function DashboardPage() {
                                             {alerts.length > 0 ? (
                                                 alerts.map((alert) => (
                                                     <div key={alert.id} className={cn(
-                                                        "p-5 rounded-2xl bg-white border flex gap-4 shadow-sm",
-                                                        alert.type === 'danger' ? "border-red-200" : "border-secondary/20"
+                                                        'p-5 rounded-2xl bg-white border flex gap-4 shadow-sm',
+                                                        alert.type === 'danger' ? 'border-red-200' : 'border-secondary/20'
                                                     )}>
                                                         <div className={cn(
-                                                            "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                                                            alert.type === 'danger' ? "bg-red-50" : "bg-secondary/5"
+                                                            'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+                                                            alert.type === 'danger' ? 'bg-red-50' : 'bg-secondary/5'
                                                         )}>
                                                             <AlertCircle className={cn(
-                                                                "w-6 h-6",
-                                                                alert.type === 'danger' ? "text-red-500" : "text-secondary"
+                                                                'w-6 h-6',
+                                                                alert.type === 'danger' ? 'text-red-500' : 'text-secondary'
                                                             )} />
                                                         </div>
                                                         <div>
