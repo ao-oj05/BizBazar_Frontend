@@ -27,8 +27,8 @@ export default function ConfiguracionPage() {
                 <Topbar />
 
                 <main className="p-8 max-w-7xl mx-auto pb-20">
-                    <div className="flex items-center justify-between mb-8">
-                        <h1 className="text-2xl font-bold text-slate-800">Configuración</h1>
+                    <div className="flex items-center justify-end mb-8">
+                        {/* El título ahora está en la Topbar */}
                     </div>
 
                     <div className="flex flex-col lg:flex-row gap-6">

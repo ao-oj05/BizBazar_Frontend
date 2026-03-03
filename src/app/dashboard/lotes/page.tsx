@@ -343,8 +343,8 @@ export default function LotesPage() {
                         </div>
                     ))}
 
-                    <div className="flex items-center justify-between mb-6">
-                        <h1 className="text-2xl font-bold text-slate-800">Lotes</h1>
+                    <div className="flex items-center justify-end mb-6">
+                        {/* El título ahora está en la Topbar */}
                     </div>
 
                     {/* Search & Filters */}

@@ -301,8 +301,8 @@ export default function ReportesPage() {
                 <Topbar />
 
                 <main className="p-8 pb-20 max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
-                        <h1 className="text-2xl font-bold text-slate-800">Reportes</h1>
+                    <div className="flex items-center justify-end mb-8">
+                        {/* El título ahora está en la Topbar */}
                     </div>
 
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 mb-6 flex flex-wrap items-center justify-between gap-4">

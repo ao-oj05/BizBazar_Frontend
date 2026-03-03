@@ -7,16 +7,26 @@ import Link from "next/link";
 
 import { usePathname } from "next/navigation";
 
+const routeTitles: Record<string, string> = {
+    '/dashboard': 'Dashboard',
+    '/dashboard/productos': 'Productos — Ropa',
+    '/dashboard/lotes': 'Gestión de Lotes',
+    '/dashboard/joyeria': 'Productos — Joyería',
+    '/dashboard/ventas': 'Ventas y Movimientos',
+    '/dashboard/subastas': 'Subastas Activas',
+    '/dashboard/reportes': 'Reportes y Métricas',
+    '/dashboard/configuracion': 'Configuración del Sistema',
+};
+
 export function Topbar() {
     const [showProfile, setShowProfile] = useState(false);
     const pathname = usePathname();
+    const title = routeTitles[pathname] || 'Dashboard';
 
     return (
         <header className="h-20 bg-white flex items-center justify-between px-8 sticky top-0 z-10">
             <div className="flex items-center gap-4">
-                {pathname === '/dashboard' && (
-                    <h2 className="text-xl font-bold text-slate-800">Dashboard</h2>
-                )}
+                <h2 className="text-xl font-bold text-slate-800">{title}</h2>
             </div>
 
             <div className="flex items-center gap-6">

@@ -84,8 +84,7 @@ export default function ProductosPage() {
                 <Topbar />
 
                 <main className="p-8 pb-20">
-                    <div className="flex items-center justify-between mb-6">
-                        <h1 className="text-2xl font-bold text-slate-800">Productos — Ropa</h1>
+                    <div className="flex items-center justify-end mb-6">
                         <button
                             onClick={() => setShowNuevoProducto(true)}
                             className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-colors"
