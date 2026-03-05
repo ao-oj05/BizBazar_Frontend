@@ -209,7 +209,7 @@ export default function DashboardPage() {
                                             <Button onClick={() => router.push('/dashboard/ventas')} className="w-full justify-center gap-3 bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold">
                                                 <Plus className="w-5 h-5" /> Registrar venta
                                             </Button>
-                                            <Button className="w-full justify-center gap-3 bg-secondary hover:bg-secondary/90 h-12 rounded-xl font-bold">
+                                            <Button onClick={() => router.push('/dashboard/subastas')} className="w-full justify-center gap-3 bg-secondary hover:bg-secondary/90 h-12 rounded-xl font-bold">
                                                 <Eye className="w-5 h-5" /> Ver subastas
                                             </Button>
                                         </div>
