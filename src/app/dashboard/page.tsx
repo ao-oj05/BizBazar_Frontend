@@ -6,6 +6,7 @@ import { StatCard } from './components/StatCard';
 import { Shirt, Gem, ShoppingBag, DollarSign, TrendingUp, Package, Plus, Eye, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/src/shared/components/ui/button';
 import { cn } from '@/src/shared/utils';
+import { NuevoLoteModal } from './components/NuevoLoteModal';
 
 interface Sale {
     id: string;
@@ -45,30 +46,32 @@ export default function DashboardPage() {
         activeLots: 0,
     });
     const [alerts, setAlerts] = useState<Alert[]>([]);
+    const [showNuevoLote, setShowNuevoLote] = useState(false);
+
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/dashboard');
+            if (!res.ok) throw new Error('Error al cargar el dashboard');
+            const data = await res.json();
+            setSales(data.sales ?? []);
+            setStats(data.stats ?? {
+                clothingProducts: 0,
+                jewelryProducts: 0,
+                soldToday: 0,
+                dailyProfit: '$0',
+                accumulatedProfit: '$0',
+                activeLots: 0,
+            });
+            setAlerts(data.alerts ?? []);
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            try {
-                const res = await fetch('/api/dashboard');
-                if (!res.ok) throw new Error('Error al cargar el dashboard');
-                const data = await res.json();
-                setSales(data.sales ?? []);
-                setStats(data.stats ?? {
-                    clothingProducts: 0,
-                    jewelryProducts: 0,
-                    soldToday: 0,
-                    dailyProfit: '$0',
-                    accumulatedProfit: '$0',
-                    activeLots: 0,
-                });
-                setAlerts(data.alerts ?? []);
-            } catch (error) {
-                console.error('Error fetching dashboard data:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchData();
     }, []);
 
@@ -182,7 +185,7 @@ export default function DashboardPage() {
                                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
                                         <h3 className="text-xl font-bold text-slate-800 mb-8">Acciones Rápidas</h3>
                                         <div className="space-y-4">
-                                            <Button className="w-full justify-center gap-3 bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold">
+                                            <Button onClick={() => setShowNuevoLote(true)} className="w-full justify-center gap-3 bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold">
                                                 <Plus className="w-5 h-5" /> Nuevo lote
                                             </Button>
                                             <Button className="w-full justify-center gap-3 bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold">
@@ -237,6 +240,16 @@ export default function DashboardPage() {
                     )}
                 </main>
             </div>
+
+            {showNuevoLote && (
+                <NuevoLoteModal
+                    onClose={() => setShowNuevoLote(false)}
+                    onSave={() => {
+                        setShowNuevoLote(false);
+                        fetchData();
+                    }}
+                />
+            )}
         </div>
     );
 }
