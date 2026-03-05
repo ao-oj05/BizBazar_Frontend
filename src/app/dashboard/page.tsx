@@ -9,6 +9,7 @@ import { cn } from '@/src/shared/utils';
 import { NuevoLoteModal } from './components/NuevoLoteModal';
 import { NuevoProductoModal } from './components/NuevoProductoModal';
 import { NuevaJoyaModal } from './components/NuevaJoyaModal';
+import { useRouter } from 'next/navigation';
 
 interface Sale {
     id: string;
@@ -36,6 +37,7 @@ interface Alert {
 }
 
 export default function DashboardPage() {
+    const router = useRouter();
     const [isCollapsed, setIsCollapsed] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [sales, setSales] = useState<Sale[]>([]);
@@ -204,7 +206,7 @@ export default function DashboardPage() {
                                             <Button onClick={() => setShowNuevaJoya(true)} className="w-full justify-center gap-3 bg-secondary hover:bg-secondary/90 h-12 rounded-xl font-bold">
                                                 <Plus className="w-5 h-5" /> Agregar joyería
                                             </Button>
-                                            <Button className="w-full justify-center gap-3 bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold">
+                                            <Button onClick={() => router.push('/dashboard/ventas')} className="w-full justify-center gap-3 bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold">
                                                 <Plus className="w-5 h-5" /> Registrar venta
                                             </Button>
                                             <Button className="w-full justify-center gap-3 bg-secondary hover:bg-secondary/90 h-12 rounded-xl font-bold">
