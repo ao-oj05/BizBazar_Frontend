@@ -7,6 +7,7 @@ import { Shirt, Gem, ShoppingBag, DollarSign, TrendingUp, Package, Plus, Eye, Al
 import { Button } from '@/src/shared/components/ui/button';
 import { cn } from '@/src/shared/utils';
 import { NuevoLoteModal } from './components/NuevoLoteModal';
+import { NuevoProductoModal } from './components/NuevoProductoModal';
 
 interface Sale {
     id: string;
@@ -47,13 +48,19 @@ export default function DashboardPage() {
     });
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [showNuevoLote, setShowNuevoLote] = useState(false);
+    const [showNuevoProducto, setShowNuevoProducto] = useState(false);
+    const [lotes, setLotes] = useState<any[]>([]);
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch('/api/dashboard');
+            const [res, resL] = await Promise.all([
+                fetch('/api/dashboard'),
+                fetch('/api/lotes')
+            ]);
             if (!res.ok) throw new Error('Error al cargar el dashboard');
             const data = await res.json();
+            const dataL = resL.ok ? await resL.json() : [];
             setSales(data.sales ?? []);
             setStats(data.stats ?? {
                 clothingProducts: 0,
@@ -64,6 +71,7 @@ export default function DashboardPage() {
                 activeLots: 0,
             });
             setAlerts(data.alerts ?? []);
+            setLotes(Array.isArray(dataL) ? dataL : dataL.data ?? []);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -188,7 +196,7 @@ export default function DashboardPage() {
                                             <Button onClick={() => setShowNuevoLote(true)} className="w-full justify-center gap-3 bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold">
                                                 <Plus className="w-5 h-5" /> Nuevo lote
                                             </Button>
-                                            <Button className="w-full justify-center gap-3 bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold">
+                                            <Button onClick={() => setShowNuevoProducto(true)} className="w-full justify-center gap-3 bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold">
                                                 <Plus className="w-5 h-5" /> Agregar producto
                                             </Button>
                                             <Button className="w-full justify-center gap-3 bg-secondary hover:bg-secondary/90 h-12 rounded-xl font-bold">
@@ -246,6 +254,17 @@ export default function DashboardPage() {
                     onClose={() => setShowNuevoLote(false)}
                     onSave={() => {
                         setShowNuevoLote(false);
+                        fetchData();
+                    }}
+                />
+            )}
+
+            {showNuevoProducto && (
+                <NuevoProductoModal
+                    lotes={lotes}
+                    onClose={() => setShowNuevoProducto(false)}
+                    onSave={() => {
+                        setShowNuevoProducto(false);
                         fetchData();
                     }}
                 />

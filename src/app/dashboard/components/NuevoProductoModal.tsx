@@ -1,0 +1,105 @@
+import { useState } from 'react';
+import { X, Loader2 } from 'lucide-react';
+
+export interface LoteBasico {
+    id: string;
+    nombre: string;
+    codigo: string;
+}
+
+export function NuevoProductoModal({ lotes, onClose, onSave }:
+    { lotes: LoteBasico[]; onClose: () => void; onSave: (p: any) => void }) {
+    const [form, setForm] = useState({ nombre: '', subcategoria: '', loteId: '', tipoVenta: 'Directa', precio: '', costo: '' });
+    const [isSaving, setIsSaving] = useState(false);
+
+    const subcategorias = ['Blusas', 'Pantalones', 'Vestidos', 'Chamarras', 'Shorts', 'Faldas', 'Tops', 'Otros'];
+
+    const handleSave = async () => {
+        if (!form.nombre || !form.subcategoria || !form.loteId) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch('/api/productos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: form.nombre,
+                    subcategoria: form.subcategoria,
+                    loteId: form.loteId,
+                    tipoVenta: form.tipoVenta,
+                    precio: form.precio ? parseFloat(form.precio) : null,
+                    costo: form.costo ? parseFloat(form.costo) : 0,
+                }),
+            });
+            if (res.ok) {
+                const newProducto = await res.json();
+                onSave(newProducto);
+            } else {
+                console.error('Error al crear producto:', await res.text());
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-left">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="flex items-center justify-between px-6 py-4 bg-slate-800 rounded-t-2xl">
+                    <h2 className="text-lg font-bold text-white">Agregar producto</h2>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white"><X className="w-4 h-4" /></button>
+                </div>
+                <div className="p-6 grid grid-cols-2 gap-4">
+                    <div className="col-span-2 flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-slate-500 uppercase">Nombre del producto</label>
+                        <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Blusa floreada azul" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-slate-500 uppercase">Subcategoría</label>
+                        <select className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white" value={form.subcategoria} onChange={e => setForm(f => ({ ...f, subcategoria: e.target.value }))}>
+                            <option value="">Seleccionar</option>
+                            {subcategorias.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-slate-500 uppercase">Lote</label>
+                        <select className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white" value={form.loteId} onChange={e => setForm(f => ({ ...f, loteId: e.target.value }))}>
+                            <option value="">Seleccionar lote</option>
+                            {lotes.map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-slate-500 uppercase">Tipo de venta</label>
+                        <select className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white" value={form.tipoVenta} onChange={e => setForm(f => ({ ...f, tipoVenta: e.target.value }))}>
+                            <option value="Directa">Directa</option>
+                            <option value="Subasta">Subasta</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-slate-500 uppercase">Costo</label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                            <input type="number" className="w-full border border-slate-200 rounded-xl pl-7 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" value={form.costo} onChange={e => setForm(f => ({ ...f, costo: e.target.value }))} />
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-slate-500 uppercase">Precio de venta</label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                            <input type="number" className="w-full border border-slate-200 rounded-xl pl-7 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" value={form.precio} onChange={e => setForm(f => ({ ...f, precio: e.target.value }))} />
+                        </div>
+                    </div>
+                </div>
+                <div className="px-6 pb-6 flex gap-3">
+                    <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button>
+                    <button onClick={handleSave} disabled={!form.nombre || !form.subcategoria || !form.loteId || isSaving}
+                        className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
