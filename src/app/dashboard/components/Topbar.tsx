@@ -1,7 +1,7 @@
 'use client';
 import { Search, Bell, User, Settings, LogOut } from "lucide-react";
 import { Input } from "@/src/shared/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 
@@ -20,8 +20,26 @@ const routeTitles: Record<string, string> = {
 
 export function Topbar() {
     const [showProfile, setShowProfile] = useState(false);
+    const [hasAlerts, setHasAlerts] = useState(false);
     const pathname = usePathname();
     const title = routeTitles[pathname] || 'Dashboard';
+
+    useEffect(() => {
+        const checkAlerts = async () => {
+            try {
+                const res = await fetch('/api/dashboard');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.alerts && data.alerts.length > 0) {
+                        setHasAlerts(true);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching alerts:', error);
+            }
+        };
+        checkAlerts();
+    }, [pathname]);
 
     return (
         <header className="h-20 bg-white flex items-center justify-between px-8 sticky top-0 z-10">
@@ -40,7 +58,9 @@ export function Topbar() {
 
                 <button className="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
                     <Bell className="w-5 h-5" />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white" />
+                    {hasAlerts && (
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white" />
+                    )}
                 </button>
 
                 <div className="relative">

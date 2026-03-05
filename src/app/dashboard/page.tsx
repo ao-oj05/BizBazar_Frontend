@@ -222,15 +222,18 @@ export default function DashboardPage() {
                                                 alerts.map((alert) => (
                                                     <div key={alert.id} className={cn(
                                                         'p-5 rounded-2xl bg-white border flex gap-4 shadow-sm',
-                                                        alert.type === 'danger' ? 'border-red-200' : 'border-secondary/20'
+                                                        alert.type === 'danger' ? 'border-red-200' :
+                                                            alert.type === 'warning' ? 'border-cyan-200' : 'border-secondary/20'
                                                     )}>
                                                         <div className={cn(
                                                             'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-                                                            alert.type === 'danger' ? 'bg-red-50' : 'bg-secondary/5'
+                                                            alert.type === 'danger' ? 'bg-red-50' :
+                                                                alert.type === 'warning' ? 'bg-[#40C4AA]/10' : 'bg-secondary/5'
                                                         )}>
                                                             <AlertCircle className={cn(
                                                                 'w-6 h-6',
-                                                                alert.type === 'danger' ? 'text-red-500' : 'text-secondary'
+                                                                alert.type === 'danger' ? 'text-red-500' :
+                                                                    alert.type === 'warning' ? 'text-[#40C4AA]' : 'text-secondary'
                                                             )} />
                                                         </div>
                                                         <div>
