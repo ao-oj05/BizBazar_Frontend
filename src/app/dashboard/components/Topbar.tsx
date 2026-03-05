@@ -13,7 +13,7 @@ const routeTitles: Record<string, string> = {
     '/dashboard/lotes': 'Gestión de Lotes',
     '/dashboard/joyeria': 'Productos — Joyería',
     '/dashboard/ventas': 'Ventas y Movimientos',
-    '/dashboard/subastas': 'Subastas Activas',
+    '/dashboard/subastas': 'Subastas',
     '/dashboard/reportes': 'Reportes y Métricas',
     '/dashboard/configuracion': 'Configuración del Sistema',
 };
