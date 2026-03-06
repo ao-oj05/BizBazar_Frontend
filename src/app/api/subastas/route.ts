@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
 // GET  /api/subastas    → Listar subastas (soporta ?estado=Activa|Cerrada)
 // POST /api/subastas    → Crear subasta
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const query = searchParams.toString();
-        const res = await fetch(`${API_URL}/subastas${query ? `?${query}` : ''}`, {
+        const res = await fetch(`${API_URL}/api/subastas${query ? `?${query}` : ''}`, {
             headers: { 'Content-Type': 'application/json' },
             cache: 'no-store',
         });
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const res = await fetch(`${API_URL}/subastas`, {
+        const res = await fetch(`${API_URL}/api/subastas`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),

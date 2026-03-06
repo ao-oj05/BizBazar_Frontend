@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
 // GET    /api/joyeria/[id]  → Obtener pieza por ID
 // PUT    /api/joyeria/[id]  → Actualizar pieza
@@ -9,7 +9,7 @@ const API_URL = process.env.API_URL ?? 'http://localhost:4000';
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
     const { id } = await context.params;
     try {
-        const res = await fetch(`${API_URL}/joyeria/${id}`, {
+        const res = await fetch(`${API_URL}/api/joyeria/${id}`, {
             headers: { 'Content-Type': 'application/json' },
             cache: 'no-store',
         });
@@ -25,7 +25,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     const { id } = await context.params;
     try {
         const body = await req.json();
-        const res = await fetch(`${API_URL}/joyeria/${id}`, {
+        const res = await fetch(`${API_URL}/api/joyeria/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -41,7 +41,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
     const { id } = await context.params;
     try {
-        const res = await fetch(`${API_URL}/joyeria/${id}`, {
+        const res = await fetch(`${API_URL}/api/joyeria/${id}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
         });

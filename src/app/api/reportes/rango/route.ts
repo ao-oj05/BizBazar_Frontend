@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
 // GET /api/reportes/rango?desde=YYYY-MM-DD&hasta=YYYY-MM-DD
 // Respuesta esperada:
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const query = searchParams.toString();
-        const res = await fetch(`${API_URL}/reportes/rango${query ? `?${query}` : ''}`, {
+        const res = await fetch(`${API_URL}/api/reportes/rango${query ? `?${query}` : ''}`, {
             headers: { 'Content-Type': 'application/json' },
             cache: 'no-store',
         });

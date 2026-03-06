@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
 // GET /api/dashboard
 export async function GET(req: NextRequest) {
     try {
-        const res = await fetch(`${API_URL}/dashboard`, {
+        const res = await fetch(`${API_URL}/api/dashboard`, {
             headers: { 'Content-Type': 'application/json' },
             cache: 'no-store',
         });

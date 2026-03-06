@@ -21,11 +21,20 @@ export default function LoginPage() {
         setError('');
 
         try {
-            // Simular petición de red para bypass del API por ahora
-            await new Promise(resolve => setTimeout(resolve, 800));
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
 
-            // Guardar token falso para simular sesión iniciada
-            localStorage.setItem('auth_token', 'mock_token_for_development');
+            if (!res.ok) {
+                setError('Credenciales inválidas o error de conexión');
+                return;
+            }
+
+            const data = await res.json();
+            // El backend devuelve un token
+            localStorage.setItem('auth_token', data.token);
 
             router.push("/dashboard");
         } catch (err) {

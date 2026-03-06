@@ -11,19 +11,45 @@ import { Loader2 } from "lucide-react";
 export default function RegisterPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [nombre, setNombre] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        setError('');
+
+        if (password !== confirmPassword) {
+            setError('Las contraseñas no coinciden');
+            return;
+        }
+
+        if (password.length < 8) {
+            setError('La contraseña debe tener al menos 8 caracteres');
+            return;
+        }
+
         setIsLoading(true);
 
         try {
-            // TODO: Conectar con la API de registro aquí
-            // const response = await fetch('/api/auth/register', { ... });
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, email, password }),
+            });
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (!response.ok) {
+                const data = await response.json();
+                setError(data.message || 'Error al crear la cuenta');
+                return;
+            }
+
             router.push("/auth/login");
         } catch (error) {
             console.error("Register error:", error);
+            setError('No se pudo conectar con el servidor');
         } finally {
             setIsLoading(false);
         }
@@ -42,24 +68,54 @@ export default function RegisterPage() {
                 <form className="w-full space-y-5" onSubmit={handleSubmit}>
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-slate-700 ml-1">Nombre completo</label>
-                        <Input type="text" placeholder="Tu nombre" required />
+                        <Input
+                            type="text"
+                            placeholder="Tu nombre"
+                            required
+                            value={nombre}
+                            onChange={(e) => setNombre(e.target.value)}
+                        />
                     </div>
 
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-slate-700 ml-1">Email</label>
-                        <Input type="email" placeholder="tu@email.com" required />
+                        <Input
+                            type="email"
+                            placeholder="tu@email.com"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
                     </div>
 
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-slate-700 ml-1">Contraseña</label>
-                        <Input type="password" placeholder="••••••••" required />
+                        <Input
+                            type="password"
+                            placeholder="••••••••"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
                         <p className="text-[10px] text-slate-400 ml-1">Mínimo 8 caracteres</p>
                     </div>
 
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-slate-700 ml-1">Confirmar contraseña</label>
-                        <Input type="password" placeholder="••••••••" required />
+                        <Input
+                            type="password"
+                            placeholder="••••••••"
+                            required
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
                     </div>
+
+                    {error && (
+                        <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-center">
+                            {error}
+                        </p>
+                    )}
 
                     <div className="flex items-center gap-2 px-1 py-2">
                         <input type="checkbox" id="terms" className="rounded border-slate-300 text-primary focus:ring-primary" required />

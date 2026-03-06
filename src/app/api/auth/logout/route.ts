@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
 // POST /api/auth/logout
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json().catch(() => ({}));
-        const res = await fetch(`${API_URL}/auth/logout`, {
+        const res = await fetch(`${API_URL}/api/auth/logout`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),

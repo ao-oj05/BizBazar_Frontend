@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
 // POST /api/subastas/[id]/puja  → Registrar una nueva puja en una subasta
 //
@@ -9,7 +9,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     const { id } = await context.params;
     try {
         const body = await req.json();
-        const res = await fetch(`${API_URL}/subastas/${id}/puja`, {
+        const res = await fetch(`${API_URL}/api/subastas/${id}/puja`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
