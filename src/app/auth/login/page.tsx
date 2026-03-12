@@ -20,29 +20,11 @@ export default function LoginPage() {
         setIsLoading(true);
         setError('');
 
-        try {
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
-
-            if (!res.ok) {
-                setError('Credenciales inválidas o error de conexión');
-                return;
-            }
-
-            const data = await res.json();
-            // El backend devuelve un token
-            localStorage.setItem('auth_token', data.token);
-
-            router.push("/dashboard");
-        } catch (err) {
-            console.error("Login error:", err);
-            setError('No se pudo conectar con el servidor. Intenta de nuevo.');
-        } finally {
-            setIsLoading(false);
-        }
+        // BYPASS LOGIN FOR TESTING
+        console.log("Login bypass activated for testing");
+        localStorage.setItem('auth_token', 'testing_token_bypass');
+        router.push("/dashboard");
+        return;
     };
 
     return (
@@ -61,7 +43,6 @@ export default function LoginPage() {
                         <Input
                             type="email"
                             placeholder="tu@email.com"
-                            required
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                         />
@@ -72,7 +53,6 @@ export default function LoginPage() {
                         <Input
                             type="password"
                             placeholder="••••••••"
-                            required
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                         />

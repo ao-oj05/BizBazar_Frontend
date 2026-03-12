@@ -44,8 +44,9 @@ function LoadingState() {
 
 // ─── Diario Tab ───────────────────────────────────────────────────────────────
 
-function DiarioTab() {
-    const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
+function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
+    const today = new Date().toLocaleDateString('en-CA');
+    const [fecha, setFecha] = useState(today);
     const [data, setData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -60,6 +61,23 @@ function DiarioTab() {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
+    const handleExport = useCallback(() => {
+        import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
+            generatePDFReport({
+                title: "Reporte Diario de Ventas",
+                subtitle: `Resumen de operaciones del día`,
+                dateRange: fecha,
+                columns: ["Hora", "Producto", "Tipo", "Precio", "Ganancia"],
+                rows: (data?.ventas ?? []).map((v: any) => [v.hora, v.producto, v.tipo, v.precio, v.ganancia]),
+                filename: `Reporte_Diario_${fecha}`
+            });
+        });
+    }, [data, fecha]);
+
+    useEffect(() => {
+        onExportReady(handleExport);
+    }, [handleExport, onExportReady]);
+
     if (isLoading) return <LoadingState />;
 
     return (
@@ -67,7 +85,7 @@ function DiarioTab() {
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
                 <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-primary" />
-                    <input type="date" value={fecha} max={new Date().toISOString().split('T')[0]}
+                    <input type="date" value={fecha} max={today}
                         onChange={e => setFecha(e.target.value)}
                         className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
@@ -112,9 +130,10 @@ function DiarioTab() {
 
 // ─── Por Rango Tab ────────────────────────────────────────────────────────────
 
-function PorRangoTab() {
-    const [desde, setDesde] = useState('');
-    const [hasta, setHasta] = useState('');
+function PorRangoTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
+    const today = new Date().toLocaleDateString('en-CA');
+    const [desde, setDesde] = useState(today);
+    const [hasta, setHasta] = useState(today);
     const [data, setData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -127,6 +146,28 @@ function PorRangoTab() {
         } catch (e) { console.error(e); }
         finally { setIsLoading(false); }
     };
+
+    const handleExport = useCallback(() => {
+        import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
+            generatePDFReport({
+                title: "Reporte de Ventas por Rango",
+                subtitle: "Resumen consolidado",
+                dateRange: (desde && hasta) ? `${desde} al ${hasta}` : 'Rango no especificado',
+                columns: ["Métrica", "Valor"],
+                rows: [
+                    ["Total Vendido", data?.totalVendido ?? '$0'],
+                    ["Total Ganancia", data?.totalGanancia ?? '$0'],
+                    ["Ventas Directas", data?.ventasDirectas ?? '$0'],
+                    ["Subastas", data?.subastas ?? '$0']
+                ],
+                filename: `Reporte_Rango_${desde || 'inicio'}_${hasta || 'fin'}`
+            });
+        });
+    }, [data, desde, hasta]);
+
+    useEffect(() => {
+        onExportReady(handleExport);
+    }, [handleExport, onExportReady]);
 
     return (
         <div className="flex flex-col gap-6">
@@ -155,7 +196,7 @@ function PorRangoTab() {
 
 // ─── Por Categoría Tab ────────────────────────────────────────────────────────
 
-function PorCategoriaTab() {
+function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
     const [tipo, setTipo] = useState<'Ropa' | 'Joyería'>('Ropa');
     const [data, setData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -170,6 +211,23 @@ function PorCategoriaTab() {
     }, [tipo]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    const handleExport = useCallback(() => {
+        import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
+            generatePDFReport({
+                title: "Reporte por Categoría",
+                subtitle: `Ventas y top productos`,
+                category: tipo,
+                columns: ["Producto", "Ventas", "Total"],
+                rows: (data?.topProductos ?? []).map((p: any) => [p.nombre, p.ventas, p.total]),
+                filename: `Reporte_Categoria_${tipo}`
+            });
+        });
+    }, [data, tipo]);
+
+    useEffect(() => {
+        onExportReady(handleExport);
+    }, [handleExport, onExportReady]);
 
     return (
         <div className="flex flex-col gap-6">
@@ -216,7 +274,7 @@ function PorCategoriaTab() {
 
 // ─── Inventario Actual Tab ────────────────────────────────────────────────────
 
-function InventarioActualTab() {
+function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
     const [estado, setEstado] = useState<'Disponible' | 'En subasta' | 'Vendido'>('Disponible');
     const [data, setData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -231,6 +289,22 @@ function InventarioActualTab() {
     }, [estado]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    const handleExport = useCallback(() => {
+        import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
+            generatePDFReport({
+                title: "Reporte de Inventario Actual",
+                subtitle: `Estado: ${estado}`,
+                columns: ["Producto", "Precio"],
+                rows: (data?.productos ?? []).map((p: any) => [p.nombre, p.precio ? `$${p.precio}` : '—']),
+                filename: `Reporte_Inventario_${estado}`
+            });
+        });
+    }, [data, estado]);
+
+    useEffect(() => {
+        onExportReady(handleExport);
+    }, [handleExport, onExportReady]);
 
     return (
         <div className="flex flex-col gap-6">
@@ -284,6 +358,11 @@ function InventarioActualTab() {
 export default function ReportesPage() {
     const [isCollapsed, setIsCollapsed] = useState(true);
     const [activeTab, setActiveTab] = useState<ReportTab>('Diario');
+    const [exportFn, setExportFn] = useState<(() => void) | null>(null);
+
+    const handleExportReady = useCallback((fn: () => void) => {
+        setExportFn(() => fn);
+    }, []);
 
     const tabs: { id: ReportTab; icon: any }[] = [
         { id: 'Diario', icon: BarChart3 },
@@ -317,22 +396,25 @@ export default function ReportesPage() {
                                 </button>
                             ))}
                         </div>
-                        <button className="flex items-center gap-2 px-5 py-2.5 bg-[#40C4AA] hover:bg-[#40C4AA]/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-200 transition-colors">
+                        <button
+                            onClick={() => exportFn?.()}
+                            disabled={!exportFn}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-[#40C4AA] hover:bg-[#40C4AA]/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-200 transition-colors disabled:opacity-50">
                             <Download className="w-4 h-4" /> Exportar
                         </button>
                     </div>
 
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        {activeTab === 'Diario' && <DiarioTab />}
-                        {activeTab === 'Por rango' && <PorRangoTab />}
-                        {activeTab === 'Por categoría' && <PorCategoriaTab />}
+                        {activeTab === 'Diario' && <DiarioTab onExportReady={handleExportReady} />}
+                        {activeTab === 'Por rango' && <PorRangoTab onExportReady={handleExportReady} />}
+                        {activeTab === 'Por categoría' && <PorCategoriaTab onExportReady={handleExportReady} />}
                         {activeTab === 'Por lote' && (
                             <div className="bg-white rounded-2xl border border-slate-100 p-20 flex flex-col items-center justify-center text-slate-400">
                                 <Package className="w-12 h-12 mb-4 opacity-20" />
                                 <p>Reporte en construcción</p>
                             </div>
                         )}
-                        {activeTab === 'Inventario actual' && <InventarioActualTab />}
+                        {activeTab === 'Inventario actual' && <InventarioActualTab onExportReady={handleExportReady} />}
                     </div>
                 </main>
             </div>
