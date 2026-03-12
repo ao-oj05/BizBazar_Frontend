@@ -5,19 +5,24 @@ import { Topbar } from "../components/Topbar";
 import { cn } from "@/src/shared/utils";
 import { Search, Gavel, Clock, ChevronRight, X, Loader2 } from "lucide-react";
 
-type SubastaEstado = 'Activa' | 'Cerrada';
+type SubastaEstado = 'activa' | 'finalizada';
 
 interface SubastaItem {
-    id: string;
-    nombre: string;
+    id: string; // the auction ID
     codigo: string;
-    categoria: 'Ropa' | 'Joyería';
-    imagen: string;
-    precioBase: number;
-    pujaActual: number;
+    producto_id: string;
+    producto_nombre: string;
+    producto_codigo: string;
+    producto_categoria: 'ropa' | 'joyeria';
+    producto_imagenes: string;
+    precio_inicial: number;
+    incremento_minimo: number;
+    precio_final?: number;
+    ganadora_nombre?: string;
     estado: SubastaEstado;
-    tiempoRestante: number;
-    pujas: number;
+    fecha_inicio: string;
+    fecha_cierre?: string;
+    tiempoRestante: number; // calculated locally for now
 }
 
 function formatTime(seconds: number) {
@@ -31,11 +36,12 @@ function formatTime(seconds: number) {
 export default function SubastasPage() {
     const [isCollapsed, setIsCollapsed] = useState(true);
     const [search, setSearch] = useState('');
-    const [filterEstado, setFilterEstado] = useState<'Todas' | 'Activa' | 'Cerrada'>('Activa');
+    const [filterEstado, setFilterEstado] = useState<'Todas' | 'activa' | 'finalizada'>('activa');
     const [subastas, setSubastas] = useState<SubastaItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedSubasta, setSelectedSubasta] = useState<SubastaItem | null>(null);
-    const [pujaInput, setPujaInput] = useState('');
+    const [precioFinalInput, setPrecioFinalInput] = useState('');
+    const [ganadoraInput, setGanadoraInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fetchSubastas = async () => {
@@ -57,13 +63,13 @@ export default function SubastasPage() {
     useEffect(() => {
         const interval = setInterval(() => {
             setSubastas(prev => prev.map(s => {
-                if (s.estado === 'Activa' && s.tiempoRestante > 0) {
+                if (s.estado === 'activa' && s.tiempoRestante > 0) {
                     return { ...s, tiempoRestante: s.tiempoRestante - 1 };
                 }
                 return s;
             }));
             setSelectedSubasta(prev => {
-                if (prev && prev.estado === 'Activa' && prev.tiempoRestante > 0) {
+                if (prev && prev.estado === 'activa' && prev.tiempoRestante > 0) {
                     return { ...prev, tiempoRestante: prev.tiempoRestante - 1 };
                 }
                 return prev;
@@ -73,45 +79,30 @@ export default function SubastasPage() {
     }, []);
 
     const filtered = subastas.filter(s => {
-        const matchSearch = !search || s.nombre.toLowerCase().includes(search.toLowerCase()) || s.codigo.toLowerCase().includes(search.toLowerCase());
-        const matchTab = filterEstado === 'Todas' || s.estado === filterEstado;
+        const matchSearch = !search || s.producto_nombre?.toLowerCase().includes(search.toLowerCase()) || s.codigo?.toLowerCase().includes(search.toLowerCase());
+        const mappedStatus = filterEstado === 'activa' ? 'activa' : filterEstado === 'finalizada' ? 'finalizada' : 'Todas';
+        const matchTab = filterEstado === 'Todas' || s.estado === mappedStatus;
         return matchSearch && matchTab;
     });
 
-    const registrarPuja = async (id: string) => {
-        const monto = parseFloat(pujaInput);
-        const subasta = subastas.find(s => s.id === id);
-        if (!subasta || !monto || monto <= subasta.pujaActual) return;
-        setIsSubmitting(true);
-        try {
-            const res = await fetch(`/api/subastas/${id}/puja`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ monto }),
-            });
-            if (res.ok) {
-                setSubastas(prev => prev.map(s => s.id === id ? { ...s, pujaActual: monto, pujas: s.pujas + 1 } : s));
-                setSelectedSubasta(prev => prev && prev.id === id ? { ...prev, pujaActual: monto, pujas: prev.pujas + 1 } : prev);
-                setPujaInput('');
-            }
-        } catch (error) {
-            console.error('Error registrando puja:', error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
     const cerrarSubasta = async (id: string) => {
+        if (!precioFinalInput || !ganadoraInput) return;
         setIsSubmitting(true);
         try {
             const res = await fetch(`/api/subastas/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ estado: 'Cerrada' }),
+                body: JSON.stringify({ 
+                    precio_final: parseFloat(precioFinalInput),
+                    ganadora_nombre: ganadoraInput
+                }),
             });
             if (res.ok) {
-                setSubastas(prev => prev.map(s => s.id === id ? { ...s, estado: 'Cerrada', tiempoRestante: 0 } : s));
-                setSelectedSubasta(prev => prev && prev.id === id ? { ...prev, estado: 'Cerrada', tiempoRestante: 0 } : prev);
+                const updated = await res.json();
+                setSubastas(prev => prev.map(s => s.id === id ? { ...s, estado: 'finalizada', precio_final: parseFloat(precioFinalInput), ganadora_nombre: ganadoraInput, tiempoRestante: 0 } : s));
+                setSelectedSubasta(null); // Close modal on success
+            } else {
+                console.error("Error cerrando subasta:", await res.text());
             }
         } catch (error) {
             console.error('Error cerrando subasta:', error);
@@ -144,7 +135,7 @@ export default function SubastasPage() {
                             />
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
-                            {(['Todas', 'Activa', 'Cerrada'] as const).map(tab => (
+                            {(['Todas', 'activa', 'finalizada'] as const).map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setFilterEstado(tab)}
@@ -155,7 +146,7 @@ export default function SubastasPage() {
                                             : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                                     )}
                                 >
-                                    {tab === 'Todas' ? 'Todas las subastas' : `Subastas ${tab}s`}
+                                    {tab === 'Todas' ? 'Todas las subastas' : tab === 'activa' ? 'Subastas Activas' : 'Subastas Finalizadas'}
                                 </button>
                             ))}
                         </div>
@@ -170,12 +161,12 @@ export default function SubastasPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filtered.map(s => (
-                                <div key={s.id} onClick={() => { setSelectedSubasta(s); setPujaInput(String(s.pujaActual + 10)); }}
+                                <div key={s.id} onClick={() => { setSelectedSubasta(s); setPrecioFinalInput(String(s.precio_inicial)); }}
                                     className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden cursor-pointer hover:shadow-lg transition-all group flex flex-col">
                                     <div className="h-48 bg-slate-100 relative overflow-hidden shrink-0">
-                                        {s.imagen ? (
+                                        {s.producto_imagenes ? (
                                             // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={s.imagen} alt={s.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            <img src={s.producto_imagenes} alt={s.producto_nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-300"><Gavel className="w-10 h-10" /></div>
                                         )}
@@ -184,31 +175,33 @@ export default function SubastasPage() {
                                         </div>
                                         <div className={cn(
                                             "absolute top-3 right-3 px-3 py-1 rounded-lg text-xs font-bold shadow-sm backdrop-blur-sm flex items-center gap-1.5",
-                                            s.estado === 'Activa' ? "bg-[#EAB308]/90 text-white" : "bg-slate-700/90 text-white"
+                                            s.estado === 'activa' ? "bg-[#EAB308]/90 text-white" : "bg-slate-700/90 text-white"
                                         )}>
                                             <Gavel className="w-3 h-3" />{s.estado}
                                         </div>
                                     </div>
                                     <div className="p-5 flex-1 flex flex-col">
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-md", s.categoria === 'Ropa' ? "text-[#40C4AA] bg-[#40C4AA]/10" : "text-primary bg-primary/10")}>
-                                                {s.categoria}
+                                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-md", s.producto_categoria === 'ropa' ? "text-[#40C4AA] bg-[#40C4AA]/10" : "text-primary bg-primary/10")}>
+                                                {s.producto_categoria}
                                             </span>
                                             <div className="flex items-center gap-1 text-slate-500 text-xs font-semibold">
                                                 <Clock className="w-3.5 h-3.5" />
-                                                {s.estado === 'Activa' ? formatTime(s.tiempoRestante) : 'Finalizada'}
+                                                {s.estado === 'activa' ? 'En progreso' : 'Finalizada'}
                                             </div>
                                         </div>
-                                        <h3 className="font-bold text-slate-800 text-lg leading-tight mb-4">{s.nombre}</h3>
+                                        <h3 className="font-bold text-slate-800 text-lg leading-tight mb-4">{s.producto_nombre}</h3>
                                         <div className="mt-auto grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
                                             <div>
-                                                <p className="text-xs text-slate-400 font-medium tracking-wide">PRECIO BASE</p>
-                                                <p className="font-bold text-slate-700 text-sm">${s.precioBase}</p>
+                                                <p className="text-xs text-slate-400 font-medium tracking-wide">PRECIO INICIAL</p>
+                                                <p className="font-bold text-slate-700 text-sm">${s.precio_inicial}</p>
                                             </div>
-                                            <div>
-                                                <p className="text-xs text-slate-400 font-medium tracking-wide">PUJA ACTUAL ({s.pujas})</p>
-                                                <p className="font-bold text-[#40C4AA] text-lg">${s.pujaActual}</p>
-                                            </div>
+                                            {s.estado === 'finalizada' && (
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-medium tracking-wide">PRECIO FINAL</p>
+                                                    <p className="font-bold text-[#40C4AA] text-lg">${s.precio_final}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -239,9 +232,9 @@ export default function SubastasPage() {
                         <div className="p-6 flex flex-col gap-6">
                             <div className="flex items-start gap-4">
                                 <div className="w-24 h-24 rounded-xl bg-slate-100 overflow-hidden shrink-0">
-                                    {selectedSubasta.imagen ? (
+                                    {selectedSubasta.producto_imagenes ? (
                                         // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={selectedSubasta.imagen} alt={selectedSubasta.nombre} className="w-full h-full object-cover" />
+                                        <img src={selectedSubasta.producto_imagenes} alt={selectedSubasta.producto_nombre} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-slate-300"><Gavel /></div>
                                     )}
@@ -249,59 +242,61 @@ export default function SubastasPage() {
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="text-xs font-bold text-slate-400">{selectedSubasta.codigo}</p>
-                                            <h3 className="font-bold text-slate-800 text-lg leading-tight">{selectedSubasta.nombre}</h3>
+                                            <p className="text-xs font-bold text-slate-400">{selectedSubasta.producto_codigo}</p>
+                                            <h3 className="font-bold text-slate-800 text-lg leading-tight">{selectedSubasta.producto_nombre}</h3>
                                         </div>
                                         <span className={cn("text-xs font-bold px-2 py-1 rounded-md",
-                                            selectedSubasta.estado === 'Activa' ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"
+                                            selectedSubasta.estado === 'activa' ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"
                                         )}>
                                             {selectedSubasta.estado}
                                         </span>
                                     </div>
-                                    <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-600 bg-slate-50 p-2 rounded-lg inline-flex">
-                                        <Clock className="w-4 h-4 text-primary" />
-                                        {selectedSubasta.estado === 'Activa' ? `Tiempo restante: ${formatTime(selectedSubasta.tiempoRestante)}` : 'Subasta Finalizada'}
+                                    {selectedSubasta.estado === 'finalizada' && (
+                                    <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-600 bg-slate-50 p-2 rounded-lg inline-flex mt-2">
+                                        Ganadora: {selectedSubasta.ganadora_nombre}
                                     </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-xs font-bold text-slate-400">Precio Base</span>
-                                    <span className="text-xl font-bold text-slate-800">${selectedSubasta.precioBase}</span>
+                                    <span className="text-xs font-bold text-slate-400">Precio Inicial</span>
+                                    <span className="text-xl font-bold text-slate-800">${selectedSubasta.precio_inicial}</span>
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-xs font-bold text-slate-400">Total Pujas</span>
-                                    <span className="text-xl font-bold text-slate-800">{selectedSubasta.pujas}</span>
+                                    <span className="text-xs font-bold text-slate-400">Incremento Mínimo</span>
+                                    <span className="text-xl font-bold text-slate-800">${selectedSubasta.incremento_minimo}</span>
                                 </div>
                                 <div className="col-span-2 flex justify-between items-end border-t border-slate-200 pt-3 mt-1">
-                                    <span className="text-sm font-bold text-slate-500">Puja Actual Ganadora</span>
-                                    <span className="text-3xl font-bold text-[#EAB308]">${selectedSubasta.pujaActual}</span>
+                                    <span className="text-sm font-bold text-slate-500">{selectedSubasta.estado === 'activa' ? 'Precio Final' : 'Precio Final'}</span>
+                                    <span className="text-3xl font-bold text-[#EAB308]">${selectedSubasta.precio_final || selectedSubasta.precio_inicial}</span>
                                 </div>
                             </div>
-                            {selectedSubasta.estado === 'Activa' && (
+                            {selectedSubasta.estado === 'activa' && (
                                 <div className="flex flex-col gap-3">
-                                    <p className="text-sm font-bold text-slate-800">Registrar nueva puja</p>
-                                    <div className="flex gap-2">
+                                    <p className="text-sm font-bold text-slate-800">Cerrar Subasta</p>
+                                    <div className="flex flex-col gap-2">
                                         <input
                                             type="number"
-                                            value={pujaInput}
-                                            onChange={e => setPujaInput(e.target.value)}
-                                            className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                            value={precioFinalInput}
+                                            onChange={e => setPrecioFinalInput(e.target.value)}
+                                            placeholder="Precio Final"
+                                            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/30"
                                         />
-                                        <button
-                                            onClick={() => registrarPuja(selectedSubasta.id)}
-                                            disabled={isSubmitting || parseFloat(pujaInput) <= selectedSubasta.pujaActual}
-                                            className="bg-[#40C4AA] hover:bg-[#40C4AA]/90 text-white font-bold px-6 rounded-xl transition-colors shadow-lg shadow-teal-200 flex items-center gap-2 disabled:opacity-50"
-                                        >
-                                            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Pujar <ChevronRight className="w-4 h-4" /></>}
-                                        </button>
+                                        <input
+                                            type="text"
+                                            value={ganadoraInput}
+                                            onChange={e => setGanadoraInput(e.target.value)}
+                                            placeholder="Nombre de la Ganadora"
+                                            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                        />
                                     </div>
                                     <button
                                         onClick={() => cerrarSubasta(selectedSubasta.id)}
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || !precioFinalInput || !ganadoraInput}
                                         className="w-full mt-2 py-3 bg-red-50 text-red-600 hover:bg-red-100 font-bold rounded-xl transition-colors disabled:opacity-50"
                                     >
-                                        Cerrar subasta anticipadamente
+                                        Terminar Subasta y Crear Venta
                                     </button>
                                 </div>
                             )}

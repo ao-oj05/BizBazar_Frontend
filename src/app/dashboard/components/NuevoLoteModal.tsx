@@ -23,40 +23,43 @@ interface Lote {
     productos: { nombre: string; estado: 'Vendido' | 'Disponible' | 'En subasta'; precio: number | null; ganancia: number | null }[];
 }
 
+import { crearLoteAction } from '../../actions/loteActions';
+
 export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSave: (lote: Lote) => void }) {
     const [form, setForm] = useState<NuevoLoteForm>({
         nombre: '', piezas: '', fecha: TODAY,
         gastosAdicionales: '', precioTotal: '',
     });
     const [isSaving, setIsSaving] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     const inversionTotal = (parseFloat(form.precioTotal) || 0) + (parseFloat(form.gastosAdicionales) || 0);
     const piezasNum = parseFloat(form.piezas) || 0;
     const costoPieza = piezasNum > 0 ? (inversionTotal / piezasNum).toFixed(2) : '0.00';
 
     const handleSave = async () => {
+        setErrorMsg(null);
         if (!form.nombre || !form.piezas || !form.fecha || !form.precioTotal) return;
         setIsSaving(true);
         try {
-            const res = await fetch('/api/lotes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nombre: form.nombre,
-                    piezas: piezasNum,
-                    fecha: form.fecha,
-                    precioTotal: parseFloat(form.precioTotal) || 0,
-                    gastosAdicionales: parseFloat(form.gastosAdicionales) || 0,
-                }),
-            });
-            if (res.ok) {
-                const newLote = await res.json();
-                onSave(newLote);
+            const formData = new FormData();
+            formData.append('nombre', form.nombre);
+            formData.append('piezas', form.piezas);
+            formData.append('fecha', form.fecha);
+            formData.append('precioTotal', form.precioTotal || '0');
+            formData.append('gastosAdicionales', form.gastosAdicionales || '0');
+
+            const result = await crearLoteAction({}, formData);
+
+            if (result.success) {
+                onSave(result.data);
             } else {
-                console.error('Error al crear lote:', await res.text());
+                setErrorMsg(result.error || 'Campos inválidos');
+                console.log(result.details);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error al crear lote:', error);
+            setErrorMsg(error.message || 'Error de conexión');
         } finally {
             setIsSaving(false);
         }
@@ -108,6 +111,11 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
                             <p className="text-2xl font-bold text-amber-500">${costoPieza}</p>
                         </div>
                     </div>
+                    {errorMsg && (
+                        <div className="col-span-2 text-red-500 text-sm font-medium mt-2">
+                            {errorMsg}
+                        </div>
+                    )}
                 </div>
                 <div className="px-6 pb-6 flex gap-3">
                     <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>

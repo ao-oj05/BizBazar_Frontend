@@ -120,14 +120,16 @@ export default function VentasPage() {
         setIsSubmitting(true);
         try {
             const body = {
-                items: cart.map(c => ({
-                    productoId: c.item.id,
-                    cantidad: c.qty,
-                    precio: c.item.precio,
-                    tipo: c.item.categoria,
-                })),
-                subtotal,
-                ganancia: totalGanancia,
+                items: cart.flatMap(c => {
+                    // Si la cantidad es > 1, enviamos el producto múltiples veces (ya que la BD inserta 1 a 1 por producto único)
+                    // Nota: En la BD, product_id es único por pieza física, pero si en el futuro se permite stock, esto sirve.
+                    // Para productos únicos, count será 1 de todas formas.
+                    return Array.from({ length: c.qty }).map(() => ({
+                        producto_id: c.item.id,
+                        precio_venta: c.item.precio,
+                    }));
+                }),
+                cliente_nombre: 'Cliente General', // Optional, hardcoded for now or add an input later
             };
             const res = await fetch('/api/ventas', {
                 method: 'POST',

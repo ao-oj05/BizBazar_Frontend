@@ -12,7 +12,21 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify(body),
         });
         const data = await res.json();
-        return NextResponse.json(data, { status: res.status });
+        
+        let response = NextResponse.json(data, { status: res.status });
+        
+        // If login is successful, set the cookie
+        if (res.ok && data.token) {
+            response.cookies.set({
+                name: 'auth_token',
+                value: data.token,
+                httpOnly: true,
+                path: '/',
+                maxAge: 60 * 60 * 24 * 7 // 1 week
+            });
+        }
+        
+        return response;
     } catch (error) {
         console.error('[API] POST /auth/login error:', error);
         return NextResponse.json({ message: 'Error al conectar con el servidor' }, { status: 500 });

@@ -174,7 +174,8 @@ function CategoriasTab() {
                 body: JSON.stringify({ nombre: nuevaCat.trim(), tipo }),
             });
             if (res.ok) {
-                const cat = await res.json();
+                const result = await res.json();
+                const cat = result.data ? result.data : result;
                 setCategorias(prev => [...prev, cat]);
                 setNuevaCat('');
             }
@@ -254,7 +255,7 @@ function AjustesGeneralesTab() {
                     const data = await res.json();
                     setForm({
                         incrementoMinimo: data.incrementoMinimo ?? '',
-                        moneda: data.moneda ?? 'MXN (Peso Mexicano)',
+                        moneda: data.moneda ?? 'MXN',
                         formatoCodigos: data.formatoCodigos ?? '',
                     });
                 }
@@ -265,13 +266,20 @@ function AjustesGeneralesTab() {
 
     const handleSave = async () => {
         setIsSaving(true);
+        const safeBody = {
+            ...form,
+            incrementoMinimo: form.incrementoMinimo ? Number(form.incrementoMinimo) : 0,
+            formatoCodigos: form.formatoCodigos || 'LOTE-%d'
+        };
+
         try {
             const res = await fetch('/api/configuracion/ajustes', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form),
+                body: JSON.stringify(safeBody),
             });
             if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
+            else { console.error('Error saving:', await res.text()); }
         } catch (e) { console.error(e); }
         finally { setIsSaving(false); }
     };
@@ -291,8 +299,8 @@ function AjustesGeneralesTab() {
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Moneda</label>
                     <select className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/30 bg-white"
                         value={form.moneda} onChange={e => setForm(f => ({ ...f, moneda: e.target.value }))}>
-                        <option>MXN (Peso Mexicano)</option>
-                        <option>USD (Dólar)</option>
+                        <option value="MXN">MXN (Peso Mexicano)</option>
+                        <option value="USD">USD (Dólar)</option>
                     </select>
                 </div>
                 <div className="flex flex-col gap-2">

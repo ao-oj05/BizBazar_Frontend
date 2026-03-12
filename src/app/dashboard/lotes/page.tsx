@@ -38,14 +38,16 @@ const TODAY = new Date().toISOString().split('T')[0];
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function RecoveryBar({ recuperado, inversion }: { recuperado: number; inversion: number }) {
-    const pct = Math.min((recuperado / inversion) * 100, 100);
-    const over = recuperado >= inversion;
+    const safeRecuperado = Number(recuperado) || 0;
+    const safeInversion = Number(inversion) || 0;
+    const pct = safeInversion > 0 ? Math.min((safeRecuperado / safeInversion) * 100, 100) : 0;
+    const over = safeRecuperado >= safeInversion && safeInversion > 0;
     return (
         <div className="flex flex-col gap-1 min-w-[120px]">
             <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-slate-800">${recuperado.toLocaleString()}</span>
+                <span className="text-sm font-bold text-slate-800">${safeRecuperado.toLocaleString('en-US')}</span>
                 <span className={cn('text-xs font-bold', over ? 'text-green-500' : 'text-primary')}>
-                    {Math.round((recuperado / inversion) * 100)}%
+                    {Math.round(pct)}%
                 </span>
             </div>
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -71,10 +73,14 @@ function AuctionDot() {
 
 function DetalleModal({ lote, onClose }: { lote: Lote; onClose: () => void }) {
     const router = useRouter();
-    const costoPieza = (lote.inversion / lote.piezas).toFixed(2);
-    const ganancia = lote.recuperado - lote.inversion;
-    const pctRecuperacion = Math.round((lote.recuperado / lote.inversion) * 100);
-    const isOver = lote.recuperado >= lote.inversion;
+    const safeInversion = Number(lote.inversion) || 0;
+    const safeRecuperado = Number(lote.recuperado) || 0;
+    const safePiezas = Number(lote.piezas) || 1; // Prevent division by 0
+    
+    const costoPieza = (safeInversion / safePiezas).toFixed(2);
+    const ganancia = safeRecuperado - safeInversion;
+    const pctRecuperacion = safeInversion > 0 ? Math.round((safeRecuperado / safeInversion) * 100) : 0;
+    const isOver = safeRecuperado >= safeInversion && safeInversion > 0;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -90,10 +96,10 @@ function DetalleModal({ lote, onClose }: { lote: Lote; onClose: () => void }) {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-6">
                     {[
-                        { label: 'Inversión Total', value: `$${lote.inversion.toLocaleString()}`, color: 'text-slate-800' },
+                        { label: 'Inversión Total', value: `$${safeInversion.toLocaleString('en-US')}`, color: 'text-slate-800' },
                         { label: 'Costo/pieza', value: `$${costoPieza}`, color: 'text-slate-800' },
-                        { label: 'Recuperado', value: `$${lote.recuperado.toLocaleString()}`, color: 'text-slate-800' },
-                        { label: 'Ganancia', value: `$${ganancia.toLocaleString()}`, color: ganancia >= 0 ? 'text-green-600' : 'text-yellow-500' },
+                        { label: 'Recuperado', value: `$${safeRecuperado.toLocaleString('en-US')}`, color: 'text-slate-800' },
+                        { label: 'Ganancia', value: `$${ganancia.toLocaleString('en-US')}`, color: ganancia >= 0 ? 'text-green-600' : 'text-yellow-500' },
                         { label: '% Recuperación', value: `${pctRecuperacion}%`, color: isOver ? 'text-green-600' : 'text-primary', circle: true },
                     ].map(stat => (
                         <div key={stat.label} className="bg-slate-50 rounded-xl p-4 flex flex-col gap-1">
@@ -187,7 +193,21 @@ export default function LotesPage() {
                 const res = await fetch('/api/lotes');
                 if (!res.ok) throw new Error('Error al cargar lotes');
                 const data = await res.json();
-                setLotes(Array.isArray(data) ? data : data.data ?? []);
+                const rawLotes = Array.isArray(data) ? data : data.data ?? [];
+                
+                // Map backend postgres fields to frontend TypeScript interface
+                const mapped = rawLotes.map((l: any) => ({
+                    id: l.id,
+                    codigo: l.codigo || '',
+                    nombre: l.nombre || 'Lote sin nombre',
+                    fecha: l.fecha_compra || l.fecha || '',
+                    inversion: Number(l.precio_total || l.inversion) || 0,
+                    piezas: Number(l.piezas_total || l.piezas) || 0,
+                    recuperado: Number(l.recuperado) || 0,
+                    estado: (l.estado && l.estado.toLowerCase() === 'cerrado') ? 'Cerrado' : 'Activo',
+                    productos: Array.isArray(l.productos) ? l.productos : []
+                }));
+                setLotes(mapped);
             } catch (error) {
                 console.error('Error fetching lotes:', error);
             } finally {
@@ -200,8 +220,9 @@ export default function LotesPage() {
     const lowStockLotes = useMemo(() =>
         lotes.filter(l => {
             if (l.estado !== 'Activo') return false;
-            const vendidos = l.productos.filter(p => p.estado === 'Vendido').length;
-            const totalProductos = l.productos.length;
+            const prods = l.productos || [];
+            const vendidos = prods.filter(p => p.estado === 'Vendido').length;
+            const totalProductos = prods.length;
             if (totalProductos === 0) return false;
             const remaining = totalProductos - vendidos;
             return remaining / totalProductos <= 0.2;
@@ -230,8 +251,8 @@ export default function LotesPage() {
 
                 <main className="p-8">
                     {/* Low stock alerts */}
-                    {lowStockLotes.map(l => (
-                        <div key={l.id} className="flex items-center gap-3 mb-4 px-5 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm">
+                    {lowStockLotes.map((l, i) => (
+                        <div key={l.id || `low-stock-${i}`} className="flex items-center gap-3 mb-4 px-5 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm">
                             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                             <span><strong>{l.nombre}</strong> ({l.codigo}) tiene stock bajo — quedan pocos productos disponibles.</span>
                         </div>
@@ -322,12 +343,12 @@ export default function LotesPage() {
                                             </div>
                                         </td></tr>
                                     ) : lotesFiltrados.length > 0 ? (
-                                        lotesFiltrados.map(lote => (
-                                            <tr key={lote.id} className="hover:bg-slate-50/50 transition-colors">
+                                        lotesFiltrados.map((lote, i) => (
+                                            <tr key={lote.id || `lote-tr-${i}`} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="px-6 py-5 text-sm font-bold text-slate-800">{lote.codigo}</td>
                                                 <td className="px-6 py-5 text-sm text-slate-700">{lote.nombre}</td>
                                                 <td className="px-6 py-5 text-sm text-slate-500">{lote.fecha}</td>
-                                                <td className="px-6 py-5 text-sm font-semibold text-slate-800">${lote.inversion.toLocaleString()}</td>
+                                                <td className="px-6 py-5 text-sm font-semibold text-slate-800">${(Number(lote.inversion) || 0).toLocaleString('en-US')}</td>
                                                 <td className="px-6 py-5 text-sm text-slate-700">{lote.piezas}</td>
                                                 <td className="px-6 py-5">
                                                     <RecoveryBar recuperado={lote.recuperado} inversion={lote.inversion} />

@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
@@ -11,8 +12,15 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const query = searchParams.toString();
+        
+        const cookieStore = await cookies();
+        const token = cookieStore.get('auth_token')?.value;
+        const authHeader = req.headers.get('authorization') || (token ? `Bearer ${token}` : null);
+        const headersContent: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (authHeader) headersContent['Authorization'] = authHeader;
+        
         const res = await fetch(`${API_URL}/api/configuracion/categorias${query ? `?${query}` : ''}`, {
-            headers: { 'Content-Type': 'application/json' },
+            headers: headersContent,
             cache: 'no-store',
         });
         const data = await res.json();
@@ -26,9 +34,16 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+        
+        const cookieStore = await cookies();
+        const token = cookieStore.get('auth_token')?.value;
+        const authHeader = req.headers.get('authorization') || (token ? `Bearer ${token}` : null);
+        const headersContent: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (authHeader) headersContent['Authorization'] = authHeader;
+        
         const res = await fetch(`${API_URL}/api/configuracion/categorias`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: headersContent,
             body: JSON.stringify(body),
         });
         const data = await res.json();
@@ -43,9 +58,16 @@ export async function DELETE(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
+        
+        const cookieStore = await cookies();
+        const token = cookieStore.get('auth_token')?.value;
+        const authHeader = req.headers.get('authorization') || (token ? `Bearer ${token}` : null);
+        const headersContent: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (authHeader) headersContent['Authorization'] = authHeader;
+        
         const res = await fetch(`${API_URL}/api/configuracion/categorias/${id}`, {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
+            headers: headersContent,
         });
         const data = await res.json().catch(() => ({}));
         return NextResponse.json(data, { status: res.status });
