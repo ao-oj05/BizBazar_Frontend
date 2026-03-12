@@ -11,7 +11,19 @@ interface NuevoLoteForm {
     precioTotal: string;
 }
 
-export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSave: (lote: any) => void }) {
+interface Lote {
+    id: string;
+    codigo: string;
+    nombre: string;
+    fecha: string;
+    inversion: number;
+    piezas: number;
+    recuperado: number;
+    estado: 'Activo' | 'Cerrado';
+    productos: { nombre: string; estado: 'Vendido' | 'Disponible' | 'En subasta'; precio: number | null; ganancia: number | null }[];
+}
+
+export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSave: (lote: Lote) => void }) {
     const [form, setForm] = useState<NuevoLoteForm>({
         nombre: '', piezas: '', fecha: TODAY,
         gastosAdicionales: '', precioTotal: '',

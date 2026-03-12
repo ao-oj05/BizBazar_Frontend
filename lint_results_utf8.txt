@@ -1,0 +1,28 @@
+﻿
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\app\api\dashboard\route.ts
+  6:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\app\dashboard\lotes\page.tsx
+  9:34  warning  'Package' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\app\dashboard\productos\page.tsx
+  2:31  warning  'useRef' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\app\dashboard\reportes\page.tsx
+  12:11  warning  'MetricData' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\app\dashboard\ventas\page.tsx
+   42:107  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   50:119  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:107  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:119  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\shared\components\ui\input.tsx
+  4:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\shared\report-utils.ts
+  10:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Ô£û 11 problems (7 errors, 4 warnings)
+

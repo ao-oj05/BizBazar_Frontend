@@ -1,7 +1,19 @@
 import { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 
-export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSave: (j: any) => void }) {
+interface Joya {
+    id: string;
+    nombre: string;
+    codigo: string;
+    subcategoria: string;
+    imagen: string;
+    estado: 'Disponible' | 'Vendido' | 'En subasta';
+    precio: number | null;
+    costo: number;
+    tipoVenta: 'Directa' | 'Subasta';
+}
+
+export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSave: (j: Joya) => void }) {
     const [form, setForm] = useState({ nombre: '', subcategoria: '', tipoVenta: 'Directa', precio: '', costo: '' });
     const [isSaving, setIsSaving] = useState(false);
 

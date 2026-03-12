@@ -6,7 +6,7 @@ import { Topbar } from '../components/Topbar';
 import { cn } from '@/src/shared/utils';
 import {
     Plus, Eye, Calendar, Filter, ChevronDown, X,
-    AlertTriangle, TrendingDown, Package, Search, Loader2
+    AlertTriangle, TrendingDown, Search, Loader2
 } from 'lucide-react';
 import { Button } from '@/src/shared/components/ui/button';
 

@@ -7,8 +7,22 @@ export interface LoteBasico {
     codigo: string;
 }
 
+interface Producto {
+    id: string;
+    nombre: string;
+    codigo: string;
+    subcategoria: string;
+    lote: string;
+    loteId: string;
+    imagen: string;
+    estado: 'Disponible' | 'Vendido' | 'En subasta';
+    precio: number | null;
+    costo: number;
+    tipoVenta: 'Directa' | 'Subasta';
+}
+
 export function NuevoProductoModal({ lotes, onClose, onSave }:
-    { lotes: LoteBasico[]; onClose: () => void; onSave: (p: any) => void }) {
+    { lotes: LoteBasico[]; onClose: () => void; onSave: (p: Producto) => void }) {
     const [form, setForm] = useState({ nombre: '', subcategoria: '', loteId: '', tipoVenta: 'Directa', precio: '', costo: '' });
     const [isSaving, setIsSaving] = useState(false);
 

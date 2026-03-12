@@ -13,7 +13,7 @@ export default function ConfiguracionPage() {
     const [isCollapsed, setIsCollapsed] = useState(true);
     const [activeTab, setActiveTab] = useState<ConfigTab>('Datos del Negocio');
 
-    const tabs: { id: ConfigTab; icon: any }[] = [
+    const tabs: { id: ConfigTab; icon: React.ElementType }[] = [
         { id: 'Datos del Negocio', icon: Store },
         { id: 'Categorías', icon: ListTree },
         { id: 'Ajustes Generales', icon: SettingsIcon },
@@ -123,7 +123,7 @@ function DatosNegocioTab() {
                         <input
                             className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/30 placeholder-slate-300"
                             placeholder={f.placeholder}
-                            value={(form as any)[f.key]}
+                            value={form[f.key as keyof typeof form]}
                             onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
                         />
                     </div>

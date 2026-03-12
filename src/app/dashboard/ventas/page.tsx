@@ -16,6 +16,24 @@ interface ProductoVenta {
     imagen: string;
 }
 
+interface RawProduct {
+    id?: string;
+    _id?: string;
+    nombre: string;
+    precio?: number;
+    costo?: number;
+    imagen?: string;
+}
+
+interface RawJoyeria {
+    id?: string;
+    _id?: string;
+    nombre: string;
+    precio?: number;
+    costo?: number;
+    imagen?: string;
+}
+
 type FilterType = 'Ambas' | 'Ropa' | 'Joyería';
 
 export default function VentasPage() {
@@ -39,7 +57,7 @@ export default function VentasPage() {
                 const ropa = resRopa.ok ? await resRopa.json() : [];
                 const joyeria = resJoyeria.ok ? await resJoyeria.json() : [];
 
-                const ropaItems: ProductoVenta[] = (Array.isArray(ropa) ? ropa : ropa.data ?? []).map((p: any) => ({
+                const ropaItems: ProductoVenta[] = (Array.isArray(ropa) ? ropa : ropa.data ?? []).map((p: RawProduct) => ({
                     id: p.id ?? p._id,
                     nombre: p.nombre,
                     precio: p.precio ?? 0,
@@ -47,7 +65,7 @@ export default function VentasPage() {
                     categoria: 'Ropa' as Categoria,
                     imagen: p.imagen ?? '',
                 }));
-                const joyeriaItems: ProductoVenta[] = (Array.isArray(joyeria) ? joyeria : joyeria.data ?? []).map((j: any) => ({
+                const joyeriaItems: ProductoVenta[] = (Array.isArray(joyeria) ? joyeria : joyeria.data ?? []).map((j: RawJoyeria) => ({
                     id: j.id ?? j._id,
                     nombre: j.nombre,
                     precio: j.precio ?? 0,
@@ -125,10 +143,10 @@ export default function VentasPage() {
                 ]);
                 const ropa = resRopa.ok ? await resRopa.json() : [];
                 const joyeria = resJoyeria.ok ? await resJoyeria.json() : [];
-                const ropaItems: ProductoVenta[] = (Array.isArray(ropa) ? ropa : ropa.data ?? []).map((p: any) => ({
+                const ropaItems: ProductoVenta[] = (Array.isArray(ropa) ? ropa : ropa.data ?? []).map((p: RawProduct) => ({
                     id: p.id ?? p._id, nombre: p.nombre, precio: p.precio ?? 0, costo: p.costo ?? 0, categoria: 'Ropa', imagen: p.imagen ?? '',
                 }));
-                const joyeriaItems: ProductoVenta[] = (Array.isArray(joyeria) ? joyeria : joyeria.data ?? []).map((j: any) => ({
+                const joyeriaItems: ProductoVenta[] = (Array.isArray(joyeria) ? joyeria : joyeria.data ?? []).map((j: RawJoyeria) => ({
                     id: j.id ?? j._id, nombre: j.nombre, precio: j.precio ?? 0, costo: j.costo ?? 0, categoria: 'Joyería', imagen: j.imagen ?? '',
                 }));
                 setItems([...ropaItems, ...joyeriaItems]);

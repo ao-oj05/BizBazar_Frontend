@@ -1,0 +1,54 @@
+﻿
+> bizbazar_frontend@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 5.4s
+  Running TypeScript ...
+node.exe : Failed to compile.
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Fai 
+   led to compile.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+./src/app/dashboard/joyeria/page.tsx:230:45
+Type error: Argument of type '(prev: Joya[]) => 
+Joya[]' is not assignable to parameter of type 
+'SetStateAction<Joya[]>'.
+  Type '(prev: Joya[]) => Joya[]' is not 
+assignable to type '(prevState: Joya[]) => 
+Joya[]'.
+    Type 'Joya[]' is not assignable to type 
+'Joya[]'. Two different types with this name 
+exist, but they are unrelated.
+      Type 'Joya' is missing the following 
+properties from type 'Joya': codigo, imagen, 
+estado
+
+[0m [90m 228 |[39m                 
+[33m<[39m[33mNuevaJoyaModal[39m
+ [90m 229 |[39m                     
+onClose[33m=[39m{() [33m=>[39m 
+setShowNuevaJoya([36mfalse[39m)}
+[31m[1m>[22m[39m[90m 230 |[39m             
+        onSave[33m=[39m{j [33m=>[39m { 
+setJoyas(prev [33m=>[39m 
+[[33m...[39mprev[33m,[39m j])[33m;[39m 
+setShowNuevaJoya([36mfalse[39m)[33m;[39m }}
+ [90m     |[39m                                
+             [31m[1m^[22m[39m
+ [90m 231 |[39m                 
+[33m/[39m[33m>[39m
+ [90m 232 |[39m             )}
+ [90m 233 |[39m         [33m<[39m[33m/[39m
+[33mdiv[39m[33m>[39m[0m
+Next.js build worker exited with code: 1 and 
+signal: null

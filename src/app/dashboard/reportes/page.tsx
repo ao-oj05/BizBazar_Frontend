@@ -9,15 +9,70 @@ type ReportTab = 'Diario' | 'Por rango' | 'Por lote' | 'Por categoría' | 'Inven
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
-interface MetricData {
-    title: string;
-    value: string | number;
-    color?: string;
+interface VentaReporte {
+    hora: string;
+    producto: string;
+    tipo: 'Directa' | 'Subasta';
+    precio: string;
+    ganancia: string;
+}
+
+interface ReporteDiarioResponse {
+    ventasRopa: number;
+    ventasJoyeria: number;
+    totalVendido: string;
+    totalGanancia: string;
+    subastasCerradas: number;
+    productosAgregados: number;
+    ventas: VentaReporte[];
+}
+
+interface ReporteRangoResponse {
+    totalVentas: number;
+    totalVendido: string;
+    totalGanancia: string;
+    ventasDirectas: string;
+    subastas: string;
+    periodo: string;
+    ventas: VentaReporte[];
+}
+
+interface ReporteCategoriaResponse {
+    categoria: string;
+    totalVendido: string;
+    totalDisponible: number;
+    ingresos: string;
+    ganancia: string;
+    cantidadProductos: number;
+    precioPromedio: string;
+    productos: {
+        id: string;
+        nombre: string;
+        tipoVenta: string;
+        precio: number;
+        estado: string;
+    }[];
+}
+
+interface ReporteInventarioResponse {
+    totalProductos: number;
+    valorInventario: string;
+    costoTotal: string;
+    gananciaProyectada: string;
+    articulos: {
+        id: string;
+        nombre: string;
+        lote: string;
+        estado: string;
+        costo: number;
+        precio: number | null;
+        imagen?: string;
+    }[];
 }
 
 // ─── Metric Card ─────────────────────────────────────────────────────────────
 
-function MetricCard({ title, value, icon: Icon, valueColor }: { title: string; value: string | number; icon?: any; valueColor?: string }) {
+function MetricCard({ title, value, icon: Icon, valueColor }: { title: string; value: string | number; icon?: React.ElementType; valueColor?: string }) {
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex items-center justify-between">
             <div className="flex flex-col gap-1">
@@ -47,7 +102,7 @@ function LoadingState() {
 function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
     const today = new Date().toLocaleDateString('en-CA');
     const [fecha, setFecha] = useState(today);
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<ReporteDiarioResponse | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchData = useCallback(async () => {
@@ -68,7 +123,7 @@ function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) =>
                 subtitle: `Resumen de operaciones del día`,
                 dateRange: fecha,
                 columns: ["Hora", "Producto", "Tipo", "Precio", "Ganancia"],
-                rows: (data?.ventas ?? []).map((v: any) => [v.hora, v.producto, v.tipo, v.precio, v.ganancia]),
+                rows: (data?.ventas ?? []).map((v) => [v.hora, v.producto, v.tipo, v.precio, v.ganancia]),
                 filename: `Reporte_Diario_${fecha}`
             });
         });
@@ -112,7 +167,7 @@ function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) =>
                     <tbody>
                         {(data?.ventas ?? []).length === 0 ? (
                             <tr><td colSpan={5} className="py-10 text-center text-slate-400 text-sm">Sin ventas para esta fecha.</td></tr>
-                        ) : (data?.ventas ?? []).map((r: any, i: number) => (
+                        ) : (data?.ventas ?? []).map((r, i) => (
                             <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
                                 <td className="py-4 text-xs font-semibold text-slate-500">{r.hora}</td>
                                 <td className="py-4 text-sm font-bold text-slate-800">{r.producto}</td>
@@ -134,7 +189,7 @@ function PorRangoTab({ onExportReady }: { onExportReady: (exportFn: () => void) 
     const today = new Date().toLocaleDateString('en-CA');
     const [desde, setDesde] = useState(today);
     const [hasta, setHasta] = useState(today);
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<ReporteRangoResponse | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchData = async () => {
@@ -198,7 +253,7 @@ function PorRangoTab({ onExportReady }: { onExportReady: (exportFn: () => void) 
 
 function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
     const [tipo, setTipo] = useState<'Ropa' | 'Joyería'>('Ropa');
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<ReporteCategoriaResponse | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchData = useCallback(async () => {
@@ -219,7 +274,7 @@ function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => vo
                 subtitle: `Ventas y top productos`,
                 category: tipo,
                 columns: ["Producto", "Ventas", "Total"],
-                rows: (data?.topProductos ?? []).map((p: any) => [p.nombre, p.ventas, p.total]),
+                rows: (data?.productos ?? []).map((p) => [p.nombre, 1, `$${p.precio}`]),
                 filename: `Reporte_Categoria_${tipo}`
             });
         });
@@ -253,15 +308,15 @@ function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => vo
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                         <h3 className="text-sm font-bold text-slate-800 mb-6">Top productos más vendidos</h3>
                         <div className="flex flex-col gap-4">
-                            {(data?.topProductos ?? []).length === 0 ? (
+                            {(data?.productos ?? []).length === 0 ? (
                                 <p className="text-slate-400 text-sm text-center py-6">Sin datos disponibles.</p>
-                            ) : (data?.topProductos ?? []).map((i: any, idx: number) => (
+                            ) : (data?.productos ?? []).map((i, idx) => (
                                 <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-4 last:border-0 last:pb-0">
                                     <div>
                                         <p className="text-sm font-bold text-slate-800">{i.nombre}</p>
-                                        <p className="text-xs text-slate-400 font-medium">{i.ventas} ventas</p>
+                                        <p className="text-xs text-slate-400 font-medium">{i.estado}</p>
                                     </div>
-                                    <span className="text-sm font-bold text-[#EAB308]">{i.total}</span>
+                                    <span className="text-sm font-bold text-[#EAB308]">${i.precio}</span>
                                 </div>
                             ))}
                         </div>
@@ -276,7 +331,7 @@ function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => vo
 
 function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
     const [estado, setEstado] = useState<'Disponible' | 'En subasta' | 'Vendido'>('Disponible');
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<ReporteInventarioResponse | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchData = useCallback(async () => {
@@ -296,7 +351,7 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                 title: "Reporte de Inventario Actual",
                 subtitle: `Estado: ${estado}`,
                 columns: ["Producto", "Precio"],
-                rows: (data?.productos ?? []).map((p: any) => [p.nombre, p.precio ? `$${p.precio}` : '—']),
+                rows: (data?.articulos ?? []).map((p) => [p.nombre, p.precio ? `$${p.precio}` : '—']),
                 filename: `Reporte_Inventario_${estado}`
             });
         });
@@ -308,10 +363,11 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <MetricCard title="Valor Total Disponible" value={data?.valorTotal ?? '$0'} valueColor="text-[#40C4AA]" />
-                <MetricCard title="Items Disponibles" value={data?.itemsDisponibles ?? 0} valueColor="text-slate-800" />
-                <MetricCard title="En Subasta" value={data?.enSubasta ?? '$0'} valueColor="text-[#FF9DAA]" />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <MetricCard title="Total Productos" value={data?.totalProductos ?? 0} valueColor="text-slate-800" />
+                <MetricCard title="Valor Inventario" value={data?.valorInventario ?? '$0'} valueColor="text-[#40C4AA]" />
+                <MetricCard title="Costo Total" value={data?.costoTotal ?? '$0'} valueColor="text-primary" />
+                <MetricCard title="Ganancia Proyectada" value={data?.gananciaProyectada ?? '$0'} valueColor="text-[#EAB308]" />
             </div>
             <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm border border-slate-100 p-1.5 self-start">
                 {(['Disponible', 'En subasta', 'Vendido'] as const).map(e => (
@@ -326,11 +382,11 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
             {isLoading ? <LoadingState /> : (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {(data?.productos ?? []).length === 0 ? (
+                        {(data?.articulos ?? []).length === 0 ? (
                             <div className="col-span-full py-16 text-center text-slate-400">
                                 <p className="text-sm">No hay productos en este estado.</p>
                             </div>
-                        ) : (data?.productos ?? []).map((p: any, i: number) => (
+                        ) : (data?.articulos ?? []).map((p, i) => (
                             <div key={p.id ?? i} className="flex flex-col gap-2 group">
                                 <div className="aspect-square bg-slate-100 rounded-xl overflow-hidden">
                                     {p.imagen ? (
@@ -364,7 +420,7 @@ export default function ReportesPage() {
         setExportFn(() => fn);
     }, []);
 
-    const tabs: { id: ReportTab; icon: any }[] = [
+    const tabs: { id: ReportTab; icon: React.ElementType }[] = [
         { id: 'Diario', icon: BarChart3 },
         { id: 'Por rango', icon: Calendar },
         { id: 'Por lote', icon: Package },

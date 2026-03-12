@@ -7,7 +7,7 @@ import { Shirt, Gem, ShoppingBag, DollarSign, TrendingUp, Package, Plus, Eye, Al
 import { Button } from '@/src/shared/components/ui/button';
 import { cn } from '@/src/shared/utils';
 import { NuevoLoteModal } from './components/NuevoLoteModal';
-import { NuevoProductoModal } from './components/NuevoProductoModal';
+import { NuevoProductoModal, LoteBasico } from './components/NuevoProductoModal';
 import { NuevaJoyaModal } from './components/NuevaJoyaModal';
 import { useRouter } from 'next/navigation';
 
@@ -53,7 +53,7 @@ export default function DashboardPage() {
     const [showNuevoLote, setShowNuevoLote] = useState(false);
     const [showNuevoProducto, setShowNuevoProducto] = useState(false);
     const [showNuevaJoya, setShowNuevaJoya] = useState(false);
-    const [lotes, setLotes] = useState<any[]>([]);
+    const [lotes, setLotes] = useState<LoteBasico[]>([]);
 
     const fetchData = async () => {
         setIsLoading(true);

@@ -7,7 +7,7 @@ interface PDFReportOptions {
     dateRange?: string;
     category?: string;
     columns: string[];
-    rows: any[][];
+    rows: (string | number)[][];
     filename: string;
 }
 
@@ -83,7 +83,7 @@ export const generatePDFReport = ({
     });
 
     // -- Footer --
-    const pageCount = (doc as any).internal.getNumberOfPages();
+    const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
