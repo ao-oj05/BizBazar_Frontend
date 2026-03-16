@@ -15,6 +15,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(data, { status: res.status });
     } catch (error) {
         console.error('[API] POST /auth/register error:', error);
-        return NextResponse.json({ message: 'Error al conectar con el servidor' }, { status: 500 });
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ 
+            message: `Fallo conexión Vercel->AWS: ${errorMsg}. Verifica puertos EC2.`,
+            debugUrl: API_URL
+        }, { status: 500 });
     }
 }
