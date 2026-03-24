@@ -1,0 +1,76 @@
+﻿
+> bizbazar_frontend@0.1.0 lint
+> eslint
+
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\C´Ç║´ü£Users´ü£Jacqueline´ü£WebstormProjects´ü£bizbazar_frontend\.next\dev\build\chunks\[root-of-the-server]__6e020478._.js
+    2:77   warning  'exports' is defined but never used      @typescript-eslint/no-unused-vars
+    4:51   error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+   56:73   warning  'exports' is defined but never used      @typescript-eslint/no-unused-vars
+   58:49   error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+   62:133  warning  'exports' is defined but never used      @typescript-eslint/no-unused-vars
+   64:79   error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  282:28   warning  'name' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\C´Ç║´ü£Users´ü£Jacqueline´ü£WebstormProjects´ü£bizbazar_frontend\.next\dev\build\chunks\[root-of-the-server]__c7ae8543._.js
+    2:65  warning  '__turbopack_context__' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+    2:88  warning  'module' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+    2:96  warning  'exports' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+    4:1   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+    7:85  warning  'exports' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+    9:55  error    A `require()` style import is forbidden                                                                              @typescript-eslint/no-require-imports
+   13:91  warning  'exports' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   15:58  error    A `require()` style import is forbidden                                                                              @typescript-eslint/no-require-imports
+  354:5   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  356:5   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  358:5   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  435:9   error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable              @next/next/no-assign-module-variable
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\C´Ç║´ü£Users´ü£Jacqueline´ü£WebstormProjects´ü£bizbazar_frontend\.next\dev\build\chunks\[turbopack]_runtime.js
+   31:5   error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable              @next/next/no-assign-module-variable
+   96:5   error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable              @next/next/no-assign-module-variable
+  140:5   error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable              @next/next/no-assign-module-variable
+  156:5   error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable              @next/next/no-assign-module-variable
+  166:5   error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable              @next/next/no-assign-module-variable
+  228:5   error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable              @next/next/no-assign-module-variable
+  243:24  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  398:5   error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable              @next/next/no-assign-module-variable
+  407:13  warning  Expected an assignment or function call and instead saw an expression                                                @typescript-eslint/no-unused-expressions
+  546:1   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+  546:69  error    A `require()` style import is forbidden                                                                              @typescript-eslint/no-require-imports
+  567:1   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+  569:34  error    A `require()` style import is forbidden                                                                              @typescript-eslint/no-require-imports
+  570:26  error    A `require()` style import is forbidden                                                                              @typescript-eslint/no-require-imports
+  572:5   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  606:13  error    A `require()` style import is forbidden                                                                              @typescript-eslint/no-require-imports
+  649:30  error    A `require()` style import is forbidden                                                                              @typescript-eslint/no-require-imports
+  678:34  error    A `require()` style import is forbidden                                                                              @typescript-eslint/no-require-imports
+  754:5   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  772:5   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\C´Ç║´ü£Users´ü£Jacqueline´ü£WebstormProjects´ü£bizbazar_frontend\.next\dev\build\webpack-loaders.js
+  1:7  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\app\actions\loteActions.ts
+  16:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  64:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\app\api\auth\login\route.ts
+   9:17  warning  'email' is assigned a value but never used           @typescript-eslint/no-unused-vars
+   9:24  warning  'password' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  18:13  error    'response' is never reassigned. Use 'const' instead  prefer-const
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\app\dashboard\components\NuevoLoteModal.tsx
+  60:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\app\dashboard\lotes\page.tsx
+  199:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Jacqueline\WebstormProjects\bizbazar_frontend\src\app\dashboard\subastas\page.tsx
+    6:32  warning  'ChevronRight' is defined but never used      @typescript-eslint/no-unused-vars
+   28:10  warning  'formatTime' is defined but never used        @typescript-eslint/no-unused-vars
+  101:23  warning  'updated' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+Ô£û 50 problems (33 errors, 17 warnings)
+  1 error and 2 warnings potentially fixable with the `--fix` option.
+
