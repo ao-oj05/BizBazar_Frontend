@@ -58,24 +58,79 @@ export default function DashboardPage() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [res, resL] = await Promise.all([
+            const [resDash, resL, resP] = await Promise.all([
                 fetch('/api/dashboard'),
-                fetch('/api/lotes')
+                fetch('/api/lotes'),
+                fetch('/api/productos')
             ]);
-            if (!res.ok) throw new Error('Error al cargar el dashboard');
-            const data = await res.json();
+            if (!resDash.ok) throw new Error('Error al cargar el dashboard');
+            
+            const dashData = await resDash.json();
             const dataL = resL.ok ? await resL.json() : [];
-            setSales(data.sales ?? []);
-            setStats(data.stats ?? {
-                clothingProducts: 0,
-                jewelryProducts: 0,
-                soldToday: 0,
-                dailyProfit: '$0',
-                accumulatedProfit: '$0',
-                activeLots: 0,
+            const dataP = resP.ok ? await resP.json() : [];
+            
+            const backendData = dashData.data || dashData;
+            
+            setSales(backendData.ventas_recientes ?? backendData.sales ?? []);
+            
+            if (backendData.metricas) {
+                setStats({
+                    clothingProducts: backendData.metricas.productos_ropa_disponibles || 0,
+                    jewelryProducts: backendData.metricas.joyeria_disponible || 0,
+                    soldToday: backendData.metricas.vendidos_hoy || 0,
+                    dailyProfit: `$${backendData.metricas.ganancia_dia || 0}`,
+                    accumulatedProfit: `$${backendData.metricas.ganancia_acumulada || 0}`,
+                    activeLots: backendData.metricas.lotes_activos || 0,
+                });
+            } else if (backendData.stats) {
+                setStats(backendData.stats);
+            } else {
+                setStats({ clothingProducts: 0, jewelryProducts: 0, soldToday: 0, dailyProfit: '$0', accumulatedProfit: '$0', activeLots: 0 });
+            }
+
+            const parsedLotes = Array.isArray(dataL) ? dataL : dataL.data ?? [];
+            const parsedProductos = Array.isArray(dataP) ? dataP : dataP.data ?? [];
+            setLotes(parsedLotes);
+
+            // Compute Alerts client-side
+            const newAlerts: Alert[] = [];
+            
+            // 1. Lotes con stock bajo (< 20% disponible)
+            parsedLotes.forEach((lote: any) => {
+                if (lote.estado?.toLowerCase() !== 'activo') return;
+                const total = Number(lote.piezas_total || lote.piezas) || 0;
+                if (total === 0) return;
+                const prods = parsedProductos.filter((p: any) => p.lote_id === lote.id);
+                const vendidos = prods.filter((p: any) => p.estado?.toLowerCase() === 'vendido').length;
+                const remain = total - vendidos;
+                if (total > 0 && remain / total <= 0.2) {
+                    newAlerts.push({
+                        id: `alert-lote-${lote.id}`,
+                        title: `Stock bajo en lote: ${lote.nombre}`,
+                        description: `Quedan ${remain} piezas disponibles de ${total}.`,
+                        type: 'danger'
+                    });
+                }
             });
-            setAlerts(data.alerts ?? []);
-            setLotes(Array.isArray(dataL) ? dataL : dataL.data ?? []);
+
+            // 2. Productos en subasta
+            const enSubasta = parsedProductos.filter((p: any) => p.estado?.toLowerCase() === 'en subasta' || p.estado?.toLowerCase() === 'en_subasta');
+            enSubasta.forEach((p: any) => {
+                newAlerts.push({
+                    id: `alert-subasta-${p.id}`,
+                    title: `Producto en subasta activa`,
+                    description: `El producto ${p.nombre} (${p.codigo}) se encuentra actualmente en subasta.`,
+                    type: 'warning' // Cyan colored alert
+                });
+            });
+
+            // Keep any backend alerts if they happen to exist
+            if (backendData.alerts) {
+                newAlerts.push(...backendData.alerts);
+            }
+
+            setAlerts(newAlerts);
+
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -163,21 +218,21 @@ export default function DashboardPage() {
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
                                                 {sales.length > 0 ? (
-                                                    sales.map((sale) => (
+                                                    sales.map((sale: any) => (
                                                         <tr key={sale.id} className="group hover:bg-slate-50 transition-colors">
-                                                            <td className="py-5 text-sm font-bold text-slate-800">{sale.id}</td>
-                                                            <td className="py-5 text-sm text-slate-600">{sale.product}</td>
+                                                            <td className="py-5 text-sm font-bold text-slate-800">{sale.id?.toString().slice(0,8)}</td>
+                                                            <td className="py-5 text-sm text-slate-600">{sale.product || (sale.items && sale.items.length > 0 ? sale.items.map((i:any)=>i.producto_nombre).join(', ') : 'Venta')}</td>
                                                             <td className="py-5">
                                                                 <span className={cn(
                                                                     'px-3 py-1 rounded-lg text-[10px] font-bold uppercase',
-                                                                    sale.type === 'Ropa' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'
+                                                                    sale.type === 'Ropa' ? 'bg-primary/10 text-primary' : sale.type === 'Joyería' || sale.type === 'joyeria' ? 'bg-secondary/10 text-secondary' : 'bg-slate-100 text-slate-500'
                                                                 )}>
-                                                                    {sale.type}
+                                                                    {sale.type || 'General'}
                                                                 </span>
                                                             </td>
-                                                            <td className="py-5 text-sm font-bold text-slate-800">{sale.price}</td>
-                                                            <td className="py-5 text-sm font-bold text-yellow-500">{sale.profit}</td>
-                                                            <td className="py-5 text-sm text-slate-400">{sale.time}</td>
+                                                            <td className="py-5 text-sm font-bold text-slate-800">${sale.total || sale.price || 0}</td>
+                                                            <td className="py-5 text-sm font-bold text-yellow-500">${sale.ganancia_total || sale.profit || 0}</td>
+                                                            <td className="py-5 text-sm text-slate-400">{new Date(sale.created_at || sale.time || Date.now()).toLocaleDateString()}</td>
                                                         </tr>
                                                     ))
                                                 ) : (

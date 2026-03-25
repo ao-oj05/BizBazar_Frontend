@@ -5,6 +5,10 @@ export interface LoteBasico {
     id: string;
     nombre: string;
     codigo: string;
+    precio_total?: number;
+    inversion?: number;
+    piezas_total?: number;
+    piezas?: number;
 }
 
 interface Subcategoria {
@@ -29,8 +33,10 @@ interface Producto {
 
 export function NuevoProductoModal({ lotes, onClose, onSave }:
     { lotes: LoteBasico[]; onClose: () => void; onSave: (p: Producto) => void }) {
-    const [form, setForm] = useState({ nombre: '', subcategoria_id: '', lote_id: '', tipo_venta: 'directa', precio: '', costo_base: '' });
+    const [form, setForm] = useState({ nombre: '', subcategoria_id: '', lote_id: '', tipo_venta: 'directa', precio: '', costo_base: '', imagenUrl: '' });
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([]);
 
     useEffect(() => {
@@ -49,7 +55,45 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
         fetchSubcategorias();
     }, []);
 
+    useEffect(() => {
+        if (form.lote_id) {
+            const loteSelect = lotes.find(l => l.id === form.lote_id);
+            if (loteSelect) {
+                const inv = loteSelect.precio_total || loteSelect.inversion || 0;
+                const pzs = loteSelect.piezas_total || loteSelect.piezas || 1;
+                if (inv > 0 && pzs > 0) {
+                    setForm(f => ({ ...f, costo_base: (inv / pzs).toFixed(2) }));
+                }
+            }
+        }
+    }, [form.lote_id, lotes]);
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        setIsUploading(true);
+        setErrorMessage('');
+        try {
+            const formData = new FormData();
+            formData.append('imagen', e.target.files[0]);
+            const res = await fetch('/api/uploads', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setForm(f => ({ ...f, imagenUrl: data.data.url }));
+            } else {
+                setErrorMessage(data.error || 'Error al subir imagen');
+            }
+        } catch (error) {
+            setErrorMessage('Error de red al subir imagen');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleSave = async () => {
+        setErrorMessage('');
         if (!form.nombre || !form.subcategoria_id || !form.lote_id) return;
         setIsSaving(true);
         try {
@@ -65,17 +109,24 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
                     tipo_venta: form.tipo_venta,
                     costo_base: form.costo_base ? parseFloat(form.costo_base) : 0,
                     precio_venta: form.precio ? parseFloat(form.precio) : null,
-                    imagenes: []
+                    imagenes: form.imagenUrl ? [form.imagenUrl] : []
                 }),
             });
             if (res.ok) {
-                const newProducto = await res.json();
+                const responseData = await res.json();
+                const newProducto = responseData.data || responseData; 
                 onSave(newProducto);
             } else {
-                console.error('Error al crear producto:', await res.text());
+                const errText = await res.text();
+                try {
+                    const errJson = JSON.parse(errText);
+                    setErrorMessage(errJson.error || errJson.message || 'Error al crear producto');
+                } catch {
+                    setErrorMessage(`Error: ${errText}`);
+                }
             }
-        } catch (error) {
-            console.error('Error:', error);
+        } catch (error: any) {
+            setErrorMessage(error.message || 'Error de conexión');
         } finally {
             setIsSaving(false);
         }
@@ -128,7 +179,20 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
                             <input type="number" className="w-full border border-slate-200 rounded-xl pl-7 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" value={form.precio} onChange={e => setForm(f => ({ ...f, precio: e.target.value }))} />
                         </div>
                     </div>
+                    <div className="col-span-2 flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-slate-500 uppercase">Subir Imagen</label>
+                        <div className="flex items-center gap-4">
+                            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+                            {isUploading && <Loader2 className="w-5 h-5 animate-spin text-primary" />}
+                            {form.imagenUrl && <span className="text-xs text-green-600 font-bold">¡Imagen subida!</span>}
+                        </div>
+                    </div>
                 </div>
+                {errorMessage && (
+                    <div className="px-6 pb-2 text-sm text-red-500 font-bold">
+                        {errorMessage}
+                    </div>
+                )}
                 <div className="px-6 pb-6 flex gap-3">
                     <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button>
                     <button onClick={handleSave} disabled={!form.nombre || !form.subcategoria_id || !form.lote_id || isSaving}
