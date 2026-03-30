@@ -16,6 +16,7 @@ const routeTitles: Record<string, string> = {
     '/dashboard/subastas': 'Subastas',
     '/dashboard/reportes': 'Reportes y Métricas',
     '/dashboard/configuracion': 'Configuración del Sistema',
+    '/dashboard/notificaciones': 'Notificaciones',
 };
 
 export function Topbar() {
@@ -56,12 +57,12 @@ export function Topbar() {
                     />
                 </div>
 
-                <button className="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+                <Link href="/dashboard/notificaciones" className="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
                     <Bell className="w-5 h-5" />
                     {hasAlerts && (
                         <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white" />
                     )}
-                </button>
+                </Link>
 
                 <div className="relative">
                     <button
