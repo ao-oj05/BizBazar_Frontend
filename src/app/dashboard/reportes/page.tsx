@@ -1,9 +1,9 @@
-'use client';
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Sidebar } from "../components/Sidebar";
 import { Topbar } from "../components/Topbar";
 import { cn } from "@/src/shared/utils";
-import { BarChart3, Calendar, Download, PieChart, TrendingUp, Package, Gem, Layers, Loader2 } from "lucide-react";
+import { BarChart3, Calendar, Download, PieChart, TrendingUp, Package, Gem, Layers, Loader2, Tag, Diamond } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 type ReportTab = 'Diario' | 'Por rango' | 'Por lote' | 'Por categoría' | 'Inventario actual';
 
@@ -409,6 +409,162 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
     );
 }
 
+// ─── Por Lote Tab ─────────────────────────────────────────────────────────────
+
+function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
+    const [lotes, setLotes] = useState<any[]>([]);
+    const [productos, setProductos] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const fetchData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const [resL, resP] = await Promise.all([
+                fetch('/api/lotes'),
+                fetch('/api/productos')
+            ]);
+            const dataL = resL.ok ? await resL.json() : [];
+            const dataP = resP.ok ? await resP.json() : [];
+            
+            setLotes(Array.isArray(dataL) ? dataL : dataL.data ?? []);
+            setProductos(Array.isArray(dataP) ? dataP : dataP.data ?? []);
+        } catch (e) { console.error(e); }
+        finally { setIsLoading(false); }
+    }, []);
+
+    useEffect(() => { fetchData(); }, [fetchData]);
+
+    // Data Transformation
+    const activePlots = lotes.filter(l => l.estado?.toLowerCase() === 'activo').length;
+    const totalInversion = lotes.reduce((acc, l) => acc + (Number(l.precio_total || l.inversion) || 0) + (Number(l.gastos_adicionales) || 0), 0);
+    const ventasRecuperadas = productos.filter(p => p.estado?.toLowerCase() === 'vendido');
+    const totalRecuperado = ventasRecuperadas.reduce((acc, p) => acc + (Number(p.precio_venta || p.precio) || 0), 0);
+    
+    let recuperacionPromedio = 0;
+    if (totalInversion > 0) recuperacionPromedio = Math.round((totalRecuperado / totalInversion) * 100);
+
+    const chartData = React.useMemo(() => {
+        return lotes.map(lote => {
+            const lotProducts = productos.filter(p => p.lote_id === lote.id);
+            const recuperadoLote = lotProducts.filter(p => p.estado?.toLowerCase() === 'vendido')
+                                              .reduce((acc, p) => acc + (Number(p.precio_venta || p.precio) || 0), 0);
+            const inver = (Number(lote.precio_total || lote.inversion) || 0) + (Number(lote.gastos_adicionales) || 0);
+            return {
+                id: lote.id,
+                name: lote.codigo || lote.nombre,
+                fullName: lote.nombre,
+                details: `${lote.fecha_compra?.split('T')[0] ?? 'Sin fecha'} - ${lote.piezas_total || lote.piezas || 0} piezas`,
+                estado: lote.estado || 'Activo',
+                inversion: inver,
+                recuperado: recuperadoLote,
+                porcentaje: inver > 0 ? Math.round((recuperadoLote / inver) * 100) : 0
+            };
+        });
+    }, [lotes, productos]);
+
+    const handleExport = useCallback(() => {
+        import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
+            generatePDFReport({
+                title: "Reporte de Inversión por Lote",
+                subtitle: "Resumen de recuperación",
+                columns: ["Lote", "Inversión", "Recuperado", "%", "Estado"],
+                rows: chartData.map((d: any) => [d.name, `$${d.inversion.toFixed(2)}`, `$${d.recuperado.toFixed(2)}`, `${d.porcentaje}%`, d.estado]),
+                filename: `Reporte_Lotes_${new Date().toLocaleDateString('en-CA')}`
+            });
+        });
+    }, [chartData]);
+
+    if (isLoading) return <LoadingState />;
+
+    return (
+        <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <MetricCard 
+                    title="Total Lotes" 
+                    value={lotes.length} 
+                    valueColor="text-slate-800"
+                />
+                <MetricCard 
+                    title="Inversión Total" 
+                    value={`$${totalInversion.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`} 
+                    valueColor="text-[#E84E4E]" 
+                />
+                <MetricCard 
+                    title="Total Recuperado" 
+                    value={`$${totalRecuperado.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`} 
+                    valueColor="text-[#40C4AA]" 
+                />
+                <MetricCard 
+                    title="Recuperación Promedio" 
+                    value={`${recuperacionPromedio}%`} 
+                    valueColor="text-[#EAB308]" 
+                />
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center">
+                <h3 className="text-sm font-bold text-slate-800 self-start mb-6">Inversión vs Recuperado por lote</h3>
+                <div className="w-full h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} />
+                            <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} />
+                            <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                            <Legend iconType="square" wrapperStyle={{fontSize: '12px', paddingTop: '20px'}} />
+                            <Bar dataKey="inversion" name="Inversión + gastos" fill="#FF8A9B" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="recuperado" name="Recuperado" fill="#40C4AA" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+                <h3 className="text-sm font-bold text-slate-800 px-2">Detalle por lote</h3>
+                {chartData.map((d, i) => {
+                    const progressValue = d.porcentaje > 100 ? 100 : d.porcentaje;
+                    const isClosed = d.estado?.toLowerCase() === 'cerrado';
+                    return (
+                        <div key={d.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0", 
+                                    d.fullName.toLowerCase().includes('joy') ? 'bg-blue-50 text-blue-400' : 'bg-[#FF9DAA]/10 text-[#FF8A9B]'
+                                )}>
+                                    {d.fullName.toLowerCase().includes('joy') ? <Diamond className="w-6 h-6" /> : <Tag className="w-6 h-6" />}
+                                </div>
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="text-sm font-bold text-slate-800">{d.fullName}</h4>
+                                        <span className="text-[10px] font-semibold text-slate-400">{d.name}</span>
+                                        <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full uppercase", 
+                                            isClosed ? "bg-slate-100 text-slate-500" : "bg-[#FF9DAA]/10 text-[#FF8A9B]"
+                                        )}>
+                                            {d.estado}
+                                        </span>
+                                    </div>
+                                    <span className="text-xs font-semibold text-slate-400 mt-0.5">{d.details}</span>
+                                </div>
+                            </div>
+
+                            <div className="w-full md:w-1/3 flex flex-col gap-1 items-end">
+                                <div className="flex justify-between w-full md:justify-end gap-2 text-xs font-bold">
+                                    <span className="text-slate-800">{d.porcentaje}%</span>
+                                    <span className="text-slate-400 font-medium">recuperado</span>
+                                </div>
+                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                                    <div 
+                                        className={cn("h-full transition-all duration-1000", isClosed || d.porcentaje >= 100 ? "bg-[#40C4AA]" : "bg-[#FF1970]")}
+                                        style={{ width: `${progressValue}%` }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ReportesPage() {
@@ -464,12 +620,7 @@ export default function ReportesPage() {
                         {activeTab === 'Diario' && <DiarioTab onExportReady={handleExportReady} />}
                         {activeTab === 'Por rango' && <PorRangoTab onExportReady={handleExportReady} />}
                         {activeTab === 'Por categoría' && <PorCategoriaTab onExportReady={handleExportReady} />}
-                        {activeTab === 'Por lote' && (
-                            <div className="bg-white rounded-2xl border border-slate-100 p-20 flex flex-col items-center justify-center text-slate-400">
-                                <Package className="w-12 h-12 mb-4 opacity-20" />
-                                <p>Reporte en construcción</p>
-                            </div>
-                        )}
+                        {activeTab === 'Por lote' && <PorLoteTab onExportReady={handleExportReady} />}
                         {activeTab === 'Inventario actual' && <InventarioActualTab onExportReady={handleExportReady} />}
                     </div>
                 </main>

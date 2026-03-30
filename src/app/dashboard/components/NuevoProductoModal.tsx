@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
-import { X, Loader2 } from 'lucide-react';
+'use client';
+import { useState, useEffect, useRef } from 'react';
+import { X, Loader2, Image as ImageIcon } from 'lucide-react';
+import { cn } from '@/src/shared/utils';
 
 export interface LoteBasico {
     id: string;
@@ -33,11 +35,13 @@ interface Producto {
 
 export function NuevoProductoModal({ lotes, onClose, onSave }:
     { lotes: LoteBasico[]; onClose: () => void; onSave: (p: Producto) => void }) {
-    const [form, setForm] = useState({ nombre: '', subcategoria_id: '', lote_id: '', tipo_venta: 'directa', precio: '', costo_base: '', imagenUrl: '' });
+    const [form, setForm] = useState({ nombre: '', descripcion: '', subcategoria_id: '', lote_id: '', tipo_venta: 'directa', costo_base: '', imagenUrl: '' });
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const fetchSubcategorias = async () => {
@@ -45,7 +49,8 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
                 const res = await fetch('/api/configuracion/categorias');
                 if (res.ok) {
                     const data = await res.json();
-                    const filtered = (Array.isArray(data) ? data : data.data ?? []).filter((s: Subcategoria) => s.tipo?.toLowerCase() === 'ropa');
+                    const filtered = (Array.isArray(data) ? data : data.data ?? [])
+                        .filter((s: Subcategoria) => s.tipo?.toLowerCase() === 'ropa');
                     setSubcategorias(filtered);
                 }
             } catch (error) {
@@ -68,28 +73,38 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
         }
     }, [form.lote_id, lotes]);
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0) return;
+    const processFile = async (file: File) => {
+        if (!file.type.startsWith('image/')) {
+            setErrorMessage('Solo se permiten imágenes (JPG, PNG o WEBP).');
+            return;
+        }
         setIsUploading(true);
         setErrorMessage('');
         try {
-            const formData = new FormData();
-            formData.append('imagen', e.target.files[0]);
-            const res = await fetch('/api/uploads', {
-                method: 'POST',
-                body: formData,
-            });
+            const fd = new FormData();
+            fd.append('imagen', file);
+            const res = await fetch('/api/uploads', { method: 'POST', body: fd });
             const data = await res.json();
             if (res.ok && data.success) {
                 setForm(f => ({ ...f, imagenUrl: data.data.url }));
             } else {
                 setErrorMessage(data.error || 'Error al subir imagen');
             }
-        } catch (error) {
+        } catch {
             setErrorMessage('Error de red al subir imagen');
         } finally {
             setIsUploading(false);
         }
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files?.[0]) processFile(e.target.files[0]);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
+        if (e.dataTransfer.files?.[0]) processFile(e.dataTransfer.files[0]);
     };
 
     const handleSave = async () => {
@@ -97,25 +112,25 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
         if (!form.nombre || !form.subcategoria_id || !form.lote_id) return;
         setIsSaving(true);
         try {
+            const generatedCodigo = 'BIZ-' + String(Date.now()).slice(-4);
             const res = await fetch('/api/productos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    codigo: form.nombre.replace(/\s+/g, '-').toUpperCase() + '-' + Date.now().toString().slice(-4),
+                    codigo: generatedCodigo,
                     nombre: form.nombre,
+                    descripcion: form.descripcion,
                     categoria: 'ropa',
                     subcategoria_id: form.subcategoria_id,
                     lote_id: form.lote_id,
                     tipo_venta: form.tipo_venta,
                     costo_base: form.costo_base ? parseFloat(form.costo_base) : 0,
-                    precio_venta: form.precio ? parseFloat(form.precio) : null,
-                    imagenes: form.imagenUrl ? [form.imagenUrl] : []
+                    imagenes: form.imagenUrl ? [form.imagenUrl] : [],
                 }),
             });
             if (res.ok) {
                 const responseData = await res.json();
-                const newProducto = responseData.data || responseData; 
-                onSave(newProducto);
+                onSave(responseData.data || responseData);
             } else {
                 const errText = await res.text();
                 try {
@@ -132,73 +147,179 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
         }
     };
 
+    const canSave = !isSaving && !!form.nombre && !!form.subcategoria_id && !!form.lote_id;
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-left">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <div className="flex items-center justify-between px-6 py-4 bg-slate-800 rounded-t-2xl">
-                    <h2 className="text-lg font-bold text-white">Agregar producto</h2>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white"><X className="w-4 h-4" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 bg-[#40C4AA]">
+                    <h2 className="text-base font-bold text-white">Agregar nuevo producto - Ropa</h2>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
-                <div className="p-6 grid grid-cols-2 gap-4">
-                    <div className="col-span-2 flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Nombre del producto</label>
-                        <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Blusa floreada azul" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Subcategoría</label>
-                        <select className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white" value={form.subcategoria_id} onChange={e => setForm(f => ({ ...f, subcategoria_id: e.target.value }))}>
-                            <option value="">Seleccionar</option>
-                            {subcategorias.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-                        </select>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Lote</label>
-                        <select className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white" value={form.lote_id} onChange={e => setForm(f => ({ ...f, lote_id: e.target.value }))}>
-                            <option value="">Seleccionar lote</option>
-                            {lotes.map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
-                        </select>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Tipo de venta</label>
-                        <select className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white" value={form.tipo_venta} onChange={e => setForm(f => ({ ...f, tipo_venta: e.target.value }))}>
-                            <option value="directa">Directa</option>
-                            <option value="subasta">Subasta</option>
-                        </select>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Costo Base</label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-                            <input type="number" className="w-full border border-slate-200 rounded-xl pl-7 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" value={form.costo_base} onChange={e => setForm(f => ({ ...f, costo_base: e.target.value }))} />
+
+                {/* Body */}
+                <div className="grid grid-cols-1 md:grid-cols-[210px_1fr]">
+
+                    {/* Left: Image Upload */}
+                    <div className="p-5 flex flex-col gap-3 border-r border-slate-100">
+                        <p className="text-xs font-semibold text-slate-500">Imagen del producto</p>
+                        <div
+                            onClick={() => fileInputRef.current?.click()}
+                            onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                            onDragLeave={() => setIsDragging(false)}
+                            onDrop={handleDrop}
+                            className={cn(
+                                "w-full aspect-square border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 cursor-pointer transition-all",
+                                isDragging ? "border-[#40C4AA] bg-teal-50" : "border-[#FF1970] bg-pink-50/40 hover:bg-pink-50"
+                            )}
+                        >
+                            {isUploading ? (
+                                <Loader2 className="w-8 h-8 text-[#FF1970] animate-spin" />
+                            ) : form.imagenUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={form.imagenUrl} alt="preview" className="w-full h-full object-cover rounded-xl" />
+                            ) : (
+                                <>
+                                    <ImageIcon className="w-10 h-10 text-[#FF1970]" strokeWidth={1.5} />
+                                    <div className="text-center px-3">
+                                        <p className="text-xs font-semibold text-slate-600 leading-tight">Arrastra tu imagen aquí o haz clic para seleccionar</p>
+                                        <p className="text-[10px] text-slate-400 mt-1">JPG, PNG o WEBP (máx. 5MB)</p>
+                                    </div>
+                                </>
+                            )}
                         </div>
+                        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                     </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Precio de venta</label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-                            <input type="number" className="w-full border border-slate-200 rounded-xl pl-7 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" value={form.precio} onChange={e => setForm(f => ({ ...f, precio: e.target.value }))} />
+
+                    {/* Right: Form */}
+                    <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
+
+                        {/* Lote Section */}
+                        <div className="flex flex-col gap-2">
+                            <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Información del lote</p>
+                            <label className="text-xs text-slate-500">Seleccionar lote <span className="text-[#FF1970]">*</span></label>
+                            <select
+                                value={form.lote_id}
+                                onChange={e => setForm(f => ({ ...f, lote_id: e.target.value }))}
+                                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40 bg-white"
+                            >
+                                <option value=""></option>
+                                {lotes.map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
+                            </select>
                         </div>
-                    </div>
-                    <div className="col-span-2 flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Subir Imagen</label>
-                        <div className="flex items-center gap-4">
-                            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
-                            {isUploading && <Loader2 className="w-5 h-5 animate-spin text-primary" />}
-                            {form.imagenUrl && <span className="text-xs text-green-600 font-bold">¡Imagen subida!</span>}
+
+                        <div className="h-px bg-slate-100" />
+
+                        {/* Product Data */}
+                        <div className="flex flex-col gap-3">
+                            <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Datos del producto</p>
+
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs text-slate-500">Nombre del producto <span className="text-[#FF1970]">*</span></label>
+                                <input
+                                    value={form.nombre}
+                                    onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+                                    placeholder="Ej: Blusa floreada azul"
+                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs text-slate-500">Descripción</label>
+                                <textarea
+                                    value={form.descripcion}
+                                    onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
+                                    placeholder="Descripción opcional del producto"
+                                    rows={3}
+                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40 resize-none"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs text-slate-500">Subcategoría <span className="text-[#FF1970]">*</span></label>
+                                <select
+                                    value={form.subcategoria_id}
+                                    onChange={e => setForm(f => ({ ...f, subcategoria_id: e.target.value }))}
+                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40 bg-white"
+                                >
+                                    <option value=""></option>
+                                    {subcategorias.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Tipo de venta pill toggle */}
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs text-slate-500">Tipo de venta</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setForm(f => ({ ...f, tipo_venta: 'directa' }))}
+                                        className={cn(
+                                            "flex flex-col items-center py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all",
+                                            form.tipo_venta === 'directa'
+                                                ? "border-[#40C4AA] bg-[#40C4AA]/10 text-[#40C4AA]"
+                                                : "border-slate-200 text-slate-500 hover:border-slate-300"
+                                        )}
+                                    >
+                                        Venta directa
+                                        <span className="text-[10px] font-normal mt-0.5 opacity-70">Precio fijo</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setForm(f => ({ ...f, tipo_venta: 'subasta' }))}
+                                        className={cn(
+                                            "flex flex-col items-center py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all",
+                                            form.tipo_venta === 'subasta'
+                                                ? "border-[#FF1970] bg-[#FF1970]/10 text-[#FF1970]"
+                                                : "border-slate-200 text-slate-500 hover:border-slate-300"
+                                        )}
+                                    >
+                                        Subasta premium
+                                        <span className="text-[10px] font-normal mt-0.5 opacity-70">Para mejores piezas</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Info card */}
+                            <div className="bg-[#E8FAF7] border border-[#40C4AA]/30 rounded-xl px-4 py-3 flex flex-col gap-1.5">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-slate-500">Código generado:</span>
+                                    <span className="font-bold text-[#40C4AA]">BIZ-{String(Date.now()).slice(-4)}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-slate-500">Costo base asignado:</span>
+                                    <span className="font-bold text-[#EAB308]">
+                                        {form.costo_base ? `$${parseFloat(form.costo_base).toFixed(2)}` : '—'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
+
+                        {errorMessage && (
+                            <p className="text-xs text-red-500 font-semibold">{errorMessage}</p>
+                        )}
                     </div>
                 </div>
-                {errorMessage && (
-                    <div className="px-6 pb-2 text-sm text-red-500 font-bold">
-                        {errorMessage}
-                    </div>
-                )}
-                <div className="px-6 pb-6 flex gap-3">
-                    <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button>
-                    <button onClick={handleSave} disabled={!form.nombre || !form.subcategoria_id || !form.lote_id || isSaving}
-                        className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={!canSave}
+                        className="flex-1 py-3 rounded-xl bg-[#40C4AA] hover:bg-[#40C4AA]/90 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                    >
                         {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                        Guardar
+                        Guardar producto
                     </button>
                 </div>
             </div>
