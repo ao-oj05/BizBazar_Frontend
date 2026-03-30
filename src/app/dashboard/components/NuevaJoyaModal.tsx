@@ -82,7 +82,7 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                     codigo: form.nombre.replace(/\s+/g, '-').toUpperCase() + '-' + Date.now().toString().slice(-4),
                     nombre: form.nombre,
                     categoria: 'joyeria',
-                    subcategoria_id: form.subcategoria_id,
+                    subcategoria: subcategorias.find(s => s.id === form.subcategoria_id)?.nombre || '',
                     tipo_venta: form.tipo_venta,
                     costo_base: form.costo_base ? parseFloat(form.costo_base) : 0,
                     precio_venta: form.precio ? parseFloat(form.precio) : null,

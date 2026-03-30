@@ -121,7 +121,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
                     nombre: form.nombre,
                     descripcion: form.descripcion,
                     categoria: 'ropa',
-                    subcategoria_id: form.subcategoria_id,
+                    subcategoria: subcategorias.find(s => s.id === form.subcategoria_id)?.nombre || '',
                     lote_id: form.lote_id,
                     tipo_venta: form.tipo_venta,
                     costo_base: form.costo_base ? parseFloat(form.costo_base) : 0,
