@@ -9,6 +9,18 @@ const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 // { nombre, piezas, fecha, precioTotal, gastosAdicionales }
 import { cookies } from 'next/headers';
 
+/** Decode JWT payload without verifying signature (safe for internal use, signature verified by backend) */
+function decodeJwtPayload(token: string): Record<string, any> | null {
+    try {
+        const base64Payload = token.split('.')[1];
+        if (!base64Payload) return null;
+        const decoded = Buffer.from(base64Payload, 'base64url').toString('utf8');
+        return JSON.parse(decoded);
+    } catch {
+        return null;
+    }
+}
+
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
@@ -42,10 +54,20 @@ export async function POST(req: NextRequest) {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (authHeader) headers['Authorization'] = authHeader;
 
+        // Decode the JWT to extract usuario_id and inject it into the body
+        // The backend DB requires it but doesn't extract it from the token automatically
+        let enrichedBody = { ...body };
+        if (token) {
+            const payload = decodeJwtPayload(token);
+            if (payload?.id && !enrichedBody.usuario_id) {
+                enrichedBody.usuario_id = payload.id;
+            }
+        }
+
         const res = await fetch(`${API_URL}/api/lotes`, {
             method: 'POST',
             headers,
-            body: JSON.stringify(body),
+            body: JSON.stringify(enrichedBody),
         });
         const data = await res.json();
         return NextResponse.json(data, { status: res.status });

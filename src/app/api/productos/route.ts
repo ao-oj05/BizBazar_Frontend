@@ -3,6 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
+function decodeJwtPayload(token: string): Record<string, any> | null {
+    try {
+        const base64Payload = token.split('.')[1];
+        if (!base64Payload) return null;
+        return JSON.parse(Buffer.from(base64Payload, 'base64url').toString('utf8'));
+    } catch { return null; }
+}
+
 // GET  /api/productos    → Listar productos de ropa (soporta ?estado=&lote=&search=)
 // POST /api/productos    → Crear nuevo producto
 //
@@ -40,11 +48,19 @@ export async function POST(req: NextRequest) {
         const authHeader = req.headers.get('authorization') || (token ? `Bearer ${token}` : null);
         const headersContent: Record<string, string> = { 'Content-Type': 'application/json' };
         if (authHeader) headersContent['Authorization'] = authHeader;
+
+        let enrichedBody = { ...body };
+        if (token) {
+            const payload = decodeJwtPayload(token);
+            if (payload?.id && !enrichedBody.usuario_id) {
+                enrichedBody.usuario_id = payload.id;
+            }
+        }
         
         const res = await fetch(`${API_URL}/api/productos`, {
             method: 'POST',
             headers: headersContent,
-            body: JSON.stringify(body),
+            body: JSON.stringify(enrichedBody),
         });
         const data = await res.json();
         return NextResponse.json(data, { status: res.status });
