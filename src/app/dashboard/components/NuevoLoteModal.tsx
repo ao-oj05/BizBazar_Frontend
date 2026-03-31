@@ -23,8 +23,6 @@ interface Lote {
     productos: { nombre: string; estado: 'Vendido' | 'Disponible' | 'En subasta'; precio: number | null; ganancia: number | null }[];
 }
 
-import { crearLoteAction } from '../../actions/loteActions';
-
 export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSave: (lote: Lote) => void }) {
     const [form, setForm] = useState<NuevoLoteForm>({
         nombre: '', piezas: '', fecha: TODAY,
@@ -42,20 +40,33 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
         if (!form.nombre || !form.piezas || !form.fecha || !form.precioTotal) return;
         setIsSaving(true);
         try {
-            const formData = new FormData();
-            formData.append('nombre', form.nombre);
-            formData.append('piezas', form.piezas);
-            formData.append('fecha', form.fecha);
-            formData.append('precioTotal', form.precioTotal || '0');
-            formData.append('gastosAdicionales', form.gastosAdicionales || '0');
+            const nombre = form.nombre.trim();
+            const codigo = nombre.replace(/\s+/g, '-').toUpperCase() + '-' + Date.now().toString().slice(-4);
 
-            const result = await crearLoteAction({}, formData);
+            const res = await fetch('/api/lotes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    codigo,
+                    nombre,
+                    piezas_total: Number(form.piezas),
+                    fecha_compra: form.fecha,
+                    precio_total: Number(form.precioTotal),
+                    gastos_adicionales: Number(form.gastosAdicionales) || 0,
+                }),
+            });
 
-            if (result.success) {
-                onSave(result.data);
+            if (res.ok) {
+                const newLote = await res.json();
+                onSave(newLote.data || newLote);
             } else {
-                setErrorMsg(result.error || 'Campos inválidos');
-                console.log(result.details);
+                const errText = await res.text();
+                try {
+                    const errJson = JSON.parse(errText);
+                    setErrorMsg(errJson.error || errJson.message || 'Error al crear lote');
+                } catch {
+                    setErrorMsg(`Error del servidor: ${errText.slice(0, 120)}`);
+                }
             }
         } catch (error: any) {
             console.error('Error al crear lote:', error);
@@ -64,6 +75,7 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
             setIsSaving(false);
         }
     };
+
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
