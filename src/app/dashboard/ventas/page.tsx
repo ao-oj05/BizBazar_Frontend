@@ -50,31 +50,23 @@ export default function VentasPage() {
             setIsLoading(true);
             try {
                 // Cargar productos de ropa y joyería disponibles para venta
-                const [resRopa, resJoyeria] = await Promise.all([
-                    fetch('/api/productos?estado=Disponible'),
-                    fetch('/api/joyeria?estado=Disponible'),
-                ]);
-                const ropa = resRopa.ok ? await resRopa.json() : [];
-                const joyeria = resJoyeria.ok ? await resJoyeria.json() : [];
+                // El endpoint /api/productos consolida ambos, y el estado debe ser 'disponible' en minúscula
+                const res = await fetch('/api/productos?estado=disponible');
+                const data = res.ok ? await res.json() : [];
 
-                const ropaItems: ProductoVenta[] = (Array.isArray(ropa) ? ropa : ropa.data ?? []).map((p: RawProduct) => ({
-                    id: p.id ?? p._id,
-                    nombre: p.nombre,
-                    precio: p.precio ?? 0,
-                    costo: p.costo ?? 0,
-                    categoria: 'Ropa' as Categoria,
-                    imagen: p.imagen ?? '',
-                }));
-                const joyeriaItems: ProductoVenta[] = (Array.isArray(joyeria) ? joyeria : joyeria.data ?? []).map((j: RawJoyeria) => ({
-                    id: j.id ?? j._id,
-                    nombre: j.nombre,
-                    precio: j.precio ?? 0,
-                    costo: j.costo ?? 0,
-                    categoria: 'Joyería' as Categoria,
-                    imagen: j.imagen ?? '',
-                }));
+                const allItems: ProductoVenta[] = (Array.isArray(data) ? data : data.data ?? []).map((p: any) => {
+                    const isJoya = p.categoria?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'joyeria';
+                    return {
+                        id: p.id ?? p._id,
+                        nombre: p.nombre,
+                        precio: p.precio ?? 0,
+                        costo: p.costo ?? 0,
+                        categoria: isJoya ? 'Joyería' as Categoria : 'Ropa' as Categoria,
+                        imagen: p.imagen ?? '',
+                    };
+                });
 
-                setItems([...ropaItems, ...joyeriaItems]);
+                setItems(allItems);
             } catch (error) {
                 console.error('Error al cargar productos para venta:', error);
             } finally {
@@ -139,19 +131,20 @@ export default function VentasPage() {
             if (res.ok) {
                 setCart([]);
                 // Recargar productos para actualizar disponibilidad
-                const [resRopa, resJoyeria] = await Promise.all([
-                    fetch('/api/productos?estado=Disponible'),
-                    fetch('/api/joyeria?estado=Disponible'),
-                ]);
-                const ropa = resRopa.ok ? await resRopa.json() : [];
-                const joyeria = resJoyeria.ok ? await resJoyeria.json() : [];
-                const ropaItems: ProductoVenta[] = (Array.isArray(ropa) ? ropa : ropa.data ?? []).map((p: RawProduct) => ({
-                    id: p.id ?? p._id, nombre: p.nombre, precio: p.precio ?? 0, costo: p.costo ?? 0, categoria: 'Ropa', imagen: p.imagen ?? '',
-                }));
-                const joyeriaItems: ProductoVenta[] = (Array.isArray(joyeria) ? joyeria : joyeria.data ?? []).map((j: RawJoyeria) => ({
-                    id: j.id ?? j._id, nombre: j.nombre, precio: j.precio ?? 0, costo: j.costo ?? 0, categoria: 'Joyería', imagen: j.imagen ?? '',
-                }));
-                setItems([...ropaItems, ...joyeriaItems]);
+                const res = await fetch('/api/productos?estado=disponible');
+                const data = res.ok ? await res.json() : [];
+                const allItems: ProductoVenta[] = (Array.isArray(data) ? data : data.data ?? []).map((p: any) => {
+                    const isJoya = p.categoria?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'joyeria';
+                    return {
+                        id: p.id ?? p._id, 
+                        nombre: p.nombre, 
+                        precio: p.precio ?? 0, 
+                        costo: p.costo ?? 0, 
+                        categoria: isJoya ? 'Joyería' as Categoria : 'Ropa' as Categoria, 
+                        imagen: p.imagen ?? ''
+                    };
+                });
+                setItems(allItems);
             } else {
                 console.error('Error al registrar venta:', await res.text());
             }
