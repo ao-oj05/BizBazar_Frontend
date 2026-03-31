@@ -35,6 +35,20 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
     const piezasNum = parseFloat(form.piezas) || 0;
     const costoPieza = piezasNum > 0 ? (inversionTotal / piezasNum).toFixed(2) : '0.00';
 
+    /** Decode JWT payload in the browser without verifying signature */
+    const getUsuarioId = (): string | null => {
+        try {
+            const cookie = document.cookie.split('; ').find(c => c.startsWith('auth_token='));
+            if (!cookie) return null;
+            const token = cookie.split('=')[1];
+            const base64Payload = token.split('.')[1];
+            if (!base64Payload) return null;
+            const padded = base64Payload.replace(/-/g, '+').replace(/_/g, '/') + '=='.slice(0, (4 - base64Payload.length % 4) % 4);
+            const payload = JSON.parse(atob(padded));
+            return payload.id || payload.usuario_id || null;
+        } catch { return null; }
+    };
+
     const handleSave = async () => {
         setErrorMsg(null);
         if (!form.nombre || !form.piezas || !form.fecha || !form.precioTotal) return;
@@ -42,6 +56,7 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
         try {
             const nombre = form.nombre.trim();
             const codigo = nombre.replace(/\s+/g, '-').toUpperCase() + '-' + Date.now().toString().slice(-4);
+            const usuario_id = getUsuarioId();
 
             const res = await fetch('/api/lotes', {
                 method: 'POST',
@@ -53,6 +68,7 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
                     fecha_compra: form.fecha,
                     precio_total: Number(form.precioTotal),
                     gastos_adicionales: Number(form.gastosAdicionales) || 0,
+                    ...(usuario_id ? { usuario_id } : {}),
                 }),
             });
 
@@ -73,6 +89,7 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
             setErrorMsg(error.message || 'Error de conexión');
         } finally {
             setIsSaving(false);
+
         }
     };
 

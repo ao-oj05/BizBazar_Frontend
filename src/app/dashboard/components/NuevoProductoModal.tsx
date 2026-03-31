@@ -107,12 +107,25 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
         if (e.dataTransfer.files?.[0]) processFile(e.dataTransfer.files[0]);
     };
 
+    const getUsuarioId = (): string | null => {
+        try {
+            const cookie = document.cookie.split('; ').find(c => c.startsWith('auth_token='));
+            if (!cookie) return null;
+            const token = cookie.split('=')[1];
+            const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            const padded = b64 + '=='.slice(0, (4 - b64.length % 4) % 4);
+            const payload = JSON.parse(atob(padded));
+            return payload.id || payload.usuario_id || null;
+        } catch { return null; }
+    };
+
     const handleSave = async () => {
         setErrorMessage('');
         if (!form.nombre || !form.subcategoria_id || !form.lote_id) return;
         setIsSaving(true);
         try {
             const generatedCodigo = 'BIZ-' + String(Date.now()).slice(-4);
+            const usuario_id = getUsuarioId();
             const res = await fetch('/api/productos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -126,6 +139,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
                     tipo_venta: form.tipo_venta,
                     costo_base: form.costo_base ? parseFloat(form.costo_base) : 0,
                     imagenes: form.imagenUrl ? [form.imagenUrl] : [],
+                    ...(usuario_id ? { usuario_id } : {}),
                 }),
             });
             if (res.ok) {
@@ -146,6 +160,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
             setIsSaving(false);
         }
     };
+
 
     const canSave = !isSaving && !!form.nombre && !!form.subcategoria_id && !!form.lote_id;
 
