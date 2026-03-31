@@ -416,20 +416,24 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
 function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
     const [lotes, setLotes] = useState<any[]>([]);
     const [productos, setProductos] = useState<any[]>([]);
+    const [ventas, setVentas] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [resL, resP] = await Promise.all([
+            const [resL, resP, resV] = await Promise.all([
                 fetch('/api/lotes'),
-                fetch('/api/productos')
+                fetch('/api/productos'),
+                fetch('/api/ventas'),
             ]);
             const dataL = resL.ok ? await resL.json() : [];
             const dataP = resP.ok ? await resP.json() : [];
-            
+            const dataV = resV.ok ? await resV.json() : [];
+
             setLotes(Array.isArray(dataL) ? dataL : dataL.data ?? []);
             setProductos(Array.isArray(dataP) ? dataP : dataP.data ?? []);
+            setVentas(Array.isArray(dataV) ? dataV : dataV.data ?? []);
         } catch (e) { console.error(e); }
         finally { setIsLoading(false); }
     }, []);
@@ -439,30 +443,66 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
     // Data Transformation
     const activePlots = lotes.filter(l => l.estado?.toLowerCase() === 'activo').length;
     const totalInversion = lotes.reduce((acc, l) => acc + (Number(l.precio_total || l.inversion) || 0) + (Number(l.gastos_adicionales) || 0), 0);
+
+    // Build a map of lote_id -> { recuperado, ganancia } from ventas items
+    const recuperadoPorLote: Record<string, { recuperado: number; ganancia: number }> = {};
+    ventas.forEach(venta => {
+        const items: any[] = venta.items || venta.productos || [];
+        items.forEach((item: any) => {
+            const loteId = item.lote_id;
+            if (!loteId) return;
+            if (!recuperadoPorLote[loteId]) recuperadoPorLote[loteId] = { recuperado: 0, ganancia: 0 };
+            recuperadoPorLote[loteId].recuperado += Number(item.precio_venta || item.precio || 0);
+            recuperadoPorLote[loteId].ganancia += Number(item.ganancia || 0);
+        });
+    });
+
+    // Fallback: use vendidos from productos if ventas items don't have lote_id
     const ventasRecuperadas = productos.filter(p => p.estado?.toLowerCase() === 'vendido');
-    const totalRecuperado = ventasRecuperadas.reduce((acc, p) => acc + (Number(p.precio_venta || p.precio) || 0), 0);
-    
+    const totalRecuperado = Object.values(recuperadoPorLote).reduce((s, r) => s + r.recuperado, 0)
+        || ventasRecuperadas.reduce((acc, p) => acc + (Number(p.precio_venta || p.precio) || 0), 0);
+
     let recuperacionPromedio = 0;
     if (totalInversion > 0) recuperacionPromedio = Math.round((totalRecuperado / totalInversion) * 100);
 
     const chartData = React.useMemo(() => {
         return lotes.map(lote => {
-            const lotProducts = productos.filter(p => p.lote_id === lote.id);
-            const recuperadoLote = lotProducts.filter(p => p.estado?.toLowerCase() === 'vendido')
-                                              .reduce((acc, p) => acc + (Number(p.precio_venta || p.precio) || 0), 0);
+            // Use real ventas data per lote if available
+            const loteVentas = recuperadoPorLote[lote.id];
+            let recuperadoLote = loteVentas?.recuperado ?? 0;
+            let gananciaLote = loteVentas?.ganancia ?? 0;
+
+            // Fallback: compute from productos if ventas don't have lote_id
+            if (recuperadoLote === 0) {
+                const lotProducts = productos.filter(p => p.lote_id === lote.id);
+                recuperadoLote = lotProducts
+                    .filter(p => p.estado?.toLowerCase() === 'vendido')
+                    .reduce((acc, p) => acc + (Number(p.precio_venta || p.precio) || 0), 0);
+                gananciaLote = lotProducts
+                    .filter(p => p.estado?.toLowerCase() === 'vendido')
+                    .reduce((acc, p) => acc + Math.max(0, (Number(p.precio_venta || p.precio) || 0) - (Number(p.costo_base || p.costo) || 0)), 0);
+            }
+
             const inver = (Number(lote.precio_total || lote.inversion) || 0) + (Number(lote.gastos_adicionales) || 0);
+            const totalProductos = productos.filter(p => p.lote_id === lote.id).length;
+            const vendidosLote = productos.filter(p => p.lote_id === lote.id && p.estado?.toLowerCase() === 'vendido').length;
+
             return {
                 id: lote.id,
                 name: lote.codigo || lote.nombre,
                 fullName: lote.nombre,
-                details: `${lote.fecha_compra?.split('T')[0] ?? 'Sin fecha'} - ${lote.piezas_total || lote.piezas || 0} piezas`,
+                details: `${lote.fecha_compra?.split('T')[0] ?? 'Sin fecha'} - ${lote.piezas_total || lote.piezas || totalProductos} piezas`,
                 estado: lote.estado || 'Activo',
                 inversion: inver,
                 recuperado: recuperadoLote,
+                ganancia: gananciaLote,
+                vendidos: vendidosLote,
+                totalProductos,
                 porcentaje: inver > 0 ? Math.round((recuperadoLote / inver) * 100) : 0
             };
         });
-    }, [lotes, productos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lotes, productos, ventas, recuperadoPorLote]);
 
     const handleExport = useCallback(() => {
         import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
@@ -544,6 +584,22 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
                                         </span>
                                     </div>
                                     <span className="text-xs font-semibold text-slate-400 mt-0.5">{d.details}</span>
+                                    {/* Vendidos & Ganancia row */}
+                                    <div className="flex items-center gap-4 mt-1.5">
+                                        <span className="text-xs text-slate-500">
+                                            <span className="font-bold text-slate-700">{d.vendidos}</span> vendidos de <span className="font-bold text-slate-700">{d.totalProductos}</span>
+                                        </span>
+                                        {d.recuperado > 0 && (
+                                            <span className="text-xs font-semibold text-[#40C4AA]">
+                                                +${d.recuperado.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} recuperado
+                                            </span>
+                                        )}
+                                        {d.ganancia > 0 && (
+                                            <span className="text-xs font-semibold text-[#EAB308]">
+                                                +${d.ganancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ganancia
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
