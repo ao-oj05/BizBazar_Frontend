@@ -232,56 +232,120 @@ export default function ProductosPage() {
 
 function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose }:
     { producto: Producto; imgIndex: number; setImgIndex: (i: number) => void; onClose: () => void }) {
-    // For now we only have one image per product; carousel ready for multiple
     const images = producto.imagen ? [producto.imagen] : [];
 
+    const estadoColor = producto.estado === 'Disponible'
+        ? 'bg-[#40C4AA] text-white'
+        : producto.estado === 'Vendido'
+            ? 'bg-slate-200 text-slate-600'
+            : 'bg-yellow-400 text-white';
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <div className="flex items-center justify-between px-6 py-4 bg-slate-800">
-                    <h2 className="text-lg font-bold text-white">Detalle de producto</h2>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white"><X className="w-4 h-4" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                    <h2 className="text-lg font-bold text-slate-800">Detalle del Producto</h2>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors">
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
-                <div className="p-6 flex flex-col gap-6">
-                    {/* Image */}
-                    <div className="h-64 bg-slate-100 rounded-xl overflow-hidden relative">
+
+                {/* Body: 2-column layout */}
+                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr]">
+
+                    {/* Left: Image */}
+                    <div className="bg-slate-50 p-5 flex items-center justify-center relative">
                         {images.length > 0 ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={images[imgIndex]} alt={producto.nombre} className="w-full h-full object-cover" />
+                            <img
+                                src={images[imgIndex]}
+                                alt={producto.nombre}
+                                className="w-full h-full max-h-72 object-cover rounded-xl shadow-sm"
+                            />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-300"><Package className="w-12 h-12" /></div>
+                            <div className="w-full h-48 flex flex-col items-center justify-center rounded-xl bg-slate-100 text-slate-300 gap-3">
+                                <Package className="w-12 h-12" />
+                                <span className="text-xs font-semibold">Sin imagen</span>
+                            </div>
                         )}
                         {images.length > 1 && (
                             <>
-                                <button onClick={() => setImgIndex(Math.max(0, imgIndex - 1))} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1"><ChevronLeft className="w-4 h-4" /></button>
-                                <button onClick={() => setImgIndex(Math.min(images.length - 1, imgIndex + 1))} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1"><ChevronRight className="w-4 h-4" /></button>
+                                <button onClick={() => setImgIndex(Math.max(0, imgIndex - 1))} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 shadow"><ChevronLeft className="w-4 h-4" /></button>
+                                <button onClick={() => setImgIndex(Math.min(images.length - 1, imgIndex + 1))} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 shadow"><ChevronRight className="w-4 h-4" /></button>
                             </>
                         )}
                     </div>
-                    {/* Info */}
-                    <div className="grid grid-cols-2 gap-4">
-                        {[
-                            { label: 'Código', value: producto.codigo },
-                            { label: 'Subcategoría', value: producto.subcategoria },
-                            { label: 'Lote', value: producto.lote },
-                            { label: 'Tipo de venta', value: producto.tipoVenta },
-                            { label: 'Costo', value: `$${producto.costo}` },
-                            { label: 'Precio', value: producto.precio ? `$${producto.precio}` : 'Sin precio' },
-                        ].map(f => (
-                            <div key={f.label} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                                <p className="text-xs text-slate-400 font-medium">{f.label}</p>
-                                <p className="font-bold text-slate-800 text-sm mt-1">{f.value}</p>
-                            </div>
-                        ))}
-                    </div>
-                    <div>
-                        <p className="text-xs text-slate-400 font-medium mb-2">Nombre</p>
-                        <p className="font-bold text-slate-800">{producto.nombre}</p>
+
+                    {/* Right: Details */}
+                    <div className="p-6 flex flex-col gap-5">
+
+                        {/* Código */}
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Código</span>
+                            <span className="text-base font-bold text-[#40C4AA]">{producto.codigo || '—'}</span>
+                        </div>
+
+                        {/* Nombre */}
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Nombre</span>
+                            <span className="text-xl font-black text-slate-800 leading-tight">{producto.nombre}</span>
+                            {producto.subcategoria && (
+                                <span className="mt-1 inline-flex self-start items-center px-2.5 py-0.5 rounded-lg text-xs font-bold border border-[#FF1970]/30 text-[#FF1970] bg-[#FF1970]/5">
+                                    {producto.subcategoria}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Lote origen */}
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Lote origen</span>
+                            <span className="text-sm font-bold text-slate-800">{producto.lote || '—'}</span>
+                        </div>
+
+                        {/* Costo base */}
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Costo base</span>
+                            <span className="text-2xl font-black text-[#EAB308]">${Number(producto.costo || 0).toFixed(2)}</span>
+                        </div>
+
+                        {/* Estado */}
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Estado actual</span>
+                            <span className={cn('self-start px-3 py-1 rounded-full text-xs font-bold', estadoColor)}>
+                                {producto.estado}
+                            </span>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-px bg-slate-100 -mx-6 mt-auto" />
+
+                        {/* Actions */}
+                        <div className="flex flex-col gap-2.5 pt-1">
+                            {producto.estado === 'Disponible' && (
+                                <button
+                                    className="w-full py-3 rounded-xl bg-[#40C4AA] hover:bg-[#36b09a] text-white font-bold text-sm shadow-lg shadow-teal-200 transition-colors"
+                                    onClick={onClose}
+                                >
+                                    Registrar venta
+                                </button>
+                            )}
+                            <button
+                                className="w-full py-3 rounded-xl border-2 border-[#40C4AA] text-[#40C4AA] font-bold text-sm hover:bg-[#40C4AA]/5 transition-colors"
+                                onClick={onClose}
+                            >
+                                Editar producto
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
+
 
 import { NuevoProductoModal } from '../components/NuevoProductoModal';
