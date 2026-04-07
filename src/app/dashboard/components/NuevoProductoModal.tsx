@@ -46,11 +46,17 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
     useEffect(() => {
         const fetchSubcategorias = async () => {
             try {
-                const res = await fetch('/api/configuracion/categorias');
+                // Use the API's native ?tipo=Ropa query param
+                const res = await fetch('/api/configuracion/categorias?tipo=Ropa');
                 if (res.ok) {
                     const data = await res.json();
-                    const filtered = (Array.isArray(data) ? data : data.data ?? [])
-                        .filter((s: Subcategoria) => s.tipo?.toLowerCase() === 'ropa');
+                    const all: Subcategoria[] = Array.isArray(data) ? data : data.data ?? [];
+                    // Fallback: if API didn't filter, do it client-side (normalize accents + case)
+                    const normalize = (s: string) =>
+                        s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const filtered = all.length > 0 && all.every(s => normalize(s.tipo ?? '') === 'ropa')
+                        ? all
+                        : all.filter(s => normalize(s.tipo ?? '') === 'ropa');
                     setSubcategorias(filtered);
                 }
             } catch (error) {

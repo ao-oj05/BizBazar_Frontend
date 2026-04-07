@@ -42,13 +42,17 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
     useEffect(() => {
         const fetchSubcategorias = async () => {
             try {
-                const res = await fetch('/api/configuracion/categorias');
+                // Use the API's native ?tipo=Joyería query param
+                const res = await fetch('/api/configuracion/categorias?tipo=Joyer%C3%ADa');
                 if (res.ok) {
                     const data = await res.json();
-                    const filtered = (Array.isArray(data) ? data : data.data ?? []).filter((s: Subcategoria) => {
-                        const t = s.tipo?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                        return t === 'joyeria';
-                    });
+                    const all: Subcategoria[] = Array.isArray(data) ? data : data.data ?? [];
+                    // Fallback: normalize accents + case client-side
+                    const normalize = (s: string) =>
+                        s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const filtered = all.length > 0 && all.every(s => normalize(s.tipo ?? '') === 'joyeria')
+                        ? all
+                        : all.filter(s => normalize(s.tipo ?? '') === 'joyeria');
                     setSubcategorias(filtered);
                 }
             } catch (error) {
