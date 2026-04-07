@@ -188,15 +188,24 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
                             onDragLeave={() => setIsDragging(false)}
                             onDrop={handleDrop}
                             className={cn(
-                                "w-full aspect-square border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 cursor-pointer transition-all",
-                                isDragging ? "border-[#40C4AA] bg-teal-50" : "border-[#FF1970] bg-pink-50/40 hover:bg-pink-50"
+                                "w-full aspect-square border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 cursor-pointer transition-all overflow-hidden relative",
+                                isDragging
+                                    ? "border-[#40C4AA] bg-teal-50"
+                                    : form.imagenUrl
+                                        ? "border-transparent"
+                                        : "border-[#FF1970] bg-pink-50/40 hover:bg-pink-50"
                             )}
                         >
                             {isUploading ? (
                                 <Loader2 className="w-8 h-8 text-[#FF1970] animate-spin" />
                             ) : form.imagenUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={form.imagenUrl} alt="preview" className="w-full h-full object-cover rounded-xl" />
+                                <>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={form.imagenUrl} alt="preview" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all flex items-center justify-center opacity-0 hover:opacity-100">
+                                        <span className="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-lg">Cambiar imagen</span>
+                                    </div>
+                                </>
                             ) : (
                                 <>
                                     <ImageIcon className="w-10 h-10 text-[#FF1970]" strokeWidth={1.5} />
@@ -208,6 +217,15 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
                             )}
                         </div>
                         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                        {form.imagenUrl && (
+                            <button
+                                type="button"
+                                onClick={() => setForm(f => ({ ...f, imagenUrl: '' }))}
+                                className="text-[10px] text-slate-400 hover:text-red-500 transition-colors text-center"
+                            >
+                                Eliminar imagen
+                            </button>
+                        )}
                     </div>
 
                     {/* Right: Form */}

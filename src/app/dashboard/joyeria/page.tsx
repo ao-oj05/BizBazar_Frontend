@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Topbar } from '../components/Topbar';
 import { cn } from '@/src/shared/utils';
-import { Search, Grid2X2, List, Plus, X, Loader2, Gem } from 'lucide-react';
+import { Search, Grid2X2, List, Plus, X, Loader2, Gem, Camera } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -34,6 +34,8 @@ export default function JoyeriaPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedJoya, setSelectedJoya] = useState<Joya | null>(null);
     const [showNuevaJoya, setShowNuevaJoya] = useState(false);
+    const [isUploadingDetalle, setIsUploadingDetalle] = useState(false);
+    const detalleFileRef = useRef<HTMLInputElement>(null);
 
     const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido', 'En subasta'];
 
@@ -51,6 +53,26 @@ export default function JoyeriaPage() {
     };
 
     useEffect(() => { fetchJoyas(); }, []);
+
+    const uploadDetalleImage = async (file: File) => {
+        if (!selectedJoya) return;
+        setIsUploadingDetalle(true);
+        try {
+            const fd = new FormData();
+            fd.append('imagen', file);
+            const res = await fetch('/api/uploads', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                // Update the selected joya with the new image and refresh list
+                setSelectedJoya(prev => prev ? { ...prev, imagen: data.data.url } : prev);
+                setJoyas(prev => prev.map(j => j.id === selectedJoya.id ? { ...j, imagen: data.data.url } : j));
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+        } finally {
+            setIsUploadingDetalle(false);
+        }
+    };
 
     const filtered = joyas.filter(j => {
         const matchSearch = !search || j.nombre.toLowerCase().includes(search.toLowerCase()) || j.codigo?.toLowerCase().includes(search.toLowerCase());
@@ -191,14 +213,45 @@ export default function JoyeriaPage() {
                             <button onClick={() => setSelectedJoya(null)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white"><X className="w-4 h-4" /></button>
                         </div>
                         <div className="p-6 flex flex-col gap-4">
-                            <div className="h-56 bg-slate-100 rounded-xl overflow-hidden">
+                            <div className="h-56 bg-slate-100 rounded-xl overflow-hidden relative group">
                                 {selectedJoya.imagen ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img src={selectedJoya.imagen} alt={selectedJoya.nombre} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-slate-300"><Gem className="w-12 h-12" /></div>
                                 )}
+                                {/* Upload overlay */}
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100">
+                                    <button
+                                        onClick={() => detalleFileRef.current?.click()}
+                                        disabled={isUploadingDetalle}
+                                        className="flex items-center gap-2 bg-white/90 hover:bg-white text-slate-700 text-xs font-bold px-4 py-2 rounded-xl shadow-lg transition-colors"
+                                    >
+                                        {isUploadingDetalle
+                                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            : <Camera className="w-3.5 h-3.5" />}
+                                        {selectedJoya.imagen ? 'Cambiar foto' : 'Subir foto'}
+                                    </button>
+                                </div>
+                                <input
+                                    ref={detalleFileRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={e => e.target.files?.[0] && uploadDetalleImage(e.target.files[0])}
+                                />
                             </div>
+                            {/* Add photo button below image for accessibility */}
+                            <button
+                                onClick={() => detalleFileRef.current?.click()}
+                                disabled={isUploadingDetalle}
+                                className="flex items-center justify-center gap-2 w-full py-2 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-primary hover:text-primary text-xs font-semibold transition-all disabled:opacity-50"
+                            >
+                                {isUploadingDetalle
+                                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    : <Camera className="w-3.5 h-3.5" />}
+                                {selectedJoya.imagen ? 'Cambiar foto' : 'Subir foto'}
+                            </button>
                             <div className="grid grid-cols-2 gap-3">
                                 {[
                                     { label: 'Código', value: selectedJoya.codigo },
