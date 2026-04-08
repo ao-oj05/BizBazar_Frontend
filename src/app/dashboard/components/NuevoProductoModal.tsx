@@ -35,34 +35,25 @@ interface Producto {
 
 export function NuevoProductoModal({ lotes, onClose, onSave }:
     { lotes: LoteBasico[]; onClose: () => void; onSave: (p: Producto) => void }) {
+    const SUBCATEGORIAS_ROPA: Subcategoria[] = [
+        { id: 'blusa', nombre: 'Blusa', tipo: 'ropa' },
+        { id: 'pantalon', nombre: 'Pantalón', tipo: 'ropa' },
+        { id: 'short', nombre: 'Short', tipo: 'ropa' },
+        { id: 'vestido', nombre: 'Vestido', tipo: 'ropa' },
+        { id: 'falda', nombre: 'Falda', tipo: 'ropa' },
+        { id: 'chamarra', nombre: 'Chamarra', tipo: 'ropa' },
+        { id: 'playera', nombre: 'Playera', tipo: 'ropa' },
+        { id: 'sueter', nombre: 'Suéter', tipo: 'ropa' },
+        { id: 'conjunto', nombre: 'Conjunto', tipo: 'ropa' },
+    ];
+
     const [form, setForm] = useState({ nombre: '', descripcion: '', subcategoria_id: '', lote_id: '', tipo_venta: 'directa', costo_base: '', imagenUrl: '' });
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-    const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([]);
+    const subcategorias = SUBCATEGORIAS_ROPA;
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        const fetchSubcategorias = async () => {
-            try {
-                // Fetch ALL categories, then filter client-side
-                // (avoids case-sensitivity issues with how tipo is stored in DB)
-                const res = await fetch('/api/configuracion/categorias');
-                if (res.ok) {
-                    const data = await res.json();
-                    const all: Subcategoria[] = Array.isArray(data) ? data : (data.data ?? []);
-                    const normalize = (s: string) =>
-                        (s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                    const filtered = all.filter(s => normalize(s.tipo) === 'ropa');
-                    setSubcategorias(filtered);
-                }
-            } catch (error) {
-                console.error('Error fetching subcategorias:', error);
-            }
-        };
-        fetchSubcategorias();
-    }, []);
 
     useEffect(() => {
         if (form.lote_id) {
