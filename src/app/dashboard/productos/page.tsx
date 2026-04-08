@@ -171,7 +171,7 @@ export default function ProductosPage() {
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
                             {filtered.map(p => (
                                 <div key={p.id} onClick={() => { setSelectedProducto(p); setImgIndex(0); }}
-                                    className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-primary/20 transition-all cursor-pointer group overflow-hidden flex flex-col">
+                                    className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group overflow-hidden flex flex-col">
                                     <div className="h-52 bg-slate-100 overflow-hidden relative shrink-0">
                                         {p.imagen ? (
                                             // eslint-disable-next-line @next/next/no-img-element
@@ -179,20 +179,37 @@ export default function ProductosPage() {
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-300"><Package className="w-8 h-8" /></div>
                                         )}
-                                        <div className={cn('absolute top-2 right-2 px-2 py-0.5 rounded-lg text-[10px] font-bold shadow-sm',
-                                            p.estado === 'Disponible' ? 'bg-white/90 text-[#40C4AA]' :
-                                                p.estado === 'Vendido' ? 'bg-white/90 text-slate-500' :
-                                                    'bg-yellow-500/90 text-white'
+                                        
+                                        {/* Top-left Code Pill */}
+                                        <div className="absolute top-3 left-3 px-2 py-1 rounded bg-white text-slate-800 text-[11px] font-bold shadow-sm">
+                                            {p.codigo}
+                                        </div>
+                                        
+                                        {/* Top-right State Pill */}
+                                        <div className={cn('absolute top-3 right-3 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm',
+                                            p.estado === 'Disponible' ? 'bg-[#40C4AA] text-white' :
+                                                p.estado === 'Vendido' ? 'bg-slate-200 text-slate-600' :
+                                                    'bg-yellow-400 text-white'
                                         )}>
                                             {p.estado}
                                         </div>
                                     </div>
-                                    <div className="p-4 flex flex-col gap-2 flex-1">
-                                        <span className="text-[10px] font-bold text-slate-400">{p.codigo}</span>
-                                        <h3 className="font-bold text-slate-800 text-sm leading-tight">{p.nombre}</h3>
-                                        <div className="mt-auto flex items-center justify-between pt-2 border-t border-slate-50">
-                                            <span className="text-xs text-slate-400 font-medium">{p.subcategoria}</span>
-                                            {p.precio ? <span className="font-bold text-primary text-sm">${p.precio}</span> : <span className="text-xs text-slate-300">Sin precio</span>}
+                                    <div className="p-5 flex flex-col flex-1 bg-white">
+                                        <h3 className="font-semibold text-[#1E293B] text-[18px] leading-tight mb-3">{p.nombre}</h3>
+                                        
+                                        <div className="flex items-center justify-between mb-4 mt-auto">
+                                            {p.subcategoria ? (
+                                                <span className="px-3 py-0.5 rounded-full text-xs font-semibold bg-[#FF007F]/5 text-[#FF007F]/70">
+                                                    {p.subcategoria}
+                                                </span>
+                                            ) : <span />}
+                                            <span className="text-[17px] font-medium text-slate-500">
+                                                ${Number(p.precio ?? p.costo ?? 0).toFixed(0)}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="text-[13px] text-slate-400">
+                                            Lote: {p.lote}
                                         </div>
                                     </div>
                                 </div>
@@ -222,7 +239,7 @@ export default function ProductosPage() {
                                                             'bg-yellow-100 text-yellow-600'
                                                 )}>{p.estado}</span>
                                             </td>
-                                            <td className="px-5 py-4 text-sm font-bold text-slate-800">{p.precio ? `$${p.precio}` : '—'}</td>
+                                            <td className="px-5 py-4 text-sm font-bold text-slate-800">${Number(p.precio ?? p.costo ?? 0).toFixed(0)}</td>
                                             <td className="px-5 py-4">
                                                 <button onClick={() => { setSelectedProducto(p); setImgIndex(0); }}
                                                     className="text-sm font-semibold text-primary hover:underline">Ver</button>
