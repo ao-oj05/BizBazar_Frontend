@@ -232,70 +232,113 @@ export default function JoyeriaPage() {
 
             {/* Detail Modal */}
             {selectedJoya && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <div className="flex items-center justify-between px-6 py-4 bg-slate-800">
-                            <h2 className="text-lg font-bold text-white">Detalle — Joyería</h2>
-                            <button onClick={() => setSelectedJoya(null)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white"><X className="w-4 h-4" /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
+                        
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                            <h2 className="text-lg font-bold text-[#1E293B]">Detalle de Joyería</h2>
+                            <button onClick={() => setSelectedJoya(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 transition-colors">
+                                <X className="w-4 h-4" />
+                            </button>
                         </div>
-                        <div className="p-6 flex flex-col gap-4">
-                            <div className="h-56 bg-slate-100 rounded-xl overflow-hidden relative group">
-                                {selectedJoya.imagen ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={selectedJoya.imagen} alt={selectedJoya.nombre} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-300"><Gem className="w-12 h-12" /></div>
-                                )}
-                                {/* Upload overlay */}
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100">
+
+                        {/* Body: 2-column layout */}
+                        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] bg-white">
+
+                            {/* Left: Image */}
+                            <div className="p-6 pr-3 flex flex-col gap-3">
+                                <div className="bg-slate-50 relative rounded-xl w-full h-[400px] flex items-center justify-center group overflow-hidden">
+                                     {selectedJoya.imagen ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={selectedJoya.imagen} alt={selectedJoya.nombre} className="w-full h-full object-cover" />
+                                     ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-3">
+                                            <Gem className="w-12 h-12" />
+                                            <span className="text-xs font-semibold">Sin imagen</span>
+                                        </div>
+                                     )}
+                                     
+                                     {/* Upload overlay */}
+                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100">
+                                         <button
+                                             onClick={() => detalleFileRef.current?.click()}
+                                             disabled={isUploadingDetalle}
+                                             className="flex items-center gap-2 bg-white/90 hover:bg-white text-slate-700 text-xs font-bold px-4 py-2 rounded-xl shadow-lg transition-colors"
+                                         >
+                                             {isUploadingDetalle ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                                             {selectedJoya.imagen ? 'Cambiar foto' : 'Subir foto'}
+                                         </button>
+                                     </div>
+                                     <input
+                                         ref={detalleFileRef}
+                                         type="file"
+                                         accept="image/*"
+                                         className="hidden"
+                                         onChange={e => e.target.files?.[0] && uploadDetalleImage(e.target.files[0])}
+                                     />
+                                </div>
+                            </div>
+
+                            {/* Right: Details */}
+                            <div className="p-6 pl-3 flex flex-col items-start gap-4 h-full relative">
+
+                                {/* Código */}
+                                <div className="flex flex-col gap-1 w-full">
+                                    <span className="text-xs font-medium text-slate-400">Código</span>
+                                    <span className="text-lg font-bold text-[#FF9696]">{selectedJoya.codigo || '—'}</span>
+                                </div>
+
+                                {/* Nombre & Subcategoria label */}
+                                <div className="flex flex-col gap-1 w-full mt-2">
+                                    <span className="text-xs font-medium text-slate-400">Nombre</span>
+                                    <span className="text-2xl font-bold text-[#1E293B] leading-tight">{selectedJoya.nombre}</span>
+                                    {selectedJoya.subcategoria && (
+                                        <span className="mt-2 inline-flex items-center px-4 py-1 rounded-full text-xs font-bold text-[#FF9696] bg-[#FFF5F5]">
+                                            {selectedJoya.subcategoria}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Costo Individual */}
+                                <div className="flex flex-col gap-1 w-full mt-4">
+                                    <span className="text-xs font-medium text-slate-400">Costo individual</span>
+                                    <span className="text-4xl font-bold text-[#FACC15]">${Number(selectedJoya.costo || 0).toFixed(0)}</span>
+                                </div>
+
+                                {/* Estado actual */}
+                                <div className="flex flex-col gap-1.5 w-full mt-4">
+                                    <span className="text-xs font-medium text-slate-400">Estado actual</span>
+                                    <span className={cn('inline-flex items-center justify-center px-4 py-1.5 rounded-full text-sm font-bold w-max',
+                                        selectedJoya.estado === 'Disponible' ? 'bg-[#40C4AA] text-white' :
+                                            selectedJoya.estado === 'Vendido' ? 'bg-slate-200 text-slate-600' :
+                                                'bg-[#FACC15] text-white'
+                                    )}>
+                                        {selectedJoya.estado}
+                                    </span>
+                                </div>
+
+                                {/* Spacer to push buttons to the bottom */}
+                                <div className="flex-1 w-full"></div>
+
+                                {/* Actions */}
+                                <div className="flex flex-col gap-3 w-full mt-6">
+                                    {selectedJoya.estado === 'Disponible' && (
+                                        <button
+                                            className="w-full py-3.5 rounded-xl bg-[#40C4AA] hover:bg-[#38b098] text-white font-bold tracking-wide transition-colors"
+                                            onClick={() => setSelectedJoya(null)}
+                                        >
+                                            Registrar venta
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={() => detalleFileRef.current?.click()}
-                                        disabled={isUploadingDetalle}
-                                        className="flex items-center gap-2 bg-white/90 hover:bg-white text-slate-700 text-xs font-bold px-4 py-2 rounded-xl shadow-lg transition-colors"
+                                        className="w-full py-3.5 rounded-xl border-2 border-[#FF9696] text-[#FF9696] bg-white hover:bg-[#FFF5F5] font-bold tracking-wide transition-colors"
+                                        onClick={() => setSelectedJoya(null)}
                                     >
-                                        {isUploadingDetalle
-                                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                            : <Camera className="w-3.5 h-3.5" />}
-                                        {selectedJoya.imagen ? 'Cambiar foto' : 'Subir foto'}
+                                        Editar joyería
                                     </button>
                                 </div>
-                                <input
-                                    ref={detalleFileRef}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={e => e.target.files?.[0] && uploadDetalleImage(e.target.files[0])}
-                                />
-                            </div>
-                            {/* Add photo button below image for accessibility */}
-                            <button
-                                onClick={() => detalleFileRef.current?.click()}
-                                disabled={isUploadingDetalle}
-                                className="flex items-center justify-center gap-2 w-full py-2 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-primary hover:text-primary text-xs font-semibold transition-all disabled:opacity-50"
-                            >
-                                {isUploadingDetalle
-                                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    : <Camera className="w-3.5 h-3.5" />}
-                                {selectedJoya.imagen ? 'Cambiar foto' : 'Subir foto'}
-                            </button>
-                            <div className="grid grid-cols-2 gap-3">
-                                {[
-                                    { label: 'Código', value: selectedJoya.codigo },
-                                    { label: 'Subcategoría', value: selectedJoya.subcategoria },
-                                    { label: 'Estado', value: selectedJoya.estado },
-                                    { label: 'Tipo de venta', value: selectedJoya.tipoVenta },
-                                    { label: 'Costo', value: `$${selectedJoya.costo}` },
-                                    { label: 'Precio', value: selectedJoya.precio ? `$${selectedJoya.precio}` : 'Sin precio' },
-                                ].map(f => (
-                                    <div key={f.label} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                        <p className="text-xs text-slate-400 font-medium">{f.label}</p>
-                                        <p className="font-bold text-slate-800 text-sm mt-0.5">{f.value}</p>
-                                    </div>
-                                ))}
-                            </div>
-                            <div>
-                                <p className="text-xs text-slate-400 font-medium mb-1">Nombre</p>
-                                <p className="font-bold text-slate-800">{selectedJoya.nombre}</p>
+
                             </div>
                         </div>
                     </div>
