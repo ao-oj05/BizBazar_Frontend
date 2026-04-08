@@ -33,9 +33,20 @@ interface Producto {
     tipoVenta: 'Directa' | 'Subasta';
 }
 
-export function NuevoProductoModal({ lotes, onClose, onSave }:
-    { lotes: LoteBasico[]; onClose: () => void; onSave: (p: Producto) => void }) {
-    const [form, setForm] = useState({ nombre: '', descripcion: '', subcategoria_id: '', lote_id: '', tipo_venta: 'directa', costo_base: '', imagenUrl: '' });
+export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
+    { lotes: LoteBasico[]; onClose: () => void; onSave: (p: Producto) => void; productoToEdit?: Producto }) {
+    
+    // Preset form using `productoToEdit` if provided
+    const [form, setForm] = useState({ 
+        nombre: productoToEdit?.nombre || '', 
+        descripcion: '', // the frontend Producto interface doesn't store descripcion currently, so starting empty
+        subcategoria_id: '', // this needs to be matched asynchronously once subcategories load
+        lote_id: productoToEdit?.loteId || '', 
+        tipo_venta: productoToEdit?.tipoVenta === 'Subasta' ? 'subasta' : 'directa', 
+        costo_base: productoToEdit?.costo?.toString() || '', 
+        imagenUrl: productoToEdit?.imagen || '' 
+    });
+
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -51,15 +62,21 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
         const fetchSubs = async () => {
             setLoadingCats(true);
             try {
-                // Use ?tipo=Ropa so the backend filters directly
                 const res = await fetch('/api/configuracion/categorias?tipo=Ropa');
                 if (res.ok) {
                     const json = await res.json();
-                    // Backend returns { success: true, data: [...] } OR a plain array
                     const all: Subcategoria[] = Array.isArray(json) ? json : (json.data ?? []);
-                    // Client-side fallback filter in case the backend didn't filter by tipo
                     const filtered = all.filter(s => normalize(s.tipo) === 'ropa');
-                    setSubcategorias(filtered.length > 0 ? filtered : all);
+                    const finalSubs = filtered.length > 0 ? filtered : all;
+                    setSubcategorias(finalSubs);
+
+                    // If editing, find the ID of the subcategory by matching names
+                    if (productoToEdit?.subcategoria) {
+                        const matchingSub = finalSubs.find(s => s.nombre === productoToEdit.subcategoria);
+                        if (matchingSub) {
+                            setForm(prev => ({ ...prev, subcategoria_id: matchingSub.id }));
+                        }
+                    }
                 }
             } catch (e) {
                 console.error('Error fetching subcategorias ropa:', e);
@@ -68,10 +85,11 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
             }
         };
         fetchSubs();
-    }, []);
+    }, [productoToEdit]);
 
     useEffect(() => {
-        if (form.lote_id) {
+        // Auto-calculate cost based on lote if creating NEW or explicitly modifying blank cost
+        if (form.lote_id && !productoToEdit) {
             const loteSelect = lotes.find(l => l.id === form.lote_id);
             if (loteSelect) {
                 const inv = loteSelect.precio_total || loteSelect.inversion || 0;
@@ -81,7 +99,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
                 }
             }
         }
-    }, [form.lote_id, lotes]);
+    }, [form.lote_id, lotes, productoToEdit]);
 
     const processFile = async (file: File) => {
         if (!file.type.startsWith('image/')) {
@@ -134,10 +152,14 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
         if (!form.nombre || !form.subcategoria_id || !form.lote_id) return;
         setIsSaving(true);
         try {
-            const generatedCodigo = 'BIZ-' + String(Date.now()).slice(-4);
+            const generatedCodigo = productoToEdit?.codigo || ('BIZ-' + String(Date.now()).slice(-4));
             const usuario_id = getUsuarioId();
-            const res = await fetch('/api/productos', {
-                method: 'POST',
+            
+            const endpoint = productoToEdit ? `/api/productos/${productoToEdit.id}` : '/api/productos';
+            const method = productoToEdit ? 'PUT' : 'POST';
+
+            const res = await fetch(endpoint, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     codigo: generatedCodigo,
@@ -145,6 +167,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
                     descripcion: form.descripcion,
                     categoria: 'ropa',
                     subcategoria: subcategorias.find(s => s.id === form.subcategoria_id)?.nombre || '',
+                    subcategoria_id: form.subcategoria_id,
                     lote_id: form.lote_id,
                     tipo_venta: form.tipo_venta,
                     costo_base: form.costo_base ? parseFloat(form.costo_base) : 0,
@@ -159,7 +182,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
                 const errText = await res.text();
                 try {
                     const errJson = JSON.parse(errText);
-                    setErrorMessage(errJson.error || errJson.message || 'Error al crear producto');
+                    setErrorMessage(errJson.error || errJson.message || 'Error al guardar producto');
                 } catch {
                     setErrorMessage(`Error: ${errText}`);
                 }
