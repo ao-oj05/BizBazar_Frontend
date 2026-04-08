@@ -83,84 +83,94 @@ function DetalleModal({ lote, onClose }: { lote: Lote; onClose: () => void }) {
     const isOver = safeRecuperado >= safeInversion && safeInversion > 0;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <div className="flex items-center justify-between px-6 py-5 bg-gradient-to-r from-primary to-secondary rounded-t-2xl">
-                    <div>
-                        <h2 className="text-xl font-bold text-white">{lote.nombre}</h2>
-                        <p className="text-white/80 text-sm">{lote.codigo} · {lote.fecha}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
+                
+                {/* Header (Pink) */}
+                <div className="flex items-center justify-between px-8 py-5 bg-[#FF007F]">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold text-white">{lote.nombre}</h2>
+                        <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold">
+                            Ropa
+                        </span>
                     </div>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white">
-                        <X className="w-4 h-4" />
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-white/80 hover:text-white transition-colors">
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-6">
-                    {[
-                        { label: 'Inversión Total', value: `$${safeInversion.toLocaleString('en-US')}`, color: 'text-slate-800' },
-                        { label: 'Costo/pieza', value: `$${costoPieza}`, color: 'text-slate-800' },
-                        { label: 'Recuperado', value: `$${safeRecuperado.toLocaleString('en-US')}`, color: 'text-slate-800' },
-                        { label: 'Ganancia', value: `$${ganancia.toLocaleString('en-US')}`, color: ganancia >= 0 ? 'text-green-600' : 'text-yellow-500' },
-                        { label: '% Recuperación', value: `${pctRecuperacion}%`, color: isOver ? 'text-green-600' : 'text-primary', circle: true },
-                    ].map(stat => (
-                        <div key={stat.label} className="bg-slate-50 rounded-xl p-4 flex flex-col gap-1">
-                            <span className="text-xs text-slate-400 font-medium">{stat.label}</span>
-                            {stat.circle ? (
-                                <span className={cn('text-lg font-bold border-4 rounded-full w-14 h-14 flex items-center justify-center mx-auto', isOver ? 'border-green-500 text-green-600' : 'border-primary text-primary')}>
-                                    {stat.value}
-                                </span>
-                            ) : (
-                                <span className={cn('text-lg font-bold', stat.color)}>{stat.value}</span>
-                            )}
-                        </div>
-                    ))}
+
+                {/* Stats Row */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 p-8 bg-white">
+                    <div className="rounded-xl border border-slate-200 p-5 flex flex-col gap-1.5 bg-white shadow-sm">
+                        <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">Inversión Total</span>
+                        <span className="text-[22px] font-black text-[#1E293B]">${safeInversion.toLocaleString('en-US')}</span>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 p-5 flex flex-col gap-1.5 bg-white shadow-sm">
+                        <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">Costo/prenda</span>
+                        <span className="text-[22px] font-black text-[#1E293B]">${costoPieza}</span>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 p-5 flex flex-col gap-1.5 bg-white shadow-sm">
+                        <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">Recuperado</span>
+                        <span className="text-[22px] font-black text-[#1E293B]">${safeRecuperado.toLocaleString('en-US')}</span>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 p-5 flex flex-col gap-1.5 bg-white shadow-sm">
+                        <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">Ganancia</span>
+                        <span className="text-[22px] font-black text-[#FACC15]">${ganancia.toLocaleString('en-US')}</span>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 p-5 flex flex-col justify-between items-start gap-1 bg-white shadow-sm relative">
+                        <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">% Recuperación</span>
+                        <span className="relative z-10 w-[52px] h-[52px] flex items-center justify-center rounded-full bg-[#FF007F]/10 text-[#FF007F] text-lg font-bold mt-1">
+                            {pctRecuperacion}%
+                        </span>
+                    </div>
                 </div>
-                <div className="px-6 pb-4">
-                    <h3 className="text-sm font-bold text-slate-700 mb-3">Productos del lote</h3>
-                    <div className="rounded-xl border border-slate-100 overflow-hidden">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="bg-slate-50 border-b border-slate-100">
-                                    <th className="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase">Producto</th>
-                                    <th className="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase">Estado</th>
-                                    <th className="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase">Precio</th>
-                                    <th className="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase">Ganancia</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {lote.productos.length === 0 ? (
-                                    <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400 text-sm">Sin productos registrados.</td></tr>
-                                ) : lote.productos.map((p, i) => (
-                                    <tr key={i} className="hover:bg-slate-50/50">
-                                        <td className="px-4 py-3 font-medium text-slate-800">{p.nombre}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold',
-                                                p.estado === 'Vendido' ? 'bg-slate-100 text-slate-600' :
-                                                    p.estado === 'Disponible' ? 'bg-blue-50 text-blue-600 border border-blue-200' :
-                                                        'bg-yellow-50 text-yellow-600 border border-yellow-200'
-                                            )}>
-                                                {p.estado}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-slate-700">{p.precio ? `$${p.precio}` : '–'}</td>
-                                        <td className="px-4 py-3">
-                                            {p.ganancia != null
-                                                ? <span className="font-bold text-yellow-500">${p.ganancia}</span>
-                                                : <span className="text-slate-300">–</span>
-                                            }
-                                        </td>
+
+                {/* Products Section */}
+                <div className="px-8 pb-8">
+                    <div className="bg-slate-50/50 rounded-2xl p-6">
+                        <h3 className="text-base font-bold text-[#334155] mb-5">Productos del lote</h3>
+                        <div className="w-full overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-slate-200">
+                                        <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Producto</th>
+                                        <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Estado</th>
+                                        <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Precio</th>
+                                        <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Ganancia</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {lote.productos.length === 0 ? (
+                                        <tr><td colSpan={4} className="py-6 text-center text-slate-400 text-sm">Sin productos registrados.</td></tr>
+                                    ) : lote.productos.map((p, i) => (
+                                        <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                                            <td className="py-4 px-2 font-medium text-slate-700">{p.nombre}</td>
+                                            <td className="py-4 px-2">
+                                                <span className={cn('px-3.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center justify-center',
+                                                    p.estado === 'Vendido' ? 'bg-slate-100 text-slate-500' :
+                                                    p.estado === 'Disponible' ? 'bg-[#FF007F]/10 text-[#FF007F]' :
+                                                    'bg-sky-100 text-sky-500'
+                                                )}>
+                                                    {p.estado}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-2 text-slate-700 font-semibold">{p.precio ? `$${p.precio}` : '-'}</td>
+                                            <td className="py-4 px-2">
+                                                {p.ganancia != null
+                                                    ? <span className="font-bold text-[#FACC15]">${p.ganancia}</span>
+                                                    : <span className="text-[#FACC15]">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-                <div className="px-6 pb-6 flex justify-between items-center">
-                    <button onClick={() => router.push('/dashboard/productos')} className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
-                        Productos Ropa →
-                    </button>
-                    <button onClick={onClose} className="px-5 py-2 rounded-xl bg-slate-100 text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors">
-                        Cerrar
-                    </button>
                 </div>
             </div>
         </div>
