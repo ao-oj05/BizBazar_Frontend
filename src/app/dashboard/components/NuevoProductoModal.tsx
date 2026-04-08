@@ -35,25 +35,40 @@ interface Producto {
 
 export function NuevoProductoModal({ lotes, onClose, onSave }:
     { lotes: LoteBasico[]; onClose: () => void; onSave: (p: Producto) => void }) {
-    const SUBCATEGORIAS_ROPA: Subcategoria[] = [
-        { id: 'blusa', nombre: 'Blusa', tipo: 'ropa' },
-        { id: 'pantalon', nombre: 'Pantalón', tipo: 'ropa' },
-        { id: 'short', nombre: 'Short', tipo: 'ropa' },
-        { id: 'vestido', nombre: 'Vestido', tipo: 'ropa' },
-        { id: 'falda', nombre: 'Falda', tipo: 'ropa' },
-        { id: 'chamarra', nombre: 'Chamarra', tipo: 'ropa' },
-        { id: 'playera', nombre: 'Playera', tipo: 'ropa' },
-        { id: 'sueter', nombre: 'Suéter', tipo: 'ropa' },
-        { id: 'conjunto', nombre: 'Conjunto', tipo: 'ropa' },
-    ];
-
     const [form, setForm] = useState({ nombre: '', descripcion: '', subcategoria_id: '', lote_id: '', tipo_venta: 'directa', costo_base: '', imagenUrl: '' });
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-    const subcategorias = SUBCATEGORIAS_ROPA;
+    const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([]);
+    const [loadingCats, setLoadingCats] = useState(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const normalize = (s: string) =>
+        (s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    useEffect(() => {
+        const fetchSubs = async () => {
+            setLoadingCats(true);
+            try {
+                // Use ?tipo=Ropa so the backend filters directly
+                const res = await fetch('/api/configuracion/categorias?tipo=Ropa');
+                if (res.ok) {
+                    const json = await res.json();
+                    // Backend returns { success: true, data: [...] } OR a plain array
+                    const all: Subcategoria[] = Array.isArray(json) ? json : (json.data ?? []);
+                    // Client-side fallback filter in case the backend didn't filter by tipo
+                    const filtered = all.filter(s => normalize(s.tipo) === 'ropa');
+                    setSubcategorias(filtered.length > 0 ? filtered : all);
+                }
+            } catch (e) {
+                console.error('Error fetching subcategorias ropa:', e);
+            } finally {
+                setLoadingCats(false);
+            }
+        };
+        fetchSubs();
+    }, []);
 
     useEffect(() => {
         if (form.lote_id) {
@@ -269,14 +284,17 @@ export function NuevoProductoModal({ lotes, onClose, onSave }:
 
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs text-slate-500">Subcategoría <span className="text-[#FF1970]">*</span></label>
-                                <select
-                                    value={form.subcategoria_id}
-                                    onChange={e => setForm(f => ({ ...f, subcategoria_id: e.target.value }))}
-                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40 bg-white"
-                                >
-                                    <option value=""></option>
-                                    {subcategorias.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-                                </select>
+                            <select
+                                value={form.subcategoria_id}
+                                onChange={e => setForm(f => ({ ...f, subcategoria_id: e.target.value }))}
+                                disabled={loadingCats}
+                                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40 bg-white disabled:opacity-60"
+                            >
+                                <option value="">
+                                    {loadingCats ? 'Cargando...' : subcategorias.length === 0 ? 'Sin subcategorías — ve a Configuración' : ''}
+                                </option>
+                                {subcategorias.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                            </select>
                             </div>
 
                             {/* Tipo de venta pill toggle */}

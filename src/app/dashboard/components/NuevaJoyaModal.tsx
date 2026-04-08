@@ -2,6 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { X, Loader2, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/src/shared/utils';
 
+interface Subcategoria {
+    id: string;
+    nombre: string;
+    tipo: string;
+}
+
 interface Joya {
     id: string;
     nombre: string;
@@ -14,51 +20,56 @@ interface Joya {
     tipoVenta: 'Directa' | 'Subasta';
 }
 
-interface Subcategoria {
-    id: string;
-    nombre: string;
-    tipo: string;
-}
+const normalize = (s: string) =>
+    (s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSave: (j: Joya) => void }) {
-    const [form, setForm] = useState({ 
-        nombre: '', 
+    const [form, setForm] = useState({
+        nombre: '',
         descripcion: '',
-        subcategoria_id: '', 
+        subcategoria_id: '',
         costo_base: '',
         codigo_custom: '',
-        tipo_venta: 'directa', 
-        imagenUrl: '' 
+        tipo_venta: 'directa',
+        imagenUrl: ''
     });
-    
+
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([]);
-    
+    const [loadingCats, setLoadingCats] = useState(true);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const fetchSubcategorias = async () => {
+        const fetchSubs = async () => {
+            setLoadingCats(true);
             try {
-                // Fetch ALL categories, then filter client-side
-                // (avoids case-sensitivity issues with how tipo is stored in DB)
-                const res = await fetch('/api/configuracion/categorias');
+                // Use ?tipo=Joyería so the backend filters directly
+                const res = await fetch('/api/configuracion/categorias?tipo=Joyer%C3%ADa');
                 if (res.ok) {
-                    const data = await res.json();
-                    const all: Subcategoria[] = Array.isArray(data) ? data : (data.data ?? []);
-                    const normalize = (s: string) =>
-                        (s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const json = await res.json();
+                    // Backend returns { success: true, data: [...] } OR a plain array
+                    const all: Subcategoria[] = Array.isArray(json) ? json : (json.data ?? []);
+                    // Client-side fallback filter in case the backend didn't filter by tipo
                     const filtered = all.filter(s => normalize(s.tipo) === 'joyeria');
-                    setSubcategorias(filtered);
+                    setSubcategorias(filtered.length > 0 ? filtered : all);
                 }
-            } catch (error) {
-                console.error('Error fetching subcategorias:', error);
+            } catch (e) {
+                console.error('Error fetching subcategorias joyería:', e);
+            } finally {
+                setLoadingCats(false);
             }
         };
-        fetchSubcategorias();
+        fetchSubs();
     }, []);
+
+    // Computed preview code
+    const previewCodigo = form.codigo_custom.trim()
+        ? form.codigo_custom.trim()
+        : 'BIZ-' + Date.now().toString().slice(-3);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -79,17 +90,14 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
         try {
             const formData = new FormData();
             formData.append('imagen', file);
-            const res = await fetch('/api/uploads', {
-                method: 'POST',
-                body: formData,
-            });
+            const res = await fetch('/api/uploads', { method: 'POST', body: formData });
             const data = await res.json();
             if (res.ok && data.success) {
                 setForm(f => ({ ...f, imagenUrl: data.data.url }));
             } else {
                 setErrorMessage(data.error || 'Error al subir imagen');
             }
-        } catch (error) {
+        } catch {
             setErrorMessage('Error de red al subir imagen');
         } finally {
             setIsUploading(false);
@@ -101,11 +109,13 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
         if (!form.nombre || !form.subcategoria_id || !form.costo_base) return;
         setIsSaving(true);
         try {
-            const finalCodigo = form.codigo_custom.trim() 
+            const finalCodigo = form.codigo_custom.trim()
                 ? form.codigo_custom.trim()
-                : 'BIZ-' + Date.now().toString().slice(-4); // Simplified code logic
+                : 'BIZ-' + Date.now().toString().slice(-3);
 
-            const res = await fetch('/api/productos', { 
+            const subcategoriaNombre = subcategorias.find(s => s.id === form.subcategoria_id)?.nombre || '';
+
+            const res = await fetch('/api/productos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -113,17 +123,16 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                     nombre: form.nombre,
                     descripcion: form.descripcion,
                     categoria: 'joyeria',
-                    subcategoria: subcategorias.find(s => s.id === form.subcategoria_id)?.nombre || '',
+                    subcategoria: subcategoriaNombre,
                     tipo_venta: form.tipo_venta,
                     costo_base: parseFloat(form.costo_base),
                     imagenes: form.imagenUrl ? [form.imagenUrl] : []
                 }),
             });
-            
+
             if (res.ok) {
                 const responseData = await res.json();
-                const nueva = responseData.data || responseData;
-                onSave(nueva);
+                onSave(responseData.data || responseData);
             } else {
                 const errText = await res.text();
                 try {
@@ -133,8 +142,8 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                     setErrorMessage(`Error: ${errText}`);
                 }
             }
-        } catch (error: any) {
-            setErrorMessage(error.message || 'Error de conexión');
+        } catch (error: unknown) {
+            setErrorMessage(error instanceof Error ? error.message : 'Error de conexión');
         } finally {
             setIsSaving(false);
         }
@@ -145,7 +154,7 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-left">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
-                
+
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 bg-[#FF9696]">
                     <h2 className="text-base font-bold text-white">Agregar nueva joyería</h2>
@@ -166,15 +175,24 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                             onDragLeave={() => setIsDragging(false)}
                             onDrop={handleDrop}
                             className={cn(
-                                "w-full aspect-[4/3] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 cursor-pointer transition-all",
-                                isDragging ? "border-[#FF1970] bg-pink-50" : form.imagenUrl ? "border-transparent" : "border-[#FF1970] bg-white hover:bg-pink-50/30"
+                                "w-full aspect-[4/3] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 cursor-pointer transition-all overflow-hidden relative",
+                                isDragging
+                                    ? "border-[#FF1970] bg-pink-50"
+                                    : form.imagenUrl
+                                        ? "border-transparent"
+                                        : "border-[#FF1970] bg-white hover:bg-pink-50/30"
                             )}
                         >
                             {isUploading ? (
                                 <Loader2 className="w-8 h-8 text-[#FF1970] animate-spin" />
                             ) : form.imagenUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={form.imagenUrl} alt="preview" className="w-full h-full object-cover rounded-xl" />
+                                <>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={form.imagenUrl} alt="preview" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all flex items-center justify-center opacity-0 hover:opacity-100">
+                                        <span className="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-lg">Cambiar imagen</span>
+                                    </div>
+                                </>
                             ) : (
                                 <>
                                     <ImageIcon className="w-10 h-10 text-[#FF1970]" strokeWidth={1.5} />
@@ -186,12 +204,22 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                             )}
                         </div>
                         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                        {form.imagenUrl && (
+                            <button
+                                type="button"
+                                onClick={() => setForm(f => ({ ...f, imagenUrl: '' }))}
+                                className="text-[10px] text-slate-400 hover:text-red-500 transition-colors text-center"
+                            >
+                                Eliminar imagen
+                            </button>
+                        )}
                     </div>
 
                     {/* Right: Form */}
                     <div className="p-8 flex flex-col gap-5 overflow-y-auto max-h-[75vh]">
                         <h3 className="text-sm font-bold text-slate-800">Datos de la joya</h3>
-                        
+
+                        {/* Nombre */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-semibold text-slate-600">Nombre <span className="text-[#FF1970]">*</span></label>
                             <input
@@ -202,6 +230,7 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                             />
                         </div>
 
+                        {/* Descripción */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-semibold text-slate-600">Descripción</label>
                             <textarea
@@ -213,23 +242,27 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                             />
                         </div>
 
+                        {/* Subcategoría */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-semibold text-slate-600">Subcategoría <span className="text-[#FF1970]">*</span></label>
                             <select
                                 value={form.subcategoria_id}
                                 onChange={e => setForm(f => ({ ...f, subcategoria_id: e.target.value }))}
-                                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF9696]/40 bg-white text-slate-800"
+                                disabled={loadingCats}
+                                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF9696]/40 bg-white text-slate-800 disabled:opacity-60"
                             >
-                                <option value=""></option>
-                                {subcategorias.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                                <option value="">
+                                    {loadingCats ? 'Cargando...' : subcategorias.length === 0 ? 'Sin subcategorías — ve a Configuración' : 'Selecciona subcategoría'}
+                                </option>
+                                {subcategorias.map(s => (
+                                    <option key={s.id} value={s.id}>{s.nombre}</option>
+                                ))}
                             </select>
                         </div>
 
-                        {/* Costo Box Highlighted */}
+                        {/* Costo */}
                         <div className="bg-[#FFF5F5] border border-[#FFD6E0] rounded-xl p-4 flex flex-col gap-1.5">
-                            <div className="mb-2">
-                                <h4 className="text-sm font-bold text-slate-800">Costo</h4>
-                            </div>
+                            <h4 className="text-sm font-bold text-slate-800 mb-1">Costo</h4>
                             <label className="text-xs font-semibold text-slate-600">Costo individual <span className="text-[#FF1970]">*</span></label>
                             <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-sm">$</span>
@@ -243,7 +276,8 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                             </div>
                             <p className="text-[10px] text-slate-400 mt-1">Ingresa el costo de adquisición de esta pieza</p>
                         </div>
-                        
+
+                        {/* Código */}
                         <div className="flex flex-col gap-3">
                             <h4 className="text-sm font-bold text-slate-800">Código</h4>
                             <div className="flex flex-col gap-1.5">
@@ -258,65 +292,92 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                             </div>
                         </div>
 
-                        {/* Tipo de Venta Pills */}
+                        {/* Tipo de Venta — radio style */}
                         <div className="flex flex-col gap-3">
                             <h4 className="text-sm font-bold text-slate-800">Tipo de venta</h4>
                             <div className="grid grid-cols-2 gap-3">
+                                {/* Venta directa */}
                                 <button
                                     type="button"
                                     onClick={() => setForm(f => ({ ...f, tipo_venta: 'directa' }))}
                                     className={cn(
-                                        "flex flex-col items-center py-4 px-3 rounded-xl border-2 font-bold text-sm transition-all",
+                                        "flex items-center gap-3 py-3 px-4 rounded-xl border-2 transition-all text-left",
                                         form.tipo_venta === 'directa'
-                                            ? "border-[#40C4AA] bg-[#40C4AA]/10 text-[#40C4AA]"
-                                            : "border-slate-200 text-slate-700 hover:border-slate-300"
+                                            ? "border-[#40C4AA] bg-white"
+                                            : "border-slate-200 hover:border-slate-300"
                                     )}
                                 >
-                                    Venta directa
-                                    <span className="text-[10px] font-normal mt-0.5 text-slate-500">Precio fijo</span>
+                                    <span className={cn(
+                                        "w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
+                                        form.tipo_venta === 'directa' ? "border-[#FF9696]" : "border-slate-300"
+                                    )}>
+                                        {form.tipo_venta === 'directa' && (
+                                            <span className="w-2 h-2 rounded-full bg-[#FF9696]" />
+                                        )}
+                                    </span>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-800">Venta directa</p>
+                                        <p className="text-[10px] text-slate-500">Precio fijo</p>
+                                    </div>
                                 </button>
+
+                                {/* Subasta premium */}
                                 <button
                                     type="button"
                                     onClick={() => setForm(f => ({ ...f, tipo_venta: 'subasta' }))}
                                     className={cn(
-                                        "flex flex-col items-center py-4 px-3 rounded-xl border-2 font-bold text-sm transition-all",
+                                        "flex items-center gap-3 py-3 px-4 rounded-xl border-2 transition-all text-left",
                                         form.tipo_venta === 'subasta'
-                                            ? "border-[#FF1970] bg-[#FF1970]/10 text-[#FF1970]"
-                                            : "border-slate-200 text-slate-700 hover:border-slate-300"
+                                            ? "border-[#FF1970] bg-white"
+                                            : "border-slate-200 hover:border-slate-300"
                                     )}
                                 >
-                                    Subasta premium
-                                    <span className="text-[10px] font-normal mt-0.5 text-slate-500">Para mejores piezas</span>
+                                    <span className={cn(
+                                        "w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
+                                        form.tipo_venta === 'subasta' ? "border-slate-600" : "border-slate-300"
+                                    )}>
+                                        {form.tipo_venta === 'subasta' && (
+                                            <span className="w-2 h-2 rounded-full bg-slate-600" />
+                                        )}
+                                    </span>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-800">Subasta premium</p>
+                                        <p className="text-[10px] text-slate-500">Para mejores piezas</p>
+                                    </div>
                                 </button>
                             </div>
                         </div>
 
+                        {/* Código preview */}
+                        <div className="bg-[#FFF0F3] border border-[#FFD6E0] rounded-xl px-4 py-3 flex items-center justify-between">
+                            <span className="text-sm text-slate-500">Código que se usará:</span>
+                            <span className="text-sm font-bold text-[#FF9696]">{previewCodigo}</span>
+                        </div>
+
                         {errorMessage && (
-                            <div className="bg-red-50 text-red-600 text-sm font-bold p-3 rounded-xl mt-2">
+                            <div className="bg-red-50 text-red-600 text-sm font-bold p-3 rounded-xl">
                                 {errorMessage}
                             </div>
                         )}
 
                         {/* Actions */}
-                        <div className="flex gap-3 mt-4 pt-4 border-t border-slate-100">
+                        <div className="flex gap-3 mt-2 pt-4 border-t border-slate-100">
                             <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
                                 Cancelar
                             </button>
-                            <button 
-                                onClick={handleSave} 
+                            <button
+                                onClick={handleSave}
                                 disabled={!canSave}
                                 className="flex-1 py-3 rounded-xl bg-[#FF9696] hover:bg-[#ff8080] text-white text-sm font-bold shadow-lg shadow-pink-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : null}
-                                Agregar joyería
+                                Guardar joyería
                             </button>
                         </div>
 
                     </div>
-
                 </div>
             </div>
         </div>
     );
 }
-
