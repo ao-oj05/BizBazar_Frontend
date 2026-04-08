@@ -17,6 +17,7 @@ interface Producto {
     estado: 'Vendido' | 'Disponible' | 'En subasta';
     precio: number | null;
     ganancia: number | null;
+    costo_base?: number | null;
 }
 
 interface Lote {
@@ -71,12 +72,38 @@ function AuctionDot() {
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 
-function DetalleModal({ lote, onClose }: { lote: Lote; onClose: () => void }) {
+function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () => void }) {
     const router = useRouter();
-    const safeInversion = Number(lote.inversion) || 0;
-    const safeRecuperado = Number(lote.recuperado) || 0;
-    const safePiezas = Number(lote.piezas) || 1; // Prevent division by 0
+    const [loteData, setLoteData] = useState<Lote | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetch(`/api/lotes/${initialLote.id}`)
+            .then(res => res.json())
+            .then(json => {
+                const fetched = json.data || json;
+                setLoteData({
+                    ...initialLote,
+                    productos: Array.isArray(fetched.productos) ? fetched.productos.map((p: any) => ({
+                        ...p,
+                        precio: p.precio_venta ?? p.precio,
+                        costo_base: p.costo_base ?? p.costo
+                    })) : []
+                });
+            })
+            .catch(err => console.error('Error fetching lote details:', err))
+            .finally(() => setIsLoading(false));
+    }, [initialLote.id]);
+
+    const activeLote = loteData || initialLote;
+
+    const safeInversion = Number(activeLote.inversion) || 0;
+    const safePiezas = Number(activeLote.piezas) || 1; // Prevent division by 0
     
+    // Compute dynamic recuperado from sold products if we have products loaded
+    const calcRecuperado = activeLote.productos.filter(p => p.estado === 'Vendido').reduce((acc, p) => acc + Number(p.precio ?? p.costo_base ?? 0), 0);
+    const safeRecuperado = (loteData && activeLote.productos.length > 0) ? calcRecuperado : (Number(initialLote.recuperado) || 0);
+
     const costoPieza = (safeInversion / safePiezas).toFixed(2);
     const ganancia = safeRecuperado - safeInversion;
     const pctRecuperacion = safeInversion > 0 ? Math.round((safeRecuperado / safeInversion) * 100) : 0;
@@ -89,7 +116,7 @@ function DetalleModal({ lote, onClose }: { lote: Lote; onClose: () => void }) {
                 {/* Header (Pink) */}
                 <div className="flex items-center justify-between px-8 py-5 bg-[#FF007F]">
                     <div className="flex items-center gap-3">
-                        <h2 className="text-2xl font-bold text-white">{lote.nombre}</h2>
+                        <h2 className="text-2xl font-bold text-white">{activeLote.nombre}</h2>
                         <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold">
                             Ropa
                         </span>
@@ -131,45 +158,58 @@ function DetalleModal({ lote, onClose }: { lote: Lote; onClose: () => void }) {
 
                 {/* Products Section */}
                 <div className="px-8 pb-8">
-                    <div className="bg-slate-50/50 rounded-2xl p-6">
+                    <div className="bg-slate-50/50 rounded-2xl p-6 min-h-[200px]">
                         <h3 className="text-base font-bold text-[#334155] mb-5">Productos del lote</h3>
-                        <div className="w-full overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-slate-200">
-                                        <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Producto</th>
-                                        <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Estado</th>
-                                        <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Precio</th>
-                                        <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Ganancia</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {lote.productos.length === 0 ? (
-                                        <tr><td colSpan={4} className="py-6 text-center text-slate-400 text-sm">Sin productos registrados.</td></tr>
-                                    ) : lote.productos.map((p, i) => (
-                                        <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
-                                            <td className="py-4 px-2 font-medium text-slate-700">{p.nombre}</td>
-                                            <td className="py-4 px-2">
-                                                <span className={cn('px-3.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center justify-center',
-                                                    p.estado === 'Vendido' ? 'bg-slate-100 text-slate-500' :
-                                                    p.estado === 'Disponible' ? 'bg-[#FF007F]/10 text-[#FF007F]' :
-                                                    'bg-sky-100 text-sky-500'
-                                                )}>
-                                                    {p.estado}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-2 text-slate-700 font-semibold">{p.precio ? `$${p.precio}` : '-'}</td>
-                                            <td className="py-4 px-2">
-                                                {p.ganancia != null
-                                                    ? <span className="font-bold text-[#FACC15]">${p.ganancia}</span>
-                                                    : <span className="text-[#FACC15]">-</span>
-                                                }
-                                            </td>
+                        
+                        {isLoading ? (
+                            <div className="flex flex-col items-center justify-center gap-3 py-10 text-slate-400">
+                                <Loader2 className="w-8 h-8 animate-spin text-[#FF007F]" />
+                                <p className="text-sm">Cargando productos...</p>
+                            </div>
+                        ) : (
+                            <div className="w-full overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-slate-200">
+                                            <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Producto</th>
+                                            <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Estado</th>
+                                            <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Precio</th>
+                                            <th className="text-left py-3 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-wide">Ganancia</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {activeLote.productos.length === 0 ? (
+                                            <tr><td colSpan={4} className="py-6 text-center text-slate-400 text-sm">Sin productos registrados.</td></tr>
+                                        ) : activeLote.productos.map((p: any, i: number) => {
+                                            const pPrecio = Number(p.precio ?? p.costo_base ?? 0);
+                                            const pGanancia = (p.estado === 'Vendido' && p.precio) ? Number(p.precio) - Number(p.costo_base ?? 0) : null;
+                                            
+                                            return (
+                                                <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                                                    <td className="py-4 px-2 font-medium text-slate-700">{p.nombre}</td>
+                                                    <td className="py-4 px-2">
+                                                        <span className={cn('px-3.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center justify-center',
+                                                            p.estado === 'Vendido' ? 'bg-slate-100 text-slate-500' :
+                                                            p.estado === 'Disponible' ? 'bg-[#FF007F]/10 text-[#FF007F]' :
+                                                            'bg-sky-100 text-sky-500'
+                                                        )}>
+                                                            {p.estado}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-2 text-slate-700 font-semibold">{pPrecio ? `$${pPrecio.toFixed(0)}` : '-'}</td>
+                                                    <td className="py-4 px-2">
+                                                        {pGanancia != null
+                                                            ? <span className="font-bold text-[#FACC15]">${pGanancia.toFixed(0)}</span>
+                                                            : <span className="text-[#FACC15]">-</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
