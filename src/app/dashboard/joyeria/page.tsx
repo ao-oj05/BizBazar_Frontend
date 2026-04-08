@@ -39,18 +39,44 @@ export default function JoyeriaPage() {
 
     const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido', 'En subasta'];
 
+    // Map raw backend row → frontend Joya shape
+    const mapJoya = (raw: any): Joya => {
+        let imagenUrl = '';
+        try {
+            const imgs = typeof raw.imagenes === 'string' ? JSON.parse(raw.imagenes) : (raw.imagenes ?? []);
+            imagenUrl = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : (raw.imagen ?? '');
+        } catch { imagenUrl = raw.imagen ?? ''; }
+
+        const rawEstado: string = raw.estado ?? 'disponible';
+        const estado = (rawEstado.charAt(0).toUpperCase() + rawEstado.slice(1).toLowerCase()) as Joya['estado'];
+
+        return {
+            id: raw.id,
+            nombre: raw.nombre ?? '',
+            codigo: raw.codigo ?? '',
+            subcategoria: raw.subcategoria_nombre ?? raw.subcategoria ?? '',
+            imagen: imagenUrl,
+            estado,
+            precio: raw.precio ?? null,
+            costo: Number(raw.costo_base ?? raw.costo ?? 0),
+            tipoVenta: raw.tipo_venta === 'subasta' ? 'Subasta' : 'Directa',
+        };
+    };
+
     const fetchJoyas = async () => {
         setIsLoading(true);
         try {
             const res = await fetch('/api/joyeria');
             const data = res.ok ? await res.json() : [];
-            setJoyas(Array.isArray(data) ? data : data.data ?? []);
+            const raw: any[] = Array.isArray(data) ? data : (data.data ?? []);
+            setJoyas(raw.map(mapJoya));
         } catch (error) {
             console.error('Error fetching joyería:', error);
         } finally {
             setIsLoading(false);
         }
     };
+
 
     useEffect(() => { fetchJoyas(); }, []);
 

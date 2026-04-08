@@ -50,6 +50,34 @@ export default function ProductosPage() {
 
     const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido', 'En subasta'];
 
+    // Map raw backend row → frontend Producto shape
+    const mapProducto = (raw: any): Producto => {
+        // imagenes can be a JSON string, array, or null
+        let imagenUrl = '';
+        try {
+            const imgs = typeof raw.imagenes === 'string' ? JSON.parse(raw.imagenes) : (raw.imagenes ?? []);
+            imagenUrl = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : '';
+        } catch { imagenUrl = ''; }
+
+        // Capitalise first letter of estado so it matches filter tabs
+        const rawEstado: string = raw.estado ?? 'disponible';
+        const estado = (rawEstado.charAt(0).toUpperCase() + rawEstado.slice(1).toLowerCase()) as Producto['estado'];
+
+        return {
+            id: raw.id,
+            nombre: raw.nombre ?? '',
+            codigo: raw.codigo ?? '',
+            subcategoria: raw.subcategoria_nombre ?? raw.subcategoria ?? '',
+            lote: raw.lote_nombre ?? raw.lote ?? '',
+            loteId: raw.lote_id ?? raw.loteId ?? '',
+            imagen: imagenUrl,
+            estado,
+            precio: raw.precio ?? null,
+            costo: Number(raw.costo_base ?? raw.costo ?? 0),
+            tipoVenta: raw.tipo_venta === 'subasta' ? 'Subasta' : 'Directa',
+        };
+    };
+
     const fetchData = async () => {
         setIsLoading(true);
         try {
@@ -59,8 +87,9 @@ export default function ProductosPage() {
             ]);
             const dataP = resP.ok ? await resP.json() : [];
             const dataL = resL.ok ? await resL.json() : [];
-            setProductos(Array.isArray(dataP) ? dataP : dataP.data ?? []);
-            setLotes(Array.isArray(dataL) ? dataL : dataL.data ?? []);
+            const rawProductos: any[] = Array.isArray(dataP) ? dataP : (dataP.data ?? []);
+            setProductos(rawProductos.map(mapProducto));
+            setLotes(Array.isArray(dataL) ? dataL : (dataL.data ?? []));
         } catch (error) {
             console.error('Error fetching productos:', error);
         } finally {
