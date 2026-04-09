@@ -32,6 +32,7 @@ interface Producto {
     precio: number | null;
     costo: number;
     tipoVenta: 'Directa' | 'Subasta';
+    categoria: string;
 }
 
 export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
@@ -194,12 +195,27 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                             })
                         });
                     } catch (subErr) {
-                        // El backend fallará si ya está en subasta, lo cual es correcto ignorar aquí
                         console.error('Error al intentar crear subasta automática:', subErr);
                     }
                 }
 
-                onSave(nuevoProducto);
+                // Formatear el objeto para que coincida con la interfaz Producto
+                const prodParaGuardar: Producto = {
+                    id: nuevoProducto.id,
+                    nombre: nuevoProducto.nombre,
+                    codigo: nuevoProducto.codigo,
+                    subcategoria: nuevoProducto.subcategoria_nombre || nuevoProducto.subcategoria,
+                    lote: nuevoProducto.lote_nombre || nuevoProducto.lote,
+                    loteId: nuevoProducto.lote_id || nuevoProducto.loteId,
+                    imagen: nuevoProducto.imagenes?.[0] || nuevoProducto.imagen || form.imagenUrl,
+                    estado: (nuevoProducto.estado?.charAt(0).toUpperCase() + nuevoProducto.estado?.slice(1).toLowerCase()) || 'Disponible',
+                    precio: nuevoProducto.precio || null,
+                    costo: Number(nuevoProducto.costo_base || nuevoProducto.costo || form.costo_base),
+                    tipoVenta: nuevoProducto.tipo_venta === 'subasta' ? 'Subasta' : 'Directa',
+                    categoria: nuevoProducto.categoria || 'ropa'
+                };
+
+                onSave(prodParaGuardar);
             } else {
                 const errText = await res.text();
                 try {

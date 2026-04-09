@@ -19,6 +19,7 @@ interface Joya {
     precio: number | null;
     costo: number;
     tipoVenta: 'Directa' | 'Subasta';
+    categoria: string;
 }
 
 const normalize = (s: string) =>
@@ -137,7 +138,21 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
 
             if (res.ok) {
                 const responseData = await res.json();
-                const nuevaJoya = responseData.data || responseData;
+                const rawJoya = responseData.data || responseData;
+                
+                // Asegurar que pasamos la categoría para el estado local
+                const nuevaJoya: Joya = {
+                    id: rawJoya.id,
+                    nombre: rawJoya.nombre,
+                    codigo: rawJoya.codigo,
+                    subcategoria: rawJoya.subcategoria_nombre || rawJoya.subcategoria,
+                    imagen: rawJoya.imagenes?.[0] || rawJoya.imagen || form.imagenUrl,
+                    estado: (rawJoya.estado?.charAt(0).toUpperCase() + rawJoya.estado?.slice(1).toLowerCase()) || 'Disponible',
+                    precio: rawJoya.precio || null,
+                    costo: Number(rawJoya.costo_base || rawJoya.costo || form.costo_base),
+                    tipoVenta: rawJoya.tipo_venta === 'subasta' ? 'Subasta' : 'Directa',
+                    categoria: rawJoya.categoria || 'joyeria'
+                };
 
                 // Lógica Extra: Crear subasta automática si es tipo subasta
                 if (form.tipo_venta === 'subasta') {
