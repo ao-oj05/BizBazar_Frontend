@@ -240,10 +240,10 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 bg-[#FF0080]">
-                    <h2 className="text-base font-bold text-white">Agregar nuevo producto - Ropa</h2>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
-                        <X className="w-4 h-4" />
+                <div className="flex items-center justify-between px-6 py-5 bg-[#FF0080]">
+                    <h2 className="text-xl font-bold text-white tracking-tight">Agregar nuevo producto - Ropa</h2>
+                    <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 text-white rounded-full transition-all">
+                        <X className="w-6 h-6" />
                     </button>
                 </div>
 

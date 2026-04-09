@@ -97,13 +97,13 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white shadow-2xl w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-300 rounded-2xl overflow-hidden">
+            <div className="bg-white shadow-2xl w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-300 rounded-2xl overflow-hidden">
                 
                 {/* Header DYNAMIC COLOR */}
                 <div className={`flex items-center justify-between px-6 py-5 ${isRopa ? 'bg-[#FF007F]' : 'bg-[#29AFFF]'} transition-colors`}>
-                    <h2 className="text-xl font-bold text-white">Crear nuevo lote</h2>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-white/80 hover:text-white transition-colors">
-                        <X className="w-5 h-5" />
+                    <h2 className="text-xl font-bold text-white tracking-tight">Crear nuevo lote</h2>
+                    <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 text-white rounded-full transition-all">
+                        <X className="w-6 h-6" />
                     </button>
                 </div>
                 
