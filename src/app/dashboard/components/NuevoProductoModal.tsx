@@ -171,6 +171,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                     subcategoria_id: form.subcategoria_id,
                     lote_id: form.lote_id,
                     tipo_venta: form.tipo_venta,
+                    premium: form.tipo_venta === 'subasta', // Se marca como premium si es subasta
                     costo_base: form.costo_base ? parseFloat(form.costo_base) : 0,
                     imagenes: form.imagenUrl ? [form.imagenUrl] : [],
                     ...(usuario_id ? { usuario_id } : {}),
@@ -178,7 +179,27 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
             });
             if (res.ok) {
                 const responseData = await res.json();
-                onSave(responseData.data || responseData);
+                const nuevoProducto = responseData.data || responseData;
+
+                // Lógica Extra: Si es subasta, crearla automáticamente en el backend
+                if (form.tipo_venta === 'subasta') {
+                    try {
+                        await fetch('/api/subastas', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                producto_id: nuevoProducto.id,
+                                precio_inicial: nuevoProducto.costo_base || nuevoProducto.costo || 0,
+                                incremento_minimo: 10 // Valor por defecto
+                            })
+                        });
+                    } catch (subErr) {
+                        // El backend fallará si ya está en subasta, lo cual es correcto ignorar aquí
+                        console.error('Error al intentar crear subasta automática:', subErr);
+                    }
+                }
+
+                onSave(nuevoProducto);
             } else {
                 const errText = await res.text();
                 try {

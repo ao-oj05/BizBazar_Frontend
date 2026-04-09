@@ -129,6 +129,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                     subcategoria_id: form.subcategoria_id,
                     lote_id: form.lote_id,
                     tipo_venta: form.tipo_venta,
+                    premium: form.tipo_venta === 'subasta', // Flag premium si es subasta
                     costo_base: parseFloat(form.costo_base),
                     imagenes: form.imagenUrl ? [form.imagenUrl] : []
                 }),
@@ -136,7 +137,26 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
 
             if (res.ok) {
                 const responseData = await res.json();
-                onSave(responseData.data || responseData);
+                const nuevaJoya = responseData.data || responseData;
+
+                // Lógica Extra: Crear subasta automática si es tipo subasta
+                if (form.tipo_venta === 'subasta') {
+                    try {
+                        await fetch('/api/subastas', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                producto_id: nuevaJoya.id,
+                                precio_inicial: nuevaJoya.costo_base || nuevaJoya.costo || 0,
+                                incremento_minimo: 10
+                            })
+                        });
+                    } catch (subErr) {
+                        console.error('Error al crear subasta automática de joya:', subErr);
+                    }
+                }
+
+                onSave(nuevaJoya);
             } else {
                 const errText = await res.text();
                 try {
