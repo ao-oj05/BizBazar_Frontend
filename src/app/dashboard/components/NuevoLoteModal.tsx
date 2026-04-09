@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Package, Loader2 } from 'lucide-react';
+import { X, Package, Loader2, Calculator } from 'lucide-react';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -180,6 +180,21 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
                             <input type="number" className="w-full sm:w-1/2 border border-slate-200 rounded-xl pl-8 pr-4 py-3.5 text-[15px] focus:outline-none focus:ring-1 focus:ring-slate-300 placeholder-slate-400" placeholder="0.00" value={form.precioTotal} onChange={e => setForm(f => ({ ...f, precioTotal: e.target.value }))} />
                         </div>
                     </div>
+
+                    {/* CUADRO DE COSTO PROMEDIO */}
+                    {(Number(form.precioTotal) > 0 && Number(form.piezas) > 0) && (
+                        <div className="col-span-2 bg-[#FFFCF0] border border-[#FACC15]/40 rounded-xl p-4 flex items-center gap-4 animate-in fade-in zoom-in duration-300">
+                            <div className="w-12 h-12 bg-[#FACC15] rounded-xl flex items-center justify-center text-white shadow-sm shadow-[#FACC15]/20 shrink-0">
+                                <Calculator className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Costo promedio por pieza</p>
+                                <p className="text-2xl font-black text-[#FACC15]">
+                                    ${((Number(form.precioTotal) + Number(form.gastosAdicionales)) / Number(form.piezas)).toFixed(2)}
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {errorMsg && (
                         <div className="col-span-2 text-red-500 text-sm font-medium mt-2">

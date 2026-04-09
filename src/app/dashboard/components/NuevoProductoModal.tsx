@@ -313,7 +313,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                             >
                                 <option value=""></option>
                                 {lotes
-                                    .filter(l => l.tipo === 'ropa' || (!l.tipo && !l.nombre.toLowerCase().includes('joyer')))
+                                    .filter(l => l.tipo === 'ropa')
                                     .map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
                             </select>
                         </div>

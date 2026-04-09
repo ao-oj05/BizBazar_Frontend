@@ -258,7 +258,7 @@ export default function LotesPage() {
                     piezas: Number(l.piezas_total || l.piezas) || 0,
                     recuperado: Number(l.recuperado) || 0,
                     estado: (l.estado && l.estado.toLowerCase() === 'cerrado') ? 'Cerrado' : 'Activo',
-                    tipo: l.tipo || (l.nombre.toLowerCase().includes('joyer') ? 'Joyería' : 'Ropa'),
+                    tipo: l.tipo || (l.nombre.toLowerCase().includes('joyer') ? 'joyeria' : 'ropa'),
                     productos: Array.isArray(l.productos) ? l.productos : []
                 }));
                 setLotes(mapped);
