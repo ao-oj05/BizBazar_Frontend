@@ -193,51 +193,50 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-left">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
-                
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 bg-[#29AFFF]">
-                    <h2 className="text-base font-bold text-white uppercase tracking-wide">Agregar nueva joyería</h2>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
-                        <X className="w-4 h-4" />
+                          {/* Header */}
+                <div className="flex items-center justify-between px-6 py-5 bg-[#29AFFF]">
+                    <h2 className="text-xl font-bold text-white tracking-tight">Agregar nuevo producto - Joyería</h2>
+                    <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 text-white rounded-full transition-all">
+                        <X className="w-6 h-6" />
                     </button>
                 </div>
 
                 {/* Body */}
-                <div className="grid grid-cols-1 md:grid-cols-[320px_1fr]">
+                <div className="grid grid-cols-1 md:grid-cols-[350px_1fr]">
                     
                     {/* Left: Image Upload */}
-                    <div className="p-8 flex flex-col gap-3 border-r border-slate-100 bg-white">
-                        <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Imagen de la joya</p>
+                    <div className="p-8 flex flex-col gap-4 border-r border-slate-50 bg-white">
+                        <p className="text-sm font-medium text-slate-500">Imagen del producto</p>
                         <div
                             onClick={() => fileInputRef.current?.click()}
                             onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                             onDragLeave={() => setIsDragging(false)}
                             onDrop={handleDrop}
                             className={cn(
-                                "w-full aspect-square border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 cursor-pointer transition-all overflow-hidden relative",
+                                "w-full aspect-square border-2 border-dashed rounded-3xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all overflow-hidden relative",
                                 isDragging
                                     ? "border-[#29AFFF] bg-sky-50"
                                     : form.imagenUrl
                                         ? "border-transparent"
-                                        : "border-[#29AFFF] bg-white hover:bg-sky-50/30"
+                                        : "border-[#29AFFF] bg-white hover:bg-sky-50/50"
                             )}
-                            style={!form.imagenUrl ? { borderColor: '#29AFFF', borderStyle: 'dotted' } : {}}
+                            style={!form.imagenUrl ? { borderColor: '#29AFFF', borderStyle: 'dashed' } : {}}
                         >
                             {isUploading ? (
-                                <Loader2 className="w-8 h-8 text-[#29AFFF] animate-spin" />
+                                <Loader2 className="w-10 h-10 text-[#29AFFF] animate-spin" />
                             ) : form.imagenUrl ? (
                                 <>
                                     <img src={form.imagenUrl} alt="preview" className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                        <span className="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-lg">Cambiar imagen</span>
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                        <span className="text-white text-xs font-bold bg-black/50 px-4 py-2 rounded-xl">Cambiar imagen</span>
                                     </div>
                                 </>
                             ) : (
                                 <>
-                                    <ImageIcon className="w-10 h-10 text-[#29AFFF]" strokeWidth={1.5} />
-                                    <div className="text-center px-4">
-                                        <p className="text-[11px] font-bold text-slate-600 leading-tight mb-1">Arrastra tu imagen aquí</p>
-                                        <p className="text-[10px] text-slate-400">o haz clic para seleccionar</p>
+                                    <ImageIcon className="w-12 h-12 text-[#29AFFF] mb-1" strokeWidth={1} />
+                                    <div className="text-center px-6">
+                                        <p className="text-[14px] font-bold text-slate-600 leading-snug mb-1">Arrastra tu imagen aquí o haz clic para seleccionar</p>
+                                        <p className="text-[11px] text-slate-400 font-medium">JPG, PNG o WEBP (máx. 5MB)</p>
                                     </div>
                                 </>
                             )}
@@ -247,7 +246,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                             <button
                                 type="button"
                                 onClick={() => setForm(f => ({ ...f, imagenUrl: '' }))}
-                                className="text-[10px] text-slate-400 hover:text-red-500 transition-colors text-center"
+                                className="text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors py-1 mt-1"
                             >
                                 Eliminar imagen
                             </button>
@@ -255,132 +254,133 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                     </div>
 
                     {/* Right: Form */}
-                    <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
+                    <div className="p-10 flex flex-col gap-8 overflow-y-auto max-h-[75vh] custom-scrollbar">
                         
                         {/* Lote Section */}
-                        <div className="flex flex-col gap-2">
-                            <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Información del lote</p>
-                            <label className="text-xs text-slate-500">Seleccionar lote <span className="text-[#29AFFF]">*</span></label>
-                            <select
-                                value={form.lote_id}
-                                onChange={e => setForm(f => ({ ...f, lote_id: e.target.value }))}
-                                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/40 bg-white"
-                            >
-                                <option value=""></option>
-                                {lotes
-                                    .filter(l => l.tipo === 'joyeria')
-                                    .map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
-                            </select>
+                        <div className="flex flex-col gap-3">
+                            <p className="text-[13px] font-bold text-slate-800 uppercase tracking-tight">INFORMACIÓN DEL LOTE</p>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-slate-500">Seleccionar lote <span className="text-[#29AFFF]">*</span></label>
+                                <select
+                                    value={form.lote_id}
+                                    onChange={e => setForm(f => ({ ...f, lote_id: e.target.value }))}
+                                    className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-[15px] text-slate-700 focus:outline-none focus:ring-4 focus:ring-sky-100 bg-white transition-all appearance-none cursor-pointer"
+                                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2364748b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem center', backgroundSize: '1rem' }}
+                                >
+                                    <option value=""></option>
+                                    {lotes
+                                        .filter(l => l.tipo === 'joyeria')
+                                        .map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
+                                </select>
+                            </div>
                         </div>
 
-                        <div className="h-px bg-slate-100" />
-
                         {/* Jewelry Data */}
-                        <div className="flex flex-col gap-3">
-                            <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Datos de la joyería</p>
+                        <div className="flex flex-col gap-6">
+                            <p className="text-[13px] font-bold text-slate-800 uppercase tracking-tight">DATOS DEL PRODUCTO</p>
 
-                            <div className="flex flex-col gap-1">
-                                <label className="text-xs text-slate-500">Nombre de la pieza <span className="text-[#29AFFF]">*</span></label>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-slate-500">Nombre del producto <span className="text-[#29AFFF]">*</span></label>
                                 <input
                                     value={form.nombre}
                                     onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
                                     placeholder="Ej: Anillo de plata con esmeralda"
-                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/40"
+                                    className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-[15px] focus:outline-none focus:ring-4 focus:ring-sky-100 transition-all placeholder:text-slate-300"
                                 />
                             </div>
-
-                            <div className="flex flex-col gap-1">
-                                <label className="text-xs text-slate-500">Descripción</label>
+                            
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-slate-500">Descripción</label>
                                 <textarea
                                     value={form.descripcion}
                                     onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
-                                    placeholder="Detalles sobre el material, calidad, etc."
+                                    placeholder="Detalles sobre el metal, piedras, calidad, etc."
                                     rows={3}
-                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/40 resize-none"
+                                    className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-[15px] focus:outline-none focus:ring-4 focus:ring-sky-100 transition-all resize-none placeholder:text-slate-300"
                                 />
                             </div>
 
-                            <div className="flex flex-col gap-1">
-                                <label className="text-xs text-slate-500">Subcategoría <span className="text-[#29AFFF]">*</span></label>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-slate-500">Subcategoría <span className="text-[#29AFFF]">*</span></label>
                                 <select
                                     value={form.subcategoria_id}
                                     onChange={e => setForm(f => ({ ...f, subcategoria_id: e.target.value }))}
                                     disabled={loadingCats}
-                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/40 bg-white disabled:opacity-60"
+                                    className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-[15px] text-slate-700 focus:outline-none focus:ring-4 focus:ring-sky-100 bg-white transition-all appearance-none cursor-pointer disabled:opacity-50"
+                                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2364748b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem center', backgroundSize: '1rem' }}
                                 >
                                     <option value="">
-                                        {loadingCats ? 'Cargando...' : subcategorias.length === 0 ? 'Sin subcategorías' : ''}
+                                        {loadingCats ? 'Cargando...' : subcategorias.length === 0 ? 'Sin subcategorías registradas' : ''}
                                     </option>
                                     {subcategorias.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                                 </select>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-slate-500">Costo individual <span className="text-[#29AFFF]">*</span></label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-medium text-slate-500">Costo individual <span className="text-[#29AFFF]">*</span></label>
                                     <div className="relative">
-                                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                                         <input
                                             type="number"
                                             value={form.costo_base}
                                             onChange={e => setForm(f => ({ ...f, costo_base: e.target.value }))}
                                             placeholder="0.00"
-                                            className="w-full border border-slate-200 rounded-xl pl-7 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/40"
+                                            className="w-full border border-slate-200 rounded-2xl pl-9 pr-5 py-4 text-[15px] focus:outline-none focus:ring-4 focus:ring-sky-100 transition-all placeholder:text-slate-300"
                                         />
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-slate-500">Código personalizado</label>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-medium text-slate-500">Código personalizado</label>
                                     <input
                                         value={form.codigo_custom}
                                         onChange={e => setForm(f => ({ ...f, codigo_custom: e.target.value }))}
-                                        placeholder="Ej: JOYA-01"
-                                        className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/40 placeholder:opacity-50"
+                                        placeholder="Opcional (Ej: JOYA-01)"
+                                        className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-[15px] focus:outline-none focus:ring-4 focus:ring-sky-100 transition-all uppercase placeholder:normal-case placeholder:text-slate-300"
                                     />
                                 </div>
                             </div>
 
-                            {/* Tipo de venta */}
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-500">Tipo de venta</label>
-                                <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col gap-3 mt-2">
+                                <label className="text-sm font-medium text-slate-500">Tipo de venta</label>
+                                <div className="grid grid-cols-2 gap-4">
                                     <button
                                         type="button"
                                         onClick={() => setForm(f => ({ ...f, tipo_venta: 'directa' }))}
                                         className={cn(
-                                            "flex flex-col items-center py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all",
+                                            "flex flex-col items-center justify-center py-5 px-4 rounded-2xl border-2 font-bold transition-all gap-1",
                                             form.tipo_venta === 'directa'
                                                 ? "border-[#29AFFF] bg-sky-50 text-[#29AFFF]"
-                                                : "border-slate-200 text-slate-500 hover:border-slate-300"
+                                                : "border-slate-100 text-slate-400 hover:border-slate-200"
                                         )}
                                     >
-                                        Venta directa
-                                        <span className="text-[10px] font-normal mt-0.5 opacity-70">Precio fijo</span>
+                                        <span className="text-sm">Venta directa</span>
+                                        <span className={cn("text-[10px] font-medium", form.tipo_venta === 'directa' ? "text-[#29AFFF]/80" : "text-slate-400")}>Precio fijo</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setForm(f => ({ ...f, tipo_venta: 'subasta' }))}
                                         className={cn(
-                                            "flex flex-col items-center py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all",
+                                            "flex flex-col items-center justify-center py-5 px-4 rounded-2xl border-2 font-bold transition-all gap-1",
                                             form.tipo_venta === 'subasta'
                                                 ? "border-slate-700 bg-slate-50 text-slate-800"
-                                                : "border-slate-200 text-slate-500 hover:border-slate-300"
+                                                : "border-slate-100 text-slate-400 hover:border-slate-200"
                                         )}
                                     >
-                                        Subasta premium
-                                        <span className="text-[10px] font-normal mt-0.5 opacity-70">Para mejores piezas</span>
+                                        <span className="text-sm">Subasta premium</span>
+                                        <span className={cn("text-[10px] font-medium text-slate-400")}>Para mejores piezas</span>
                                     </button>
                                 </div>
                             </div>
 
                             {/* Info card preview */}
-                            <div className="bg-sky-50/50 border border-[#29AFFF]/20 rounded-xl px-4 py-3 flex flex-col gap-1.5 mt-2">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-500">Código final:</span>
-                                    <span className="font-bold text-[#29AFFF]">{previewCodigo}</span>
+                            <div className="bg-[#F0FDFA] border border-[#2DD4BF]/20 rounded-3xl p-6 flex flex-col gap-3 mt-2">
+                                <div className="flex justify-between items-center text-sm font-medium">
+                                    <span className="text-slate-500">Código generado:</span>
+                                    <span className="font-bold text-[#14B8A6]">{previewCodigo}</span>
                                 </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-500">Inversión asignada:</span>
+                                <div className="flex justify-between items-center text-sm font-medium">
+                                    <span className="text-slate-500">Costo base asignado:</span>
                                     <span className="font-bold text-[#29AFFF]">
                                         {form.costo_base ? `$${parseFloat(form.costo_base).toFixed(2)}` : '—'}
                                     </span>
@@ -389,25 +389,27 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                         </div>
 
                         {errorMessage && (
-                            <p className="text-xs text-red-500 font-semibold">{errorMessage}</p>
+                            <div className="bg-red-50 text-red-600 text-[13px] font-bold p-4 rounded-2xl border border-red-100">
+                                {errorMessage}
+                            </div>
                         )}
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
+                <div className="px-8 py-6 border-t border-slate-50 flex gap-4 bg-white/50 backdrop-blur-sm">
                     <button
                         onClick={onClose}
-                        className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                        className="flex-1 py-4 rounded-2xl border border-slate-200 text-sm font-bold text-slate-500 hover:bg-slate-50 transition-all"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={!canSave}
-                        className="flex-1 py-3 rounded-xl bg-[#29AFFF] hover:bg-[#2596D7] text-white text-sm font-bold shadow-lg shadow-sky-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="flex-1 py-4 rounded-2xl bg-[#29AFFF] hover:bg-[#2596D7] text-white text-sm font-bold shadow-xl shadow-sky-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {isSaving && <Loader2 className="w-5 h-5 animate-spin text-white" />}
                         Guardar joyería
                     </button>
                 </div>
