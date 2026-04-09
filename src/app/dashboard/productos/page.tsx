@@ -187,7 +187,7 @@ export default function ProductosPage() {
                                         
                                         {/* Top-right State Pill */}
                                         <div className={cn('absolute top-3 right-3 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm',
-                                            p.estado === 'Disponible' ? 'bg-[#40C4AA] text-white' :
+                                            p.estado === 'Disponible' ? 'bg-[#FF0080] text-white' :
                                                 p.estado === 'Vendido' ? 'bg-slate-200 text-slate-600' :
                                                     'bg-yellow-400 text-white'
                                         )}>
@@ -234,7 +234,7 @@ export default function ProductosPage() {
                                             <td className="px-5 py-4 text-sm text-slate-500">{p.subcategoria}</td>
                                             <td className="px-5 py-4">
                                                 <span className={cn('px-2 py-1 rounded-lg text-xs font-bold',
-                                                    p.estado === 'Disponible' ? 'bg-[#40C4AA]/10 text-[#40C4AA]' :
+                                                    p.estado === 'Disponible' ? 'bg-[#FF0080]/10 text-[#FF0080]' :
                                                         p.estado === 'Vendido' ? 'bg-slate-100 text-slate-500' :
                                                             'bg-yellow-100 text-yellow-600'
                                                 )}>{p.estado}</span>
@@ -288,7 +288,7 @@ function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden relative">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden relative">
                 
                 {/* Close Button top-right absolute */}
                 <button onClick={onClose} className="absolute right-4 top-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/50 hover:bg-slate-100 text-slate-500 transition-colors">
@@ -296,7 +296,7 @@ function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit
                 </button>
 
                 {/* Body: 2-column layout missing header */}
-                <div className="grid grid-cols-1 md:grid-cols-[300px_1fr]">
+                <div className="grid grid-cols-1 md:grid-cols-[320px_1fr]">
 
                     {/* Left: Image (takes full height on the left) */}
                     <div className="relative bg-slate-50 min-h-[400px] h-full overflow-hidden flex items-center justify-center">
@@ -327,7 +327,7 @@ function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit
                         {/* Código */}
                         <div className="flex flex-col gap-1 w-full">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Código</span>
-                            <span className="text-base font-bold text-[#40C4AA]">{producto.codigo || '—'}</span>
+                            <span className="text-base font-bold text-[#FF0080]">{producto.codigo || '—'}</span>
                         </div>
 
                         {/* Nombre */}
@@ -351,7 +351,7 @@ function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit
                             {producto.precio != null && (
                                 <div className="flex flex-col gap-1">
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Precio Venta</span>
-                                    <span className="text-[28px] font-black text-[#40C4AA]">${Number(producto.precio).toFixed(2)}</span>
+                                    <span className="text-[28px] font-black text-[#FF0080]">${Number(producto.precio).toFixed(2)}</span>
                                 </div>
                             )}
                         </div>
@@ -360,7 +360,7 @@ function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit
                         <div className="flex flex-col gap-1.5 w-full mt-2">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estado actual</span>
                             <span className={cn('inline-flex items-center justify-center px-4 py-1.5 rounded-full text-sm font-bold w-max',
-                                producto.estado === 'Disponible' ? 'bg-[#40C4AA] text-white' :
+                                producto.estado === 'Disponible' ? 'bg-[#FF0080] text-white' :
                                     producto.estado === 'Vendido' ? 'bg-slate-200 text-slate-600' :
                                         'bg-[#FACC15] text-white'
                             )}>
@@ -375,14 +375,14 @@ function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit
                         <div className="flex flex-col gap-3 w-full mt-4">
                             {producto.estado === 'Disponible' && (
                                 <button
-                                    className="w-full py-3.5 rounded-xl bg-[#40C4AA] hover:bg-[#38b098] text-white font-bold tracking-wide transition-colors"
+                                    className="w-full py-3.5 rounded-xl bg-[#FF0080] hover:bg-[#FF0080]/90 text-white font-bold tracking-wide transition-colors"
                                     onClick={onClose}
                                 >
                                     Registrar venta
                                 </button>
                             )}
                             <button
-                                className="w-full py-3.5 rounded-xl border-2 border-[#40C4AA] text-[#40C4AA] bg-white hover:bg-[#F2FBF9] font-bold tracking-wide transition-colors"
+                                className="w-full py-3.5 rounded-xl border-2 border-[#FF0080] text-[#FF0080] bg-white hover:bg-pink-50/50 font-bold tracking-wide transition-colors"
                                 onClick={onEdit}
                             >
                                 Editar producto

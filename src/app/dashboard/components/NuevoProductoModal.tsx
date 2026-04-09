@@ -221,10 +221,10 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 bg-[#40C4AA]">
+                <div className="flex items-center justify-between px-6 py-4 bg-[#FF0080]">
                     <h2 className="text-base font-bold text-white">Agregar nuevo producto - Ropa</h2>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
                         <X className="w-4 h-4" />
@@ -232,7 +232,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                 </div>
 
                 {/* Body */}
-                <div className="grid grid-cols-1 md:grid-cols-[210px_1fr]">
+                <div className="grid grid-cols-1 md:grid-cols-[320px_1fr]">
 
                     {/* Left: Image Upload */}
                     <div className="p-5 flex flex-col gap-3 border-r border-slate-100">
@@ -245,7 +245,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                             className={cn(
                                 "w-full aspect-square border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 cursor-pointer transition-all overflow-hidden relative",
                                 isDragging
-                                    ? "border-[#40C4AA] bg-teal-50"
+                                    ? "border-[#FF0080] bg-pink-50"
                                     : form.imagenUrl
                                         ? "border-transparent"
                                         : "border-[#FF1970] bg-pink-50/40 hover:bg-pink-50"
@@ -293,7 +293,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                             <select
                                 value={form.lote_id}
                                 onChange={e => setForm(f => ({ ...f, lote_id: e.target.value }))}
-                                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40 bg-white"
+                                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#FF0080]/40 bg-white"
                             >
                                 <option value=""></option>
                                 {lotes
@@ -314,7 +314,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                                     value={form.nombre}
                                     onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
                                     placeholder="Ej: Blusa floreada azul"
-                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40"
+                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF0080]/40"
                                 />
                             </div>
 
@@ -325,7 +325,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                                     onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
                                     placeholder="Descripción opcional del producto"
                                     rows={3}
-                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40 resize-none"
+                                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF0080]/40 resize-none"
                                 />
                             </div>
 
@@ -335,7 +335,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                                 value={form.subcategoria_id}
                                 onChange={e => setForm(f => ({ ...f, subcategoria_id: e.target.value }))}
                                 disabled={loadingCats}
-                                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40 bg-white disabled:opacity-60"
+                                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#FF0080]/40 bg-white disabled:opacity-60"
                             >
                                 <option value="">
                                     {loadingCats ? 'Cargando...' : subcategorias.length === 0 ? 'Sin subcategorías — ve a Configuración' : ''}
@@ -354,7 +354,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                                         className={cn(
                                             "flex flex-col items-center py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all",
                                             form.tipo_venta === 'directa'
-                                                ? "border-[#40C4AA] bg-[#40C4AA]/10 text-[#40C4AA]"
+                                                ? "border-[#FF0080] bg-[#FF0080]/10 text-[#FF0080]"
                                                 : "border-slate-200 text-slate-500 hover:border-slate-300"
                                         )}
                                     >
@@ -385,7 +385,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-slate-500">Costo base asignado:</span>
-                                    <span className="font-bold text-[#EAB308]">
+                                    <span className="font-bold text-[#FF0080]">
                                         {form.costo_base ? `$${parseFloat(form.costo_base).toFixed(2)}` : '—'}
                                     </span>
                                 </div>
@@ -409,7 +409,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                     <button
                         onClick={handleSave}
                         disabled={!canSave}
-                        className="flex-1 py-3 rounded-xl bg-[#40C4AA] hover:bg-[#40C4AA]/90 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                        className="flex-1 py-3 rounded-xl bg-[#FF0080] hover:bg-[#FF0080]/90 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
                     >
                         {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                         Guardar producto

@@ -132,7 +132,7 @@ export default function JoyeriaPage() {
                 <main className="p-8 pb-20">
                     <div className="flex items-center justify-end mb-6">
                         <button onClick={() => setShowNuevaJoya(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-colors">
+                            className="flex items-center gap-2 px-5 py-2.5 bg-[#29AFFF] hover:bg-[#2596D7] text-white rounded-xl text-sm font-bold shadow-lg shadow-sky-200 transition-colors">
                             <Plus className="w-4 h-4" /> Agregar pieza
                         </button>
                     </div>
@@ -141,7 +141,7 @@ export default function JoyeriaPage() {
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-6 flex flex-col gap-4">
                         <div className="relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder-slate-400"
+                            <input className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/20 placeholder-slate-400"
                                 placeholder="Buscar por nombre o código..."
                                 value={search} onChange={e => setSearch(e.target.value)} />
                         </div>
@@ -150,17 +150,17 @@ export default function JoyeriaPage() {
                                 {filterTabs.map(tab => (
                                     <button key={tab} onClick={() => setFilterTab(tab)}
                                         className={cn('px-4 py-2 rounded-xl text-sm font-semibold transition-all',
-                                            filterTab === tab ? 'bg-primary text-white shadow-sm shadow-primary/20' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                            filterTab === tab ? 'bg-[#29AFFF] text-white shadow-sm shadow-sky-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                         )}>
                                         {tab}
                                     </button>
                                 ))}
                             </div>
                             <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
-                                <button onClick={() => setViewMode('grid')} className={cn('p-2 rounded-lg transition-colors', viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-slate-400 hover:text-slate-600')}>
+                                <button onClick={() => setViewMode('grid')} className={cn('p-2 rounded-lg transition-colors', viewMode === 'grid' ? 'bg-white shadow-sm text-[#29AFFF]' : 'text-slate-400 hover:text-slate-600')}>
                                     <Grid2X2 className="w-4 h-4" />
                                 </button>
-                                <button onClick={() => setViewMode('list')} className={cn('p-2 rounded-lg transition-colors', viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-slate-400 hover:text-slate-600')}>
+                                <button onClick={() => setViewMode('list')} className={cn('p-2 rounded-lg transition-colors', viewMode === 'list' ? 'bg-white shadow-sm text-[#29AFFF]' : 'text-slate-400 hover:text-slate-600')}>
                                     <List className="w-4 h-4" />
                                 </button>
                             </div>
@@ -170,7 +170,7 @@ export default function JoyeriaPage() {
                     {/* Content */}
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-3">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                            <Loader2 className="w-8 h-8 animate-spin text-[#29AFFF]" />
                             <p className="text-sm">Cargando joyería...</p>
                         </div>
                     ) : filtered.length === 0 ? (
@@ -182,7 +182,7 @@ export default function JoyeriaPage() {
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
                             {filtered.map(j => (
                                 <div key={j.id} onClick={() => setSelectedJoya(j)}
-                                    className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-primary/20 transition-all cursor-pointer group overflow-hidden flex flex-col">
+                                    className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-[#29AFFF]/20 transition-all cursor-pointer group overflow-hidden flex flex-col">
                                     <div className="h-52 bg-slate-100 overflow-hidden relative shrink-0">
                                         {j.imagen ? (
                                             // eslint-disable-next-line @next/next/no-img-element
@@ -203,7 +203,7 @@ export default function JoyeriaPage() {
                                         <h3 className="font-bold text-slate-800 text-sm leading-tight">{j.nombre}</h3>
                                         <div className="mt-auto flex items-center justify-between pt-2 border-t border-slate-50">
                                             <span className="text-xs text-slate-400 font-medium">{j.subcategoria}</span>
-                                            {j.precio ? <span className="font-bold text-primary text-sm">${j.precio}</span> : <span className="text-xs text-slate-300">Sin precio</span>}
+                                            {j.precio ? <span className="font-bold text-[#29AFFF] text-sm">${j.precio}</span> : <span className="text-xs text-slate-300">Sin precio</span>}
                                         </div>
                                     </div>
                                 </div>
@@ -235,7 +235,7 @@ export default function JoyeriaPage() {
                                             <td className="px-5 py-4 text-sm text-slate-500">{j.tipoVenta}</td>
                                             <td className="px-5 py-4 text-sm font-bold text-slate-800">{j.precio ? `$${j.precio}` : '—'}</td>
                                             <td className="px-5 py-4">
-                                                <button onClick={() => setSelectedJoya(j)} className="text-sm font-semibold text-primary hover:underline">Ver</button>
+                                                <button onClick={() => setSelectedJoya(j)} className="text-sm font-semibold text-[#29AFFF] hover:underline">Ver</button>
                                             </td>
                                         </tr>
                                     ))}
@@ -249,7 +249,7 @@ export default function JoyeriaPage() {
             {/* Detail Modal */}
             {selectedJoya && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
                         
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
@@ -260,7 +260,7 @@ export default function JoyeriaPage() {
                         </div>
 
                         {/* Body: 2-column layout */}
-                        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] bg-white">
+                        <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] bg-white">
 
                             {/* Left: Image */}
                             <div className="p-6 pr-3 flex flex-col gap-3">
@@ -302,7 +302,7 @@ export default function JoyeriaPage() {
                                 {/* Código */}
                                 <div className="flex flex-col gap-1 w-full">
                                     <span className="text-xs font-medium text-slate-400">Código</span>
-                                    <span className="text-lg font-bold text-[#FF9696]">{selectedJoya.codigo || '—'}</span>
+                                    <span className="text-lg font-bold text-[#29AFFF]">{selectedJoya.codigo || '—'}</span>
                                 </div>
 
                                 {/* Nombre & Subcategoria label */}
@@ -310,7 +310,7 @@ export default function JoyeriaPage() {
                                     <span className="text-xs font-medium text-slate-400">Nombre</span>
                                     <span className="text-2xl font-bold text-[#1E293B] leading-tight">{selectedJoya.nombre}</span>
                                     {selectedJoya.subcategoria && (
-                                        <span className="mt-2 inline-flex items-center px-4 py-1 rounded-full text-xs font-bold text-[#FF9696] bg-[#FFF5F5]">
+                                        <span className="mt-2 inline-flex items-center px-4 py-1 rounded-full text-xs font-bold text-[#29AFFF] bg-[#29AFFF]/10">
                                             {selectedJoya.subcategoria}
                                         </span>
                                     )}
@@ -348,7 +348,7 @@ export default function JoyeriaPage() {
                                         </button>
                                     )}
                                     <button
-                                        className="w-full py-3.5 rounded-xl border-2 border-[#FF9696] text-[#FF9696] bg-white hover:bg-[#FFF5F5] font-bold tracking-wide transition-colors"
+                                        className="w-full py-3.5 rounded-xl border-2 border-[#29AFFF] text-[#29AFFF] bg-white hover:bg-[#29AFFF]/5 font-bold tracking-wide transition-colors"
                                         onClick={() => setSelectedJoya(null)}
                                     >
                                         Editar joyería
