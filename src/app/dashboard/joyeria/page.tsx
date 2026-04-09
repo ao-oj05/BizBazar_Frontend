@@ -23,6 +23,13 @@ interface Joya {
 
 type FilterTab = 'Todos' | EstadoJoya;
 
+interface Lote {
+    id: string;
+    nombre: string;
+    codigo: string;
+    tipo?: string;
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function JoyeriaPage() {
@@ -31,6 +38,7 @@ export default function JoyeriaPage() {
     const [search, setSearch] = useState('');
     const [filterTab, setFilterTab] = useState<FilterTab>('Todos');
     const [joyas, setJoyas] = useState<Joya[]>([]);
+    const [lotes, setLotes] = useState<Lote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedJoya, setSelectedJoya] = useState<Joya | null>(null);
     const [showNuevaJoya, setShowNuevaJoya] = useState(false);
@@ -66,12 +74,20 @@ export default function JoyeriaPage() {
     const fetchJoyas = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch('/api/joyeria');
-            const data = res.ok ? await res.json() : [];
-            const raw: any[] = Array.isArray(data) ? data : (data.data ?? []);
+            const [resJ, resL] = await Promise.all([
+                fetch('/api/joyeria'),
+                fetch('/api/lotes'),
+            ]);
+            const dataJ = resJ.ok ? await resJ.json() : [];
+            const dataL = resL.ok ? await resL.json() : [];
+            
+            const raw: any[] = Array.isArray(dataJ) ? dataJ : (dataJ.data ?? []);
             setJoyas(raw.map(mapJoya));
+            
+            const rawLotes: any[] = Array.isArray(dataL) ? dataL : (dataL.data ?? []);
+            setLotes(rawLotes);
         } catch (error) {
-            console.error('Error fetching joyería:', error);
+            console.error('Error fetching data:', error);
         } finally {
             setIsLoading(false);
         }
@@ -348,6 +364,7 @@ export default function JoyeriaPage() {
             {/* Nueva Joya Modal */}
             {showNuevaJoya && (
                 <NuevaJoyaModal
+                    lotes={lotes}
                     onClose={() => setShowNuevaJoya(false)}
                     onSave={j => { setJoyas(prev => [...prev, j]); setShowNuevaJoya(false); }}
                 />
