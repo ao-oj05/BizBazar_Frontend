@@ -73,6 +73,11 @@ export default function DashboardPage() {
             
             setSales(backendData.ventas_recientes ?? backendData.sales ?? []);
             
+            const parsedLotes = Array.isArray(dataL) ? dataL : dataL.data ?? [];
+            const parsedProductos = Array.isArray(dataP) ? dataP : dataP.data ?? [];
+
+            const countLotesActivos = parsedLotes.filter((l: any) => l.estado?.toLowerCase() === 'activo').length;
+
             if (backendData.metricas) {
                 setStats({
                     clothingProducts: backendData.metricas.productos_ropa_disponibles || 0,
@@ -80,49 +85,49 @@ export default function DashboardPage() {
                     soldToday: backendData.metricas.vendidos_hoy || 0,
                     dailyProfit: `$${backendData.metricas.ganancia_dia || 0}`,
                     accumulatedProfit: `$${backendData.metricas.ganancia_acumulada || 0}`,
-                    activeLots: backendData.metricas.lotes_activos || 0,
+                    activeLots: countLotesActivos || backendData.metricas.lotes_activos || 0,
                 });
             } else if (backendData.stats) {
-                setStats(backendData.stats);
+                setStats({
+                    ...backendData.stats,
+                    activeLots: countLotesActivos || backendData.stats.activeLots || 0,
+                });
             } else {
-                setStats({ clothingProducts: 0, jewelryProducts: 0, soldToday: 0, dailyProfit: '$0', accumulatedProfit: '$0', activeLots: 0 });
+                setStats({ clothingProducts: 0, jewelryProducts: 0, soldToday: 0, dailyProfit: '$0', accumulatedProfit: '$0', activeLots: countLotesActivos });
             }
 
-            const parsedLotes = Array.isArray(dataL) ? dataL : dataL.data ?? [];
-            const parsedProductos = Array.isArray(dataP) ? dataP : dataP.data ?? [];
             setLotes(parsedLotes);
 
             // Compute Alerts client-side
             const newAlerts: Alert[] = [];
             
-            // 1. Lotes con stock bajo (< 20% disponible)
-            parsedLotes.forEach((lote: any) => {
-                if (lote.estado?.toLowerCase() !== 'activo') return;
-                const total = Number(lote.piezas_total || lote.piezas) || 0;
-                if (total === 0) return;
-                const prods = parsedProductos.filter((p: any) => p.lote_id === lote.id);
-                const vendidos = prods.filter((p: any) => p.estado?.toLowerCase() === 'vendido').length;
-                const remain = total - vendidos;
-                if (total > 0 && remain / total <= 0.2) {
-                    newAlerts.push({
-                        id: `alert-lote-${lote.id}`,
-                        title: `Stock bajo en lote: ${lote.nombre}`,
-                        description: `Quedan ${remain} piezas disponibles de ${total}.`,
-                        type: 'danger'
-                    });
-                }
-            });
-
-            // 2. Productos en subasta
-            const enSubasta = parsedProductos.filter((p: any) => p.estado?.toLowerCase() === 'en subasta' || p.estado?.toLowerCase() === 'en_subasta');
-            enSubasta.forEach((p: any) => {
+            // 1. Stock bajo en ropa (<= 2 prendas)
+            const ropaDisponiblesCount = parsedProductos.filter((p: any) => 
+                p.categoria?.toLowerCase() === 'ropa' && (!p.estado || p.estado?.toLowerCase() === 'disponible' || p.estado?.toLowerCase() === 'activo')
+            ).length;
+            
+            if (ropaDisponiblesCount <= 2) {
                 newAlerts.push({
-                    id: `alert-subasta-${p.id}`,
-                    title: `Producto en subasta activa`,
-                    description: `El producto ${p.nombre} (${p.codigo}) se encuentra actualmente en subasta.`,
-                    type: 'warning' // Cyan colored alert
+                    id: 'alert-stock-ropa',
+                    title: 'Stock bajo ropa',
+                    description: `${ropaDisponiblesCount} productos`,
+                    type: 'danger'
                 });
-            });
+            }
+
+            // 2. Subastas activas (>= 1 subasta)
+            const enSubastaCount = parsedProductos.filter((p: any) => 
+                p.estado?.toLowerCase() === 'en subasta' || p.estado?.toLowerCase() === 'en_subasta'
+            ).length;
+            
+            if (enSubastaCount >= 1) {
+                newAlerts.push({
+                    id: 'alert-subastas',
+                    title: 'Subastas activas',
+                    description: `${enSubastaCount} productos`,
+                    type: 'warning'
+                });
+            }
 
             // Keep any backend alerts if they happen to exist
             if (backendData.alerts) {
@@ -334,6 +339,7 @@ export default function DashboardPage() {
 
             {showNuevaJoya && (
                 <NuevaJoyaModal
+                    lotes={lotes}
                     onClose={() => setShowNuevaJoya(false)}
                     onSave={() => {
                         setShowNuevaJoya(false);

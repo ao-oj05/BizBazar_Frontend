@@ -11,6 +11,7 @@ export interface LoteBasico {
     inversion?: number;
     piezas_total?: number;
     piezas?: number;
+    tipo?: string;
 }
 
 interface Subcategoria {
@@ -274,7 +275,9 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                                 className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/40 bg-white"
                             >
                                 <option value=""></option>
-                                {lotes.map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
+                                {lotes
+                                    .filter(l => l.tipo === 'ropa' || (!l.tipo && !l.nombre.toLowerCase().includes('joyer')))
+                                    .map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
                             </select>
                         </div>
 

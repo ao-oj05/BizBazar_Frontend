@@ -6,7 +6,7 @@ import { Topbar } from '../components/Topbar';
 import { cn } from '@/src/shared/utils';
 import {
     Plus, Eye, Calendar, Filter, ChevronDown, X,
-    AlertTriangle, TrendingDown, Search, Loader2
+    AlertTriangle, TrendingDown, Search, Loader2, Tag, Gem
 } from 'lucide-react';
 import { Button } from '@/src/shared/components/ui/button';
 
@@ -29,10 +29,12 @@ interface Lote {
     piezas: number;
     recuperado: number;
     estado: 'Activo' | 'Cerrado';
+    tipo: string;
     productos: Producto[];
 }
 
 type EstadoFilter = 'Todos los estados' | 'Activo' | 'Cerrado';
+type CategoriaFilter = 'Todos' | 'Ropa' | 'Joyería';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -226,6 +228,7 @@ export default function LotesPage() {
     const [lotes, setLotes] = useState<Lote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [estadoFilter, setEstadoFilter] = useState<EstadoFilter>('Todos los estados');
+    const [categoriaFilter, setCategoriaFilter] = useState<CategoriaFilter>('Todos');
     const [showEstadoDropdown, setShowEstadoDropdown] = useState(false);
     const [search, setSearch] = useState('');
     const [fechaDesde, setFechaDesde] = useState('');
@@ -255,6 +258,7 @@ export default function LotesPage() {
                     piezas: Number(l.piezas_total || l.piezas) || 0,
                     recuperado: Number(l.recuperado) || 0,
                     estado: (l.estado && l.estado.toLowerCase() === 'cerrado') ? 'Cerrado' : 'Activo',
+                    tipo: l.tipo || (l.nombre.toLowerCase().includes('joyer') ? 'Joyería' : 'Ropa'),
                     productos: Array.isArray(l.productos) ? l.productos : []
                 }));
                 setLotes(mapped);
@@ -285,10 +289,11 @@ export default function LotesPage() {
             lote.codigo.toLowerCase().includes(search.toLowerCase()) ||
             lote.nombre.toLowerCase().includes(search.toLowerCase());
         const matchEstado = estadoFilter === 'Todos los estados' || lote.estado === estadoFilter;
+        const matchCategoria = categoriaFilter === 'Todos' || (categoriaFilter === 'Ropa' && lote.tipo.toLowerCase() === 'ropa') || (categoriaFilter === 'Joyería' && (lote.tipo.toLowerCase() === 'joyería' || lote.tipo.toLowerCase() === 'joyeria'));
         const matchDesde = !fechaDesde || lote.fecha >= fechaDesde;
         const matchHasta = !fechaHasta || lote.fecha <= fechaHasta;
-        return matchSearch && matchEstado && matchDesde && matchHasta;
-    }), [lotes, search, estadoFilter, fechaDesde, fechaHasta]);
+        return matchSearch && matchEstado && matchCategoria && matchDesde && matchHasta;
+    }), [lotes, search, estadoFilter, categoriaFilter, fechaDesde, fechaHasta]);
 
     const hasAuction = (lote: Lote) => lote.productos.some(p => p.estado === 'En subasta');
 
@@ -314,12 +319,29 @@ export default function LotesPage() {
 
                     {/* Search & Filters */}
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-6 flex flex-col gap-4">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder-slate-400 transition-all" placeholder="Buscar lote por nombre o código..." value={search} onChange={e => setSearch(e.target.value)} />
-                        </div>
-                        <div className="flex items-center justify-between flex-wrap gap-3">
-                            <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <button
+                                    onClick={() => setCategoriaFilter('Todos')}
+                                    className={cn("px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm", categoriaFilter === 'Todos' ? "bg-[#FF007F] text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")}
+                                >
+                                    Todos
+                                </button>
+                                <button
+                                    onClick={() => setCategoriaFilter('Ropa')}
+                                    className={cn("flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm", categoriaFilter === 'Ropa' ? "bg-[#FF007F] text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")}
+                                >
+                                    <Tag className="w-4 h-4" /> Ropa
+                                </button>
+                                <button
+                                    onClick={() => setCategoriaFilter('Joyería')}
+                                    className={cn("flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm", categoriaFilter === 'Joyería' ? "bg-[#29AFFF] text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")}
+                                >
+                                    <Gem className="w-4 h-4" /> Joyería
+                                </button>
+                                
+                                <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
                                 {/* Date filter */}
                                 <div className="relative">
                                     <button onClick={() => setShowDateFilter(!showDateFilter)} className={cn('flex items-center gap-2 px-4 py-2 bg-white border rounded-lg text-sm font-medium transition-colors shadow-sm', (fechaDesde || fechaHasta) ? 'border-primary text-primary' : 'border-slate-200 text-slate-600 hover:bg-slate-50')}>
@@ -362,9 +384,6 @@ export default function LotesPage() {
                                     )}
                                 </div>
                             </div>
-                            <Button onClick={() => setShowNuevoLote(true)} className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20 px-5 py-2.5">
-                                <Plus className="w-4 h-4" /> Nuevo Lote
-                            </Button>
                         </div>
                     </div>
 
@@ -374,14 +393,15 @@ export default function LotesPage() {
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-slate-100 bg-slate-50/50">
-                                        <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Código</th>
-                                        <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Nombre</th>
-                                        <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
-                                        <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Inversión</th>
-                                        <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Piezas</th>
-                                        <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Recuperado</th>
-                                        <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Estado</th>
-                                        <th className="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Acciones</th>
+                                        <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Código</th>
+                                        <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tipo</th>
+                                        <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nombre</th>
+                                        <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
+                                        <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Inversión</th>
+                                        <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Piezas</th>
+                                        <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Recuperado</th>
+                                        <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Estado</th>
+                                        <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
@@ -396,10 +416,19 @@ export default function LotesPage() {
                                         lotesFiltrados.map((lote, i) => (
                                             <tr key={lote.id || `lote-tr-${i}`} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="px-6 py-5 text-sm font-bold text-slate-800">{lote.codigo}</td>
-                                                <td className="px-6 py-5 text-sm text-slate-700">{lote.nombre}</td>
-                                                <td className="px-6 py-5 text-sm text-slate-500">{lote.fecha}</td>
-                                                <td className="px-6 py-5 text-sm font-semibold text-slate-800">${(Number(lote.inversion) || 0).toLocaleString('en-US')}</td>
-                                                <td className="px-6 py-5 text-sm text-slate-700">{lote.piezas}</td>
+                                                <td className="px-6 py-5">
+                                                    <span className={cn(
+                                                        'px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5',
+                                                        lote.tipo === 'Ropa' || lote.tipo === 'ropa' ? 'bg-[#FF007F]/10 text-[#FF007F]' : 'bg-[#29AFFF]/10 text-[#29AFFF]'
+                                                    )}>
+                                                        {lote.tipo === 'Ropa' || lote.tipo === 'ropa' ? <Tag className="w-3.5 h-3.5" /> : <Gem className="w-3.5 h-3.5" />}
+                                                        {lote.tipo === 'Ropa' || lote.tipo === 'ropa' ? 'Ropa' : 'Joyería'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-5 text-sm text-slate-700 font-medium">{lote.nombre}</td>
+                                                <td className="px-6 py-5 text-sm text-slate-500 font-medium">{lote.fecha}</td>
+                                                <td className="px-6 py-5 text-sm font-bold text-slate-800">${(Number(lote.inversion) || 0).toLocaleString('en-US')}</td>
+                                                <td className="px-6 py-5 text-sm text-slate-600 font-medium">{lote.piezas}</td>
                                                 <td className="px-6 py-5">
                                                     <RecoveryBar recuperado={lote.recuperado} inversion={lote.inversion} />
                                                 </td>

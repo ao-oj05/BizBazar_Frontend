@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Loader2, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/src/shared/utils';
+import { LoteBasico } from './NuevoProductoModal';
 
 interface Subcategoria {
     id: string;
@@ -23,11 +24,12 @@ interface Joya {
 const normalize = (s: string) =>
     (s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSave: (j: Joya) => void }) {
+export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]; onClose: () => void; onSave: (j: Joya) => void }) {
     const [form, setForm] = useState({
         nombre: '',
         descripcion: '',
         subcategoria_id: '',
+        lote_id: '',
         costo_base: '',
         codigo_custom: '',
         tipo_venta: 'directa',
@@ -106,7 +108,7 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
 
     const handleSave = async () => {
         setErrorMessage('');
-        if (!form.nombre || !form.subcategoria_id || !form.costo_base) return;
+        if (!form.nombre || !form.subcategoria_id || !form.costo_base || !form.lote_id) return;
         setIsSaving(true);
         try {
             const finalCodigo = form.codigo_custom.trim()
@@ -124,6 +126,8 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                     descripcion: form.descripcion,
                     categoria: 'joyeria',
                     subcategoria: subcategoriaNombre,
+                    subcategoria_id: form.subcategoria_id,
+                    lote_id: form.lote_id,
                     tipo_venta: form.tipo_venta,
                     costo_base: parseFloat(form.costo_base),
                     imagenes: form.imagenUrl ? [form.imagenUrl] : []
@@ -149,7 +153,7 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
         }
     };
 
-    const canSave = !isSaving && !!form.nombre && !!form.subcategoria_id && !!form.costo_base;
+    const canSave = !isSaving && !!form.nombre && !!form.subcategoria_id && !!form.costo_base && !!form.lote_id;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-left">
@@ -218,6 +222,23 @@ export function NuevaJoyaModal({ onClose, onSave }: { onClose: () => void; onSav
                     {/* Right: Form */}
                     <div className="p-8 flex flex-col gap-5 overflow-y-auto max-h-[75vh]">
                         <h3 className="text-sm font-bold text-slate-800">Datos de la joya</h3>
+
+                        {/* Lote */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-semibold text-slate-600">Seleccionar lote <span className="text-[#FF1970]">*</span></label>
+                            <select
+                                value={form.lote_id}
+                                onChange={e => setForm(f => ({ ...f, lote_id: e.target.value }))}
+                                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF9696]/40 bg-white text-slate-800"
+                            >
+                                <option value=""></option>
+                                {lotes
+                                    .filter(l => l.tipo === 'joyeria' || l.tipo === 'joyería' || (!l.tipo && l.nombre.toLowerCase().includes('joyer')))
+                                    .map(l => (
+                                        <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>
+                                    ))}
+                            </select>
+                        </div>
 
                         {/* Nombre */}
                         <div className="flex flex-col gap-1.5">

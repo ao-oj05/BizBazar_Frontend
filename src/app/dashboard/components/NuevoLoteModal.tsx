@@ -20,6 +20,7 @@ interface Lote {
     piezas: number;
     recuperado: number;
     estado: 'Activo' | 'Cerrado';
+    tipo: string;
     productos: { nombre: string; estado: 'Vendido' | 'Disponible' | 'En subasta'; precio: number | null; ganancia: number | null }[];
 }
 
