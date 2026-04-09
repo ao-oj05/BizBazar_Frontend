@@ -208,26 +208,26 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-left">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
                           {/* Header */}
-                <div className="flex items-center justify-between px-6 py-5 bg-[#29AFFF]">
-                    <h2 className="text-xl font-bold text-white tracking-tight">Agregar nuevo producto - Joyería</h2>
-                    <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 text-white rounded-full transition-all">
-                        <X className="w-6 h-6" />
+                <div className="flex items-center justify-between px-6 py-4 bg-[#29AFFF]">
+                    <h2 className="text-base font-bold text-white tracking-tight">Agregar nuevo producto - Joyería</h2>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-white/20 hover:bg-white/30 text-white rounded-full transition-all">
+                        <X className="w-4 h-4" />
                     </button>
                 </div>
 
                 {/* Body */}
-                <div className="grid grid-cols-1 md:grid-cols-[350px_1fr]">
+                <div className="grid grid-cols-1 md:grid-cols-[320px_1fr]">
                     
                     {/* Left: Image Upload */}
                     <div className="p-8 flex flex-col gap-4 border-r border-slate-50 bg-white">
-                        <p className="text-sm font-medium text-slate-500">Imagen del producto</p>
+                        <p className="text-xs text-slate-500">Imagen del producto</p>
                         <div
                             onClick={() => fileInputRef.current?.click()}
                             onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                             onDragLeave={() => setIsDragging(false)}
                             onDrop={handleDrop}
                             className={cn(
-                                "w-full aspect-square border-2 border-dashed rounded-3xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all overflow-hidden relative",
+                                "w-full aspect-square border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all overflow-hidden relative",
                                 isDragging
                                     ? "border-[#29AFFF] bg-sky-50"
                                     : form.imagenUrl
@@ -237,20 +237,20 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                             style={!form.imagenUrl ? { borderColor: '#29AFFF', borderStyle: 'dashed' } : {}}
                         >
                             {isUploading ? (
-                                <Loader2 className="w-10 h-10 text-[#29AFFF] animate-spin" />
+                                <Loader2 className="w-8 h-8 text-[#29AFFF] animate-spin" />
                             ) : form.imagenUrl ? (
                                 <>
                                     <img src={form.imagenUrl} alt="preview" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                        <span className="text-white text-xs font-bold bg-black/50 px-4 py-2 rounded-xl">Cambiar imagen</span>
+                                        <span className="text-white text-[10px] font-bold bg-black/50 px-3 py-1.5 rounded-lg">Cambiar imagen</span>
                                     </div>
                                 </>
                             ) : (
                                 <>
-                                    <ImageIcon className="w-12 h-12 text-[#29AFFF] mb-1" strokeWidth={1} />
-                                    <div className="text-center px-6">
-                                        <p className="text-[14px] font-bold text-slate-600 leading-snug mb-1">Arrastra tu imagen aquí o haz clic para seleccionar</p>
-                                        <p className="text-[11px] text-slate-400 font-medium">JPG, PNG o WEBP (máx. 5MB)</p>
+                                    <ImageIcon className="w-10 h-10 text-[#29AFFF] mb-1" strokeWidth={1} />
+                                    <div className="text-center px-4">
+                                        <p className="text-xs font-bold text-slate-600 leading-snug">Arrastra tu imagen aquí</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">o haz clic para seleccionar</p>
                                     </div>
                                 </>
                             )}
@@ -268,17 +268,17 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                     </div>
 
                     {/* Right: Form */}
-                    <div className="p-10 flex flex-col gap-8 overflow-y-auto max-h-[75vh] custom-scrollbar">
+                    <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[70vh] custom-scrollbar">
                         
                         {/* Lote Section */}
-                        <div className="flex flex-col gap-3">
-                            <p className="text-[13px] font-bold text-slate-800 uppercase tracking-tight">INFORMACIÓN DEL LOTE</p>
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-slate-500">Seleccionar lote <span className="text-[#29AFFF]">*</span></label>
+                        <div className="flex flex-col gap-2">
+                            <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">INFORMACIÓN DEL LOTE</p>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs text-slate-500">Seleccionar lote <span className="text-[#29AFFF]">*</span></label>
                                 <select
                                     value={form.lote_id}
                                     onChange={e => setForm(f => ({ ...f, lote_id: e.target.value }))}
-                                    className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-[15px] text-slate-700 focus:outline-none focus:ring-4 focus:ring-sky-100 bg-white transition-all appearance-none cursor-pointer"
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/40 bg-white transition-all appearance-none cursor-pointer"
                                     style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2364748b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem center', backgroundSize: '1rem' }}
                                 >
                                     <option value=""></option>
@@ -290,37 +290,36 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                         </div>
 
                         {/* Jewelry Data */}
-                        <div className="flex flex-col gap-6">
-                            <p className="text-[13px] font-bold text-slate-800 uppercase tracking-tight">DATOS DEL PRODUCTO</p>
+                        <div className="flex flex-col gap-3">
+                            <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">DATOS DEL PRODUCTO</p>
 
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-slate-500">Nombre del producto <span className="text-[#29AFFF]">*</span></label>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs text-slate-500">Nombre del producto <span className="text-[#29AFFF]">*</span></label>
                                 <input
                                     value={form.nombre}
                                     onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
                                     placeholder="Ej: Anillo de plata con esmeralda"
-                                    className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-[15px] focus:outline-none focus:ring-4 focus:ring-sky-100 transition-all placeholder:text-slate-300"
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/40 transition-all placeholder:text-slate-300"
                                 />
                             </div>
-                            
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-slate-500">Descripción</label>
+                                               <div className="flex flex-col gap-1">
+                                <label className="text-xs text-slate-500">Descripción</label>
                                 <textarea
                                     value={form.descripcion}
                                     onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
                                     placeholder="Detalles sobre el metal, piedras, calidad, etc."
                                     rows={3}
-                                    className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-[15px] focus:outline-none focus:ring-4 focus:ring-sky-100 transition-all resize-none placeholder:text-slate-300"
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/40 transition-all resize-none placeholder:text-slate-300"
                                 />
                             </div>
 
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-slate-500">Subcategoría <span className="text-[#29AFFF]">*</span></label>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs text-slate-500">Subcategoría <span className="text-[#29AFFF]">*</span></label>
                                 <select
                                     value={form.subcategoria_id}
                                     onChange={e => setForm(f => ({ ...f, subcategoria_id: e.target.value }))}
                                     disabled={loadingCats}
-                                    className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-[15px] text-slate-700 focus:outline-none focus:ring-4 focus:ring-sky-100 bg-white transition-all appearance-none cursor-pointer disabled:opacity-50"
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#29AFFF]/40 bg-white transition-all appearance-none cursor-pointer disabled:opacity-50"
                                     style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2364748b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem center', backgroundSize: '1rem' }}
                                 >
                                     <option value="">
@@ -330,53 +329,51 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                                 </select>
                             </div>
 
-
-
-                            <div className="flex flex-col gap-3 mt-2">
-                                <label className="text-sm font-medium text-slate-500">Tipo de venta</label>
-                                <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-2 mt-2">
+                                <label className="text-xs text-slate-500">Tipo de venta</label>
+                                <div className="grid grid-cols-2 gap-2">
                                     <button
                                         type="button"
                                         onClick={() => setForm(f => ({ ...f, tipo_venta: 'directa' }))}
                                         className={cn(
-                                            "flex flex-col items-center justify-center py-5 px-4 rounded-2xl border-2 font-bold transition-all gap-1",
+                                            "flex flex-col items-center justify-center py-3 px-2 rounded-xl border-2 font-bold transition-all",
                                             form.tipo_venta === 'directa'
                                                 ? "border-[#29AFFF] bg-sky-50 text-[#29AFFF]"
                                                 : "border-slate-100 text-slate-400 hover:border-slate-200"
                                         )}
                                     >
-                                        <span className="text-sm">Venta directa</span>
-                                        <span className={cn("text-[10px] font-medium", form.tipo_venta === 'directa' ? "text-[#29AFFF]/80" : "text-slate-400")}>Precio fijo</span>
+                                        <span className="text-sm leading-tight">Venta directa</span>
+                                        <span className={cn("text-[10px] font-medium leading-tight", form.tipo_venta === 'directa' ? "text-[#29AFFF]/80" : "text-slate-400")}>Precio fijo</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setForm(f => ({ ...f, tipo_venta: 'subasta' }))}
                                         className={cn(
-                                            "flex flex-col items-center justify-center py-5 px-4 rounded-2xl border-2 font-bold transition-all gap-1",
+                                            "flex flex-col items-center justify-center py-3 px-2 rounded-xl border-2 font-bold transition-all",
                                             form.tipo_venta === 'subasta'
                                                 ? "border-slate-700 bg-slate-50 text-slate-800"
                                                 : "border-slate-100 text-slate-400 hover:border-slate-200"
                                         )}
                                     >
-                                        <span className="text-sm">Subasta premium</span>
-                                        <span className={cn("text-[10px] font-medium text-slate-400")}>Para mejores piezas</span>
+                                        <span className="text-sm leading-tight">Subasta premium</span>
+                                        <span className={cn("text-[10px] font-medium leading-tight text-slate-400")}>Para mejores piezas</span>
                                     </button>
                                 </div>
                             </div>
-
+                            
                             {/* Info card preview */}
-                            <div className="bg-[#F0FDFA] border border-[#2DD4BF]/20 rounded-3xl p-6 flex flex-col gap-3 mt-2">
-                                <div className="flex justify-between items-center text-sm font-medium">
+                            <div className="bg-[#F0FDFA] border border-[#2DD4BF]/20 rounded-2xl p-4 flex flex-col gap-2 mt-2">
+                                <div className="flex justify-between items-center text-xs font-medium">
                                     <span className="text-slate-500">Código generado:</span>
                                     <span className="font-bold text-[#14B8A6]">{previewCodigo}</span>
                                 </div>
-                                <div className="flex justify-between items-center text-sm font-medium">
+                                <div className="flex justify-between items-center text-xs font-medium">
                                     <span className="text-slate-500">Costo base asignado:</span>
                                     <span className="font-bold text-[#29AFFF]">
                                         {form.costo_base ? `$${parseFloat(form.costo_base).toFixed(2)}` : '—'}
                                     </span>
                                 </div>
-                            </div>
+                            </div>          </div>
                         </div>
 
                         {errorMessage && (
