@@ -69,6 +69,20 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
         fetchSubs();
     }, []);
 
+    useEffect(() => {
+        // Auto-calculate cost based on lote for parity with Clothing logic
+        if (form.lote_id) {
+            const loteSelect = lotes.find(l => l.id === form.lote_id);
+            if (loteSelect) {
+                const inv = loteSelect.precio_total || loteSelect.inversion || 0;
+                const pzs = loteSelect.piezas_total || loteSelect.piezas || 1;
+                if (inv > 0 && pzs > 0) {
+                    setForm(f => ({ ...f, costo_base: (inv / pzs).toFixed(2) }));
+                }
+            }
+        }
+    }, [form.lote_id, lotes]);
+
     // Computed preview code
     const previewCodigo = form.codigo_custom.trim()
         ? form.codigo_custom.trim()
@@ -316,30 +330,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                                 </select>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-sm font-medium text-slate-500">Costo individual <span className="text-[#29AFFF]">*</span></label>
-                                    <div className="relative">
-                                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                                        <input
-                                            type="number"
-                                            value={form.costo_base}
-                                            onChange={e => setForm(f => ({ ...f, costo_base: e.target.value }))}
-                                            placeholder="0.00"
-                                            className="w-full border border-slate-200 rounded-2xl pl-9 pr-5 py-4 text-[15px] focus:outline-none focus:ring-4 focus:ring-sky-100 transition-all placeholder:text-slate-300"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-sm font-medium text-slate-500">Código personalizado</label>
-                                    <input
-                                        value={form.codigo_custom}
-                                        onChange={e => setForm(f => ({ ...f, codigo_custom: e.target.value }))}
-                                        placeholder="Opcional (Ej: JOYA-01)"
-                                        className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-[15px] focus:outline-none focus:ring-4 focus:ring-sky-100 transition-all uppercase placeholder:normal-case placeholder:text-slate-300"
-                                    />
-                                </div>
-                            </div>
+
 
                             <div className="flex flex-col gap-3 mt-2">
                                 <label className="text-sm font-medium text-slate-500">Tipo de venta</label>
