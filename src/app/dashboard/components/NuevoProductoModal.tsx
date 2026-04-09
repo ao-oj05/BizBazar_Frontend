@@ -179,25 +179,8 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                 }),
             });
             if (res.ok) {
-                const responseData = await res.json();
+                const responseData: any = await res.json();
                 const nuevoProducto = responseData.data || responseData;
-
-                // Lógica Extra: Si es subasta, crearla automáticamente en el backend
-                if (form.tipo_venta === 'subasta') {
-                    try {
-                        await fetch('/api/subastas', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                producto_id: nuevoProducto.id,
-                                precio_inicial: nuevoProducto.costo_base || nuevoProducto.costo || 0,
-                                incremento_minimo: 10 // Valor por defecto
-                            })
-                        });
-                    } catch (subErr) {
-                        console.error('Error al intentar crear subasta automática:', subErr);
-                    }
-                }
 
                 // Formatear el objeto para que coincida con la interfaz Producto
                 const prodParaGuardar: Producto = {
@@ -214,6 +197,23 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                     tipoVenta: nuevoProducto.tipo_venta === 'subasta' ? 'Subasta' : 'Directa',
                     categoria: nuevoProducto.categoria || 'ropa'
                 };
+
+                // Lógica Extra: Si es subasta, crearla automáticamente en el backend
+                if (form.tipo_venta === 'subasta') {
+                    try {
+                        await fetch('/api/subastas', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                producto_id: nuevoProducto.id,
+                                precio_inicial: prodParaGuardar.costo || 0,
+                                incremento_minimo: 10 // Valor por defecto
+                            })
+                        });
+                    } catch (subErr) {
+                        console.error('Error al intentar crear subasta automática:', subErr);
+                    }
+                }
 
                 onSave(prodParaGuardar);
             } else {

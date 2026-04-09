@@ -137,7 +137,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
             });
 
             if (res.ok) {
-                const responseData = await res.json();
+                const responseData: any = await res.json();
                 const rawJoya = responseData.data || responseData;
                 
                 // Asegurar que pasamos la categoría para el estado local
@@ -162,7 +162,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 producto_id: nuevaJoya.id,
-                                precio_inicial: nuevaJoya.costo_base || nuevaJoya.costo || 0,
+                                precio_inicial: nuevaJoya.costo || 0,
                                 incremento_minimo: 10
                             })
                         });
