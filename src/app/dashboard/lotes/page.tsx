@@ -314,7 +314,12 @@ export default function LotesPage() {
                     ))}
 
                     <div className="flex items-center justify-end mb-6">
-                        {/* El título ahora está en la Topbar */}
+                        <Button
+                            onClick={() => setShowNuevoLote(true)}
+                            className="bg-[#FF007F] hover:bg-[#FF007F]/90 text-white px-6 h-12 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-[#FF007F]/20 transition-all hover:scale-[1.02]"
+                        >
+                            <Plus className="w-5 h-5" /> Nuevo Lote
+                        </Button>
                     </div>
 
                     {/* Search & Filters */}
