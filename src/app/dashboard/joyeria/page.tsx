@@ -56,7 +56,7 @@ export default function JoyeriaPage() {
             imagenUrl = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : (raw.imagen ?? '');
         } catch { imagenUrl = raw.imagen ?? ''; }
 
-        const rawEstado: string = raw.estado ?? 'disponible';
+        const rawEstado: string = (raw.estado ?? 'disponible').replace(/_/g, ' ');
         const estado = (rawEstado.charAt(0).toUpperCase() + rawEstado.slice(1).toLowerCase()) as Joya['estado'];
 
         return {
