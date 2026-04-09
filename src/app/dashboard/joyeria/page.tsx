@@ -19,6 +19,7 @@ interface Joya {
     precio: number | null;
     costo: number;
     tipoVenta: 'Directa' | 'Subasta';
+    categoria: string;
 }
 
 type FilterTab = 'Todos' | EstadoJoya;
@@ -68,6 +69,7 @@ export default function JoyeriaPage() {
             precio: raw.precio ?? null,
             costo: Number(raw.costo_base ?? raw.costo ?? 0),
             tipoVenta: raw.tipo_venta === 'subasta' ? 'Subasta' : 'Directa',
+            categoria: raw.categoria ?? 'joyeria',
         };
     };
 
@@ -117,9 +119,10 @@ export default function JoyeriaPage() {
     };
 
     const filtered = joyas.filter(j => {
+        const isJoyeria = j.categoria.toLowerCase() === 'joyeria' || j.categoria.toLowerCase() === 'joyería';
         const matchSearch = !search || j.nombre.toLowerCase().includes(search.toLowerCase()) || j.codigo?.toLowerCase().includes(search.toLowerCase());
         const matchTab = filterTab === 'Todos' || j.estado === filterTab;
-        return matchSearch && matchTab;
+        return isJoyeria && matchSearch && matchTab;
     });
 
     return (

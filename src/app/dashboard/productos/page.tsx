@@ -24,6 +24,7 @@ interface Producto {
     precio: number | null;
     costo: number;
     tipoVenta: 'Directa' | 'Subasta';
+    categoria: string;
 }
 
 interface Lote {
@@ -76,6 +77,7 @@ export default function ProductosPage() {
             precio: raw.precio ?? null,
             costo: Number(raw.costo_base ?? raw.costo ?? 0),
             tipoVenta: raw.tipo_venta === 'subasta' ? 'Subasta' : 'Directa',
+            categoria: raw.categoria ?? 'ropa',
         };
     };
 
@@ -101,9 +103,10 @@ export default function ProductosPage() {
     useEffect(() => { fetchData(); }, []);
 
     const filtered = productos.filter(p => {
+        const isRopa = p.categoria.toLowerCase() === 'ropa';
         const matchSearch = !search || p.nombre.toLowerCase().includes(search.toLowerCase()) || p.codigo?.toLowerCase().includes(search.toLowerCase());
         const matchTab = filterTab === 'Todos' || p.estado === filterTab;
-        return matchSearch && matchTab;
+        return isRopa && matchSearch && matchTab;
     });
 
     return (
