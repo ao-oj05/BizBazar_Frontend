@@ -6,7 +6,7 @@ import { Topbar } from '../components/Topbar';
 import { cn } from '@/src/shared/utils';
 import {
     Search, Grid2X2, List, Plus, X, ChevronLeft, ChevronRight,
-    Loader2, Package
+    Loader2, Package, Eye
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -206,15 +206,21 @@ export default function ProductosPage() {
                                             <div className="w-full h-full flex items-center justify-center text-slate-300"><Package className="w-8 h-8" /></div>
                                         )}
                                         
+                                        {/* Overlay Hover */}
+                                        <div className="absolute inset-0 bg-[#FF0080]/80 flex items-center justify-center gap-2 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                            <Eye className="w-6 h-6" />
+                                            <span className="font-bold text-[17px]">Ver detalle</span>
+                                        </div>
+                                        
                                         {/* Top-left Code Pill */}
-                                        <div className="absolute top-3 left-3 px-2 py-1 rounded bg-white text-slate-800 text-[11px] font-bold shadow-sm">
+                                        <div className="absolute top-3 left-3 px-2 py-1 rounded bg-white/90 text-[11px] font-bold text-[#FF0080]/50 backdrop-blur-sm z-20 transition-all group-hover:text-[#FF0080]">
                                             {p.codigo}
                                         </div>
                                         
                                         {/* Top-right State Pill */}
-                                        <div className={cn('absolute top-3 right-3 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm',
-                                            p.estado === 'Disponible' ? 'bg-[#FF0080] text-white' :
-                                                p.estado === 'En_subasta' ? 'bg-yellow-400 text-white' :
+                                        <div className={cn('absolute top-3 right-3 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm z-20',
+                                            p.estado === 'Disponible' ? 'bg-[#FF0080] text-white group-hover:bg-white group-hover:text-[#FF0080]' :
+                                                p.estado === 'En_subasta' ? 'bg-yellow-400 text-white group-hover:bg-white group-hover:text-yellow-500' :
                                                     'bg-slate-200 text-slate-600'
                                         )}>
                                             {p.estado === 'En_subasta' ? 'En subasta' : p.estado}

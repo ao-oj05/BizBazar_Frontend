@@ -407,6 +407,7 @@ export default function LotesPage() {
                                         <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
                                         <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Inversión</th>
                                         <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Piezas</th>
+                                        <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Costo Unit.</th>
                                         <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Recuperado</th>
                                         <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Estado</th>
                                         <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Acciones</th>
@@ -437,6 +438,7 @@ export default function LotesPage() {
                                                 <td className="px-6 py-5 text-sm text-slate-500 font-medium">{lote.fecha ? lote.fecha.split('T')[0] : '-'}</td>
                                                 <td className="px-6 py-5 text-sm font-bold text-slate-800">${(Number(lote.inversion) || 0).toLocaleString('en-US')}</td>
                                                 <td className="px-6 py-5 text-sm text-slate-600 font-medium">{lote.piezas}</td>
+                                                <td className="px-6 py-5 text-sm font-bold text-slate-800">${((Number(lote.inversion) || 0) / (Number(lote.piezas) || 1)).toFixed(2)}</td>
                                                 <td className="px-6 py-5">
                                                     <RecoveryBar recuperado={lote.recuperado} inversion={lote.inversion} />
                                                 </td>

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Sidebar } from '../components/Sidebar';
 import { Topbar } from '../components/Topbar';
 import { cn } from '@/src/shared/utils';
-import { Search, Grid2X2, List, Plus, X, Loader2, Gem, Camera } from 'lucide-react';
+import { Search, Grid2X2, List, Plus, X, Loader2, Gem, Camera, Eye } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -219,22 +219,43 @@ export default function JoyeriaPage() {
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-300"><Gem className="w-8 h-8" /></div>
                                         )}
-                                        <div className={cn('absolute top-2 right-2 px-2 py-0.5 rounded-lg text-[10px] font-bold shadow-sm',
-                                            j.estado === 'Disponible' ? 'bg-white/90 text-[#40C4AA]' :
-                                                j.estado === 'Vendido' ? 'bg-white/90 text-slate-500' :
-                                                    'bg-yellow-500/90 text-white'
+                                        
+                                        {/* Overlay Hover */}
+                                        <div className="absolute inset-0 bg-[#29AFFF]/80 flex items-center justify-center gap-2 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                            <Eye className="w-6 h-6" />
+                                            <span className="font-bold text-[17px]">Ver detalle</span>
+                                        </div>
+                                        
+                                        {/* Top-left Code Pill */}
+                                        <div className="absolute top-3 left-3 px-2 py-1 rounded bg-white/90 text-[11px] font-bold text-[#29AFFF]/50 backdrop-blur-sm z-20 transition-all group-hover:text-[#29AFFF]">
+                                            {j.codigo}
+                                        </div>
+                                        
+                                        {/* Top-right State Pill */}
+                                        <div className={cn('absolute top-3 right-3 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm z-20 transition-colors',
+                                            j.estado === 'Disponible' ? 'bg-[#29AFFF] text-white group-hover:bg-white group-hover:text-[#29AFFF]' :
+                                                j.estado === 'Vendido' ? 'bg-slate-200 text-slate-600 group-hover:bg-white' :
+                                                    'bg-yellow-500 text-white'
                                         )}>
                                             {j.estado}
                                         </div>
                                     </div>
-                                    <div className="p-4 flex flex-col gap-2 flex-1">
-                                        <span className="text-[10px] font-bold text-slate-400">{j.codigo}</span>
-                                        <h3 className="font-bold text-slate-800 text-sm leading-tight">{j.nombre}</h3>
-                                        <div className="mt-auto flex items-center justify-between pt-2 border-t border-slate-50">
-                                            <span className="text-xs text-slate-400 font-medium">{j.subcategoria}</span>
+                                    <div className="p-5 flex flex-col flex-1 bg-white">
+                                        <h3 className="font-semibold text-[#1E293B] text-[18px] leading-tight mb-3">{j.nombre}</h3>
+                                        
+                                        <div className="flex items-center justify-between mb-4 mt-auto">
+                                            {j.subcategoria ? (
+                                                <span className="px-3 py-0.5 rounded-full text-xs font-semibold bg-[#29AFFF]/10 text-[#29AFFF]">
+                                                    {j.subcategoria}
+                                                </span>
+                                            ) : <span />}
                                             {(j.precio || j.costo)
-                                                ? <span className="font-bold text-[#29AFFF] text-sm">${j.precio ?? j.costo}</span>
+                                                ? <span className="text-[17px] font-bold text-[#FACC15]">${j.precio ?? j.costo}</span>
                                                 : <span className="text-xs text-slate-300">Sin precio</span>}
+                                        </div>
+                                        
+                                        <div className="text-[13px] text-slate-400">
+                                            Lote: {j.lote}
                                         </div>
                                     </div>
                                 </div>
