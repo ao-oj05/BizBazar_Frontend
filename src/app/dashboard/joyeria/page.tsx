@@ -7,7 +7,7 @@ import { Search, Grid2X2, List, Plus, X, Loader2, Gem, Camera } from 'lucide-rea
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type EstadoJoya = 'Todos' | 'Disponible' | 'Vendido';
+type EstadoJoya = 'Disponible' | 'Vendido';
 
 interface Joya {
     id: string;
@@ -18,11 +18,11 @@ interface Joya {
     estado: EstadoJoya;
     precio: number | null;
     costo: number;
-    tipoVenta: 'Directa' | 'Subasta';
+    tipoVenta: 'Directa';
     categoria: string;
 }
 
-type FilterTab = 'Todos' | 'Disponible' | 'Vendido';
+type FilterTab = 'Todos' | EstadoJoya;
 
 interface Lote {
     id: string;

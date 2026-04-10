@@ -15,10 +15,10 @@ interface Joya {
     codigo: string;
     subcategoria: string;
     imagen: string;
-    estado: 'Disponible' | 'Vendido' | 'En subasta';
+    estado: 'Disponible' | 'Vendido';
     precio: number | null;
     costo: number;
-    tipoVenta: 'Directa' | 'Subasta';
+    tipoVenta: 'Directa';
     categoria: string;
 }
 
@@ -164,7 +164,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                     estado: (rawJoya.estado?.charAt(0).toUpperCase() + rawJoya.estado?.slice(1).toLowerCase()) || 'Disponible',
                     precio: rawJoya.precio || null,
                     costo: Number(rawJoya.costo_base || rawJoya.costo || form.costo_base),
-                    tipoVenta: rawJoya.tipo_venta === 'subasta' ? 'Subasta' : 'Directa',
+                    tipoVenta: 'Directa',
                     categoria: rawJoya.categoria || 'joyeria'
                 };
 
