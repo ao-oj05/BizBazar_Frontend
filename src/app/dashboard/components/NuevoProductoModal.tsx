@@ -28,7 +28,7 @@ interface Producto {
     lote: string;
     loteId: string;
     imagen: string;
-    estado: 'Disponible' | 'Vendido';
+    estado: 'Disponible' | 'Vendido' | 'En_subasta';
     precio: number | null;
     costo: number;
     tipoVenta: 'Directa';
