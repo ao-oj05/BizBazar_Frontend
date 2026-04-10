@@ -268,7 +268,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                                 >
                                     <option value=""></option>
                                     {lotes
-                                        .filter(l => l.tipo === 'joyeria')
+                                        .filter(l => !l.tipo || normalize(l.tipo) === 'joyeria')
                                         .map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
                                 </select>
                             </div>

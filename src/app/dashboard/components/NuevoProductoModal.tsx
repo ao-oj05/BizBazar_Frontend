@@ -296,7 +296,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                             >
                                 <option value=""></option>
                                 {lotes
-                                    .filter(l => l.tipo === 'ropa')
+                                    .filter(l => !l.tipo || normalize(l.tipo) === 'ropa')
                                     .map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
                             </select>
                         </div>
@@ -343,7 +343,6 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                             </select>
                             </div>
 
-                            {/* Tipo de venta pill toggle */}
                             <div className="flex flex-col gap-2">
                                 <label className="text-xs text-slate-500">Tipo de venta</label>
                                 <div className="grid grid-cols-2 gap-2">
@@ -366,7 +365,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                                         className={cn(
                                             "flex flex-col items-center py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all",
                                             form.tipo_venta === 'subasta'
-                                                ? "border-[#FF1970] bg-[#FF1970]/10 text-[#FF1970]"
+                                                ? "border-yellow-400 bg-yellow-400/10 text-yellow-600"
                                                 : "border-slate-200 text-slate-500 hover:border-slate-300"
                                         )}
                                     >

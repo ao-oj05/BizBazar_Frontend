@@ -10,7 +10,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type EstadoProducto = 'Disponible' | 'Vendido';
+type EstadoProducto = 'Disponible' | 'Vendido' | 'En_subasta';
 
 interface Producto {
     id: string;
@@ -50,7 +50,7 @@ export default function ProductosPage() {
     const [showNuevoProducto, setShowNuevoProducto] = useState(false);
     const [imgIndex, setImgIndex] = useState(0);
 
-    const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido'];
+    const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido', 'En_subasta'];
 
     // Map raw backend row → frontend Producto shape
     const mapProducto = (raw: any): Producto => {
@@ -191,10 +191,10 @@ export default function ProductosPage() {
                                         {/* Top-right State Pill */}
                                         <div className={cn('absolute top-3 right-3 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm',
                                             p.estado === 'Disponible' ? 'bg-[#FF0080] text-white' :
-                                                p.estado === 'Vendido' ? 'bg-slate-200 text-slate-600' :
-                                                    'bg-yellow-400 text-white'
+                                                p.estado === 'En_subasta' ? 'bg-yellow-400 text-white' :
+                                                    'bg-slate-200 text-slate-600'
                                         )}>
-                                            {p.estado}
+                                            {p.estado === 'En_subasta' ? 'En subasta' : p.estado}
                                         </div>
                                     </div>
                                     <div className="p-5 flex flex-col flex-1 bg-white">
@@ -237,8 +237,10 @@ export default function ProductosPage() {
                                             <td className="px-5 py-4 text-sm text-slate-500">{p.subcategoria}</td>
                                             <td className="px-5 py-4">
                                                 <span className={cn('px-2 py-1 rounded-lg text-xs font-bold',
-                                                    p.estado === 'Disponible' ? 'bg-[#FF0080]/10 text-[#FF0080]' : 'bg-slate-100 text-slate-500'
-                                                )}>{p.estado}</span>
+                                                    p.estado === 'Disponible' ? 'bg-[#FF0080]/10 text-[#FF0080]' :
+                                                        p.estado === 'En_subasta' ? 'bg-yellow-400/15 text-yellow-600' :
+                                                            'bg-slate-100 text-slate-500'
+                                                )}>{p.estado === 'En_subasta' ? 'En subasta' : p.estado}</span>
                                             </td>
                                             <td className="px-5 py-4 text-sm font-bold text-slate-800">${Number(p.precio ?? p.costo ?? 0).toFixed(0)}</td>
                                             <td className="px-5 py-4">
@@ -362,10 +364,10 @@ function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estado actual</span>
                             <span className={cn('inline-flex items-center justify-center px-4 py-1.5 rounded-full text-sm font-bold w-max',
                                 producto.estado === 'Disponible' ? 'bg-[#FF0080] text-white' :
-                                    producto.estado === 'Vendido' ? 'bg-slate-200 text-slate-600' :
-                                        'bg-[#FACC15] text-white'
+                                    producto.estado === 'En_subasta' ? 'bg-yellow-400 text-white' :
+                                        'bg-slate-200 text-slate-600'
                             )}>
-                                {producto.estado}
+                                {producto.estado === 'En_subasta' ? 'En subasta' : producto.estado}
                             </span>
                         </div>
 
