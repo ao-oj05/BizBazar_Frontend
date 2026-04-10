@@ -194,26 +194,9 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                     estado: (nuevoProducto.estado?.charAt(0).toUpperCase() + nuevoProducto.estado?.slice(1).toLowerCase()) || 'Disponible',
                     precio: nuevoProducto.precio || null,
                     costo: Number(nuevoProducto.costo_base || nuevoProducto.costo || form.costo_base),
-                    tipoVenta: nuevoProducto.tipo_venta === 'subasta' ? 'Subasta' : 'Directa',
+                    tipoVenta: 'Directa',
                     categoria: nuevoProducto.categoria || 'ropa'
                 };
-
-                // Lógica Extra: Si es subasta, crearla automáticamente en el backend
-                if (form.tipo_venta === 'subasta') {
-                    try {
-                        await fetch('/api/subastas', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                producto_id: nuevoProducto.id,
-                                precio_inicial: prodParaGuardar.costo || 0,
-                                incremento_minimo: 10 // Valor por defecto
-                            })
-                        });
-                    } catch (subErr) {
-                        console.error('Error al intentar crear subasta automática:', subErr);
-                    }
-                }
 
                 onSave(prodParaGuardar);
             } else {

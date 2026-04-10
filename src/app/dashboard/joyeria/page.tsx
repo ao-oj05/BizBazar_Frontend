@@ -68,7 +68,7 @@ export default function JoyeriaPage() {
             estado,
             precio: raw.precio ?? null,
             costo: Number(raw.costo_base ?? raw.costo ?? 0),
-            tipoVenta: raw.tipo_venta === 'subasta' ? 'Subasta' : 'Directa',
+            tipoVenta: 'Directa',
             categoria: raw.categoria ?? 'joyeria',
         };
     };
