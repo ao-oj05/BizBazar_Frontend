@@ -143,8 +143,8 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                     subcategoria: subcategoriaNombre,
                     subcategoria_id: form.subcategoria_id,
                     lote_id: form.lote_id,
-                    tipo_venta: form.tipo_venta,
-                    premium: form.tipo_venta === 'subasta', // Flag premium si es subasta
+                    tipo_venta: 'directa',
+                    premium: false,
                     costo_base: parseFloat(form.costo_base),
                     imagenes: form.imagenUrl ? [form.imagenUrl] : []
                 }),
@@ -168,22 +168,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                     categoria: rawJoya.categoria || 'joyeria'
                 };
 
-                // Lógica Extra: Crear subasta automática si es tipo subasta
-                if (form.tipo_venta === 'subasta') {
-                    try {
-                        await fetch('/api/subastas', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                producto_id: nuevaJoya.id,
-                                precio_inicial: nuevaJoya.costo || 0,
-                                incremento_minimo: 10
-                            })
-                        });
-                    } catch (subErr) {
-                        console.error('Error al crear subasta automática de joya:', subErr);
-                    }
-                }
+
 
                 onSave(nuevaJoya);
             } else {
@@ -329,37 +314,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                                 </select>
                             </div>
 
-                            <div className="flex flex-col gap-2 mt-2">
-                                <label className="text-xs text-slate-500">Tipo de venta</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setForm(f => ({ ...f, tipo_venta: 'directa' }))}
-                                        className={cn(
-                                            "flex flex-col items-center justify-center py-3 px-2 rounded-xl border-2 font-bold transition-all",
-                                            form.tipo_venta === 'directa'
-                                                ? "border-[#29AFFF] bg-sky-50 text-[#29AFFF]"
-                                                : "border-slate-100 text-slate-400 hover:border-slate-200"
-                                        )}
-                                    >
-                                        <span className="text-sm leading-tight">Venta directa</span>
-                                        <span className={cn("text-[10px] font-medium leading-tight", form.tipo_venta === 'directa' ? "text-[#29AFFF]/80" : "text-slate-400")}>Precio fijo</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setForm(f => ({ ...f, tipo_venta: 'subasta' }))}
-                                        className={cn(
-                                            "flex flex-col items-center justify-center py-3 px-2 rounded-xl border-2 font-bold transition-all",
-                                            form.tipo_venta === 'subasta'
-                                                ? "border-slate-700 bg-slate-50 text-slate-800"
-                                                : "border-slate-100 text-slate-400 hover:border-slate-200"
-                                        )}
-                                    >
-                                        <span className="text-sm leading-tight">Subasta premium</span>
-                                        <span className={cn("text-[10px] font-medium leading-tight text-slate-400")}>Para mejores piezas</span>
-                                    </button>
-                                </div>
-                            </div>
+
                             
                             {/* Info card preview */}
                             <div className="bg-[#F0FDFA] border border-[#2DD4BF]/20 rounded-2xl p-4 flex flex-col gap-2 mt-2">

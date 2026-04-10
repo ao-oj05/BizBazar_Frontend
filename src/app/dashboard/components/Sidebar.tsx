@@ -21,7 +21,6 @@ const menuItems = [
     { icon: Shirt, label: "Productos - Ropa", path: "/dashboard/productos" },
     { icon: Gem, label: "Joyería", path: "/dashboard/joyeria" },
     { icon: ShoppingCart, label: "Ventas", path: "/dashboard/ventas" },
-    { icon: Gavel, label: "Subastas", path: "/dashboard/subastas" },
     { icon: BarChart2, label: "Reportes", path: "/dashboard/reportes" },
     { icon: Settings, label: "Configuración", path: "/dashboard/configuracion" },
 ];

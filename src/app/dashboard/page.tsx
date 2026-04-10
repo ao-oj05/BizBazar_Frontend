@@ -223,23 +223,31 @@ export default function DashboardPage() {
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
                                                 {sales.length > 0 ? (
-                                                    sales.map((sale: any) => (
-                                                        <tr key={sale.id} className="group hover:bg-slate-50 transition-colors">
-                                                            <td className="py-5 text-sm font-bold text-slate-800">{sale.id?.toString().slice(0,8)}</td>
-                                                            <td className="py-5 text-sm text-slate-600">{sale.product || (sale.items && sale.items.length > 0 ? sale.items.map((i:any)=>i.producto_nombre).join(', ') : 'Venta')}</td>
-                                                            <td className="py-5">
-                                                                <span className={cn(
-                                                                    'px-3 py-1 rounded-lg text-[10px] font-bold uppercase',
-                                                                    sale.type === 'Ropa' ? 'bg-primary/10 text-primary' : sale.type === 'Joyería' || sale.type === 'joyeria' ? 'bg-secondary/10 text-secondary' : 'bg-slate-100 text-slate-500'
-                                                                )}>
-                                                                    {sale.type || 'General'}
-                                                                </span>
-                                                            </td>
-                                                            <td className="py-5 text-sm font-bold text-slate-800">${sale.total || sale.price || 0}</td>
-                                                            <td className="py-5 text-sm font-bold text-yellow-500">${sale.ganancia_total || sale.profit || 0}</td>
-                                                            <td className="py-5 text-sm text-slate-400">{new Date(sale.created_at || sale.time || Date.now()).toLocaleDateString()}</td>
-                                                        </tr>
-                                                    ))
+                                                    sales.map((sale: any, index) => {
+                                                        const saleId = sale.id?.toString().slice(-4).toUpperCase() || `00${index + 1}`;
+                                                        const saleTime = new Date(sale.created_at || sale.time || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                                                        const isJoya = (sale.type || '').toLowerCase().includes('joyeria') || (sale.items?.[0]?.categoria_nombre || '').toLowerCase().includes('joyeria');
+                                                        
+                                                        return (
+                                                            <tr key={sale.id} className="group hover:bg-slate-50 transition-colors">
+                                                                <td className="py-5 text-sm font-bold text-slate-800">V{saleId}</td>
+                                                                <td className="py-5 text-sm font-medium text-slate-600">
+                                                                    {sale.product || (sale.items && sale.items.length > 0 ? sale.items.map((i:any)=>i.producto_nombre).join(', ') : 'Venta General')}
+                                                                </td>
+                                                                <td className="py-5">
+                                                                    <span className={cn(
+                                                                        'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider',
+                                                                        !isJoya ? 'bg-[#FF8A9B]/10 text-[#FF8A9B]' : 'bg-[#29AFFF]/10 text-[#29AFFF]'
+                                                                    )}>
+                                                                        {!isJoya ? 'Ropa' : 'Joyería'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="py-5 text-sm font-black text-slate-800">${sale.total || sale.price || 0}</td>
+                                                                <td className="py-5 text-sm font-black text-[#EAB308]">${sale.ganancia_total || sale.profit || 0}</td>
+                                                                <td className="py-5 text-sm font-medium text-slate-400">{saleTime}</td>
+                                                            </tr>
+                                                        );
+                                                    })
                                                 ) : (
                                                     <tr>
                                                         <td colSpan={6} className="py-20 text-center text-slate-400">

@@ -43,7 +43,10 @@ export default function VentasPage() {
     const [items, setItems] = useState<ProductoVenta[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [cart, setCart] = useState<Array<{ item: ProductoVenta; qty: number }>>([]);
+    const [preciosVenta, setPreciosVenta] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [lastVenta, setLastVenta] = useState<any>(null);
 
     useEffect(() => {
         const fetchProductos = async () => {
@@ -55,14 +58,14 @@ export default function VentasPage() {
                 const data = res.ok ? await res.json() : [];
 
                 const allItems: ProductoVenta[] = (Array.isArray(data) ? data : data.data ?? []).map((p: any) => {
-                    const isJoya = p.categoria?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'joyeria';
+                    const isJoya = (p.categoria || p.tipo || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'joyeria';
                     return {
                         id: p.id ?? p._id,
                         nombre: p.nombre,
-                        precio: p.precio ?? 0,
-                        costo: p.costo ?? 0,
+                        precio: Number(p.precio || p.costo_base || 0),
+                        costo: Number(p.costo_base || p.costo || 0),
                         categoria: isJoya ? 'Joyería' as Categoria : 'Ropa' as Categoria,
-                        imagen: p.imagen ?? '',
+                        imagen: p.imagenes?.[0] || p.imagen || '',
                     };
                 });
 
@@ -82,8 +85,13 @@ export default function VentasPage() {
         return matchSearch && matchTab;
     });
 
-    const subtotal = cart.reduce((acc, curr) => acc + curr.item.precio * curr.qty, 0);
-    const totalGanancia = cart.reduce((acc, curr) => acc + (curr.item.precio - curr.item.costo) * curr.qty, 0);
+    const getPrecioVenta = (id: string, defaultPrecio: number) => {
+        const val = preciosVenta[id];
+        return val === undefined || val === '' ? defaultPrecio : Number(val);
+    };
+
+    const subtotal = cart.reduce((acc, curr) => acc + getPrecioVenta(curr.item.id, curr.item.precio) * curr.qty, 0);
+    const totalGanancia = cart.reduce((acc, curr) => acc + (getPrecioVenta(curr.item.id, curr.item.precio) - curr.item.costo) * curr.qty, 0);
     const countRopa = cart.filter(c => c.item.categoria === 'Ropa').reduce((acc, curr) => acc + curr.qty, 0);
     const countJoyeria = cart.filter(c => c.item.categoria === 'Joyería').reduce((acc, curr) => acc + curr.qty, 0);
     const totalItems = countRopa + countJoyeria;
@@ -113,15 +121,13 @@ export default function VentasPage() {
         try {
             const body = {
                 items: cart.flatMap(c => {
-                    // Si la cantidad es > 1, enviamos el producto múltiples veces (ya que la BD inserta 1 a 1 por producto único)
-                    // Nota: En la BD, product_id es único por pieza física, pero si en el futuro se permite stock, esto sirve.
-                    // Para productos únicos, count será 1 de todas formas.
+                    const precioActual = getPrecioVenta(c.item.id, c.item.precio);
                     return Array.from({ length: c.qty }).map(() => ({
                         producto_id: c.item.id,
-                        precio_venta: c.item.precio,
+                        precio_venta: precioActual,
                     }));
                 }),
-                cliente_nombre: 'Cliente General', // Optional, hardcoded for now or add an input later
+                cliente_nombre: 'Cliente General',
             };
             const res = await fetch('/api/ventas', {
                 method: 'POST',
@@ -129,19 +135,32 @@ export default function VentasPage() {
                 body: JSON.stringify(body),
             });
             if (res.ok) {
+                const result = await res.json();
+                setLastVenta({
+                    ...result.data,
+                    items: cart.map(c => ({
+                        ...c.item,
+                        qty: c.qty,
+                        precio_final: getPrecioVenta(c.item.id, c.item.precio)
+                    })),
+                    total: subtotal,
+                    ganancia: totalGanancia
+                });
+                setShowSuccessModal(true);
                 setCart([]);
+                setPreciosVenta({});
                 // Recargar productos para actualizar disponibilidad
-                const res = await fetch('/api/productos?estado=disponible');
-                const data = res.ok ? await res.json() : [];
+                const resLoad = await fetch('/api/productos?estado=disponible');
+                const data = resLoad.ok ? await resLoad.json() : [];
                 const allItems: ProductoVenta[] = (Array.isArray(data) ? data : data.data ?? []).map((p: any) => {
-                    const isJoya = p.categoria?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'joyeria';
+                    const isJoya = (p.categoria || p.tipo || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'joyeria';
                     return {
                         id: p.id ?? p._id, 
                         nombre: p.nombre, 
-                        precio: p.precio ?? 0, 
-                        costo: p.costo ?? 0, 
+                        precio: Number(p.precio || p.costo_base || 0), 
+                        costo: Number(p.costo_base || p.costo || 0), 
                         categoria: isJoya ? 'Joyería' as Categoria : 'Ropa' as Categoria, 
-                        imagen: p.imagen ?? ''
+                        imagen: p.imagenes?.[0] || p.imagen || ''
                     };
                 });
                 setItems(allItems);
@@ -253,38 +272,74 @@ export default function VentasPage() {
                                         <p className="text-sm">Agrega productos para registrar una venta</p>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col gap-3">
-                                        {cart.map(c => (
-                                            <div key={c.item.id} className="flex items-center gap-4 p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                                                <div className="w-12 h-12 rounded-lg bg-white overflow-hidden shrink-0 border border-slate-200">
-                                                    {c.item.imagen ? (
-                                                        // eslint-disable-next-line @next/next/no-img-element
-                                                        <img src={c.item.imagen} alt={c.item.nombre} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-slate-100" />
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-slate-800 truncate">{c.item.nombre}</p>
-                                                    <p className="text-xs text-slate-500 font-medium">${c.item.precio} c/u</p>
-                                                </div>
-                                                <div className="flex items-center gap-3 shrink-0">
-                                                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1">
-                                                        <button onClick={() => updateQty(c.item.id, -1)} className="p-1 hover:bg-slate-100 rounded-md text-slate-500 transition-colors">
-                                                            <Minus className="w-3 h-3" />
-                                                        </button>
-                                                        <span className="text-sm font-bold text-slate-800 w-6 text-center">{c.qty}</span>
-                                                        <button onClick={() => updateQty(c.item.id, 1)} className="p-1 hover:bg-slate-100 rounded-md text-slate-500 transition-colors">
-                                                            <Plus className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                    <p className="font-bold text-primary w-16 text-right">${c.item.precio * c.qty}</p>
-                                                    <button onClick={() => removeFromCart(c.item.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="text-slate-400 text-[10px] font-bold uppercase tracking-wider border-b border-slate-50">
+                                                    <th className="pb-3 pl-2">PRODUCTO</th>
+                                                    <th className="pb-3">TIPO</th>
+                                                    <th className="pb-3">COSTO BASE</th>
+                                                    <th className="pb-3">PRECIO VENTA</th>
+                                                    <th className="pb-3">GANANCIA</th>
+                                                    <th className="pb-3 text-right"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {cart.map(c => {
+                                                    const currentPrice = getPrecioVenta(c.item.id, c.item.precio);
+                                                    const profit = currentPrice - c.item.costo;
+                                                    return (
+                                                        <tr key={c.item.id} className="group hover:bg-slate-50/50 transition-colors">
+                                                            <td className="py-4 pl-2">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 overflow-hidden shrink-0">
+                                                                        {c.item.imagen ? (
+                                                                            <img src={c.item.imagen} alt={c.item.nombre} className="w-full h-full object-cover" />
+                                                                        ) : (
+                                                                            <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-300">N/A</div>
+                                                                        )}
+                                                                    </div>
+                                                                    <span className="text-sm font-bold text-slate-800">{c.item.nombre}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-4">
+                                                                <span className={cn(
+                                                                    'text-[10px] font-bold px-2 py-0.5 rounded-md',
+                                                                    c.item.categoria === 'Ropa' ? 'text-[#40C4AA] bg-[#40C4AA]/10' : 'text-[#FF8A9B] bg-[#FF8A9B]/10'
+                                                                )}>
+                                                                    {c.item.categoria}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-4 text-sm font-medium text-slate-500">${c.item.costo.toFixed(2)}</td>
+                                                            <td className="py-4">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-slate-400 text-sm">$</span>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        className="w-20 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                                                        value={preciosVenta[c.item.id] ?? c.item.precio}
+                                                                        onChange={(e) => setPreciosVenta(prev => ({ ...prev, [c.item.id]: e.target.value }))}
+                                                                    />
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-4">
+                                                                <span className={cn(
+                                                                    "text-sm font-bold",
+                                                                    profit >= 0 ? "text-yellow-500" : "text-red-500"
+                                                                )}>
+                                                                    ${profit.toFixed(2)}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-4 text-right">
+                                                                <button onClick={() => removeFromCart(c.item.id)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 )}
                             </div>
@@ -335,6 +390,40 @@ export default function VentasPage() {
                     </div>
                 </main>
             </div>
+
+            {showSuccessModal && lastVenta && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[32px] w-full max-w-lg p-8 shadow-2xl animate-in zoom-in-95 duration-300 text-center">
+                        <div className="w-20 h-20 bg-[#40C4AA]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Plus className="w-10 h-10 text-[#40C4AA] rotate-45" /> {/* Simulating a check mark or success icon */}
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-800 mb-2">¡Venta Confirmada!</h2>
+                        <p className="text-slate-500 font-medium mb-8">El registro se ha procesado correctamente</p>
+                        
+                        <div className="bg-slate-50 rounded-2xl p-6 mb-8 text-left space-y-3">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Productos</span>
+                                <span className="text-slate-800 font-bold">{lastVenta.items?.length} items</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-3">
+                                <span className="text-slate-800 font-black">TOTAL VENTA</span>
+                                <span className="text-primary font-black text-xl">${lastVenta.total?.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-800 font-black">GANANCIA</span>
+                                <span className="text-yellow-500 font-black text-xl">${lastVenta.ganancia?.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => setShowSuccessModal(false)}
+                            className="w-full py-4 bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-primary/20 transition-all text-lg"
+                        >
+                            Listo, volver
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
