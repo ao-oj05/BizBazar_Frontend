@@ -122,7 +122,7 @@ function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () 
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 p-8 bg-white">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 p-8 bg-white">
                     <div className="rounded-xl border border-slate-200 p-5 flex flex-col gap-1.5 bg-white shadow-sm">
                         <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">Inversión Total</span>
                         <span className="text-[22px] font-black text-[#1E293B]">${safeInversion.toLocaleString('en-US')}</span>
@@ -147,6 +147,18 @@ function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () 
                         <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">% Recuperación</span>
                         <span className="relative z-10 w-[52px] h-[52px] flex items-center justify-center rounded-full bg-[#FF007F]/10 text-[#FF007F] text-lg font-bold mt-1">
                             {pctRecuperacion}%
+                        </span>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 p-5 flex flex-col gap-1.5 bg-white shadow-sm">
+                        <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">Estado</span>
+                        <span className={cn(
+                            'inline-flex items-center self-start px-3 py-1.5 rounded-full text-sm font-bold mt-1',
+                            activeLote.estado === 'Activo'
+                                ? 'bg-primary/10 text-primary border border-primary/20'
+                                : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        )}>
+                            {activeLote.estado}
                         </span>
                     </div>
                 </div>
@@ -422,7 +434,7 @@ export default function LotesPage() {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-5 text-sm text-slate-700 font-medium">{lote.nombre}</td>
-                                                <td className="px-6 py-5 text-sm text-slate-500 font-medium">{lote.fecha}</td>
+                                                <td className="px-6 py-5 text-sm text-slate-500 font-medium">{lote.fecha ? lote.fecha.split('T')[0] : '-'}</td>
                                                 <td className="px-6 py-5 text-sm font-bold text-slate-800">${(Number(lote.inversion) || 0).toLocaleString('en-US')}</td>
                                                 <td className="px-6 py-5 text-sm text-slate-600 font-medium">{lote.piezas}</td>
                                                 <td className="px-6 py-5">
@@ -431,7 +443,6 @@ export default function LotesPage() {
                                                 <td className="px-6 py-5">
                                                     <span className={cn('inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold', lote.estado === 'Activo' ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-slate-100 text-slate-500 border border-slate-200')}>
                                                         {lote.estado}
-                                                        {lote.estado === 'Activo' && <span className="bg-[#FF007F]/10 text-[#FF007F] text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">ACTIVO</span>}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-5">
