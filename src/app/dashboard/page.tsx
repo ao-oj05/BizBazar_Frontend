@@ -204,7 +204,7 @@ export default function DashboardPage() {
                                                     <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider">TIPO</th>
                                                     <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider">PRECIO</th>
                                                     <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider">GANANCIA</th>
-                                                    <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider">HORA</th>
+                                                    <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider">COSTO LOTE</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
@@ -228,9 +228,9 @@ export default function DashboardPage() {
                                                                         {!isJoya ? 'Ropa' : 'Joyería'}
                                                                     </span>
                                                                 </td>
-                                                                <td className="py-5 text-sm font-black text-slate-800">${sale.total || sale.price || 0}</td>
+                                                                <td className="py-5 text-sm font-black text-slate-800">${sale.total || sale.precio_venta || sale.price || 0}</td>
                                                                 <td className="py-5 text-sm font-black text-[#EAB308]">${sale.ganancia_total || sale.profit || 0}</td>
-                                                                <td className="py-5 text-sm font-medium text-slate-400">{saleTime}</td>
+                                                                <td className="py-5 text-sm font-medium text-slate-600">${sale.items && sale.items.length > 0 ? (sale.items[0]?.costo_base || sale.items[0]?.costo || 0) : 0}</td>
                                                             </tr>
                                                         );
                                                     })
