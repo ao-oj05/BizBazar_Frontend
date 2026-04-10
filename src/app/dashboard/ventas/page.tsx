@@ -355,24 +355,24 @@ export default function VentasPage() {
                                         <span className="font-bold text-slate-800">{totalItems} productos</span>
                                     </div>
                                     <div className="flex items-center justify-between text-sm">
-                                        <span className="text-slate-500 font-medium">Subtotal venta:</span>
-                                        <span className="font-bold text-slate-800 text-lg">${subtotal.toFixed(2)}</span>
+                                        <span className="text-slate-500 font-medium">Total Utilidad:</span>
+                                        <span className="font-bold text-slate-800 text-lg">${totalGanancia.toFixed(2)}</span>
                                     </div>
                                 </div>
                                 <div className="h-px w-full bg-slate-100 mb-6" />
                                 <div className="mb-8">
                                     <div className="flex items-center justify-between mb-3">
-                                        <span className="text-slate-800 font-bold text-lg">Total Utilidad:</span>
-                                        <span className="font-bold text-[#EAB308] text-3xl">${totalGanancia.toFixed(2)}</span>
+                                        <span className="text-slate-800 font-bold text-lg">Total Venta:</span>
+                                        <span className="font-bold text-[#EAB308] text-3xl">${subtotal.toFixed(2)}</span>
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
                                             <span>Ropa: {countRopa} items</span>
-                                            <span>${cart.filter(c => c.item.categoria === 'Ropa').reduce((acc, curr) => acc + (curr.item.precio - curr.item.costo) * curr.qty, 0).toFixed(2)}</span>
+                                            <span>${cart.filter(c => c.item.categoria === 'Ropa').reduce((acc, curr) => acc + (getPrecioVenta(curr.item.id, curr.item.precio) - curr.item.costo) * curr.qty, 0).toFixed(2)}</span>
                                         </div>
                                         <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
                                             <span>Joyería: {countJoyeria} items</span>
-                                            <span>${cart.filter(c => c.item.categoria === 'Joyería').reduce((acc, curr) => acc + (curr.item.precio - curr.item.costo) * curr.qty, 0).toFixed(2)}</span>
+                                            <span>${cart.filter(c => c.item.categoria === 'Joyería').reduce((acc, curr) => acc + (getPrecioVenta(curr.item.id, curr.item.precio) - curr.item.costo) * curr.qty, 0).toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -407,11 +407,11 @@ export default function VentasPage() {
                             </div>
                             <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-3">
                                 <span className="text-slate-800 font-black">TOTAL VENTA</span>
-                                <span className="text-primary font-black text-xl">${lastVenta.total?.toFixed(2)}</span>
+                                <span className="text-[#EAB308] font-black text-xl">${lastVenta.total?.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-800 font-black">GANANCIA</span>
-                                <span className="text-yellow-500 font-black text-xl">${lastVenta.ganancia?.toFixed(2)}</span>
+                                <span className="text-slate-800 font-black">TOTAL UTILIDAD</span>
+                                <span className="text-primary font-black text-xl">${lastVenta.ganancia?.toFixed(2)}</span>
                             </div>
                         </div>
 

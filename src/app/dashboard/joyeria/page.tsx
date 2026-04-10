@@ -7,7 +7,7 @@ import { Search, Grid2X2, List, Plus, X, Loader2, Gem, Camera } from 'lucide-rea
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type EstadoJoya = 'Disponible' | 'Vendido' | 'En subasta';
+type EstadoJoya = 'Todos' | 'Disponible' | 'Vendido';
 
 interface Joya {
     id: string;
@@ -22,7 +22,7 @@ interface Joya {
     categoria: string;
 }
 
-type FilterTab = 'Todos' | EstadoJoya;
+type FilterTab = 'Todos' | 'Disponible' | 'Vendido';
 
 interface Lote {
     id: string;
@@ -46,7 +46,7 @@ export default function JoyeriaPage() {
     const [isUploadingDetalle, setIsUploadingDetalle] = useState(false);
     const detalleFileRef = useRef<HTMLInputElement>(null);
 
-    const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido', 'En subasta'];
+    const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido'];
 
     // Map raw backend row → frontend Joya shape
     const mapJoya = (raw: any): Joya => {
@@ -230,9 +230,7 @@ export default function JoyeriaPage() {
                                             <td className="px-5 py-4 text-sm text-slate-500">{j.subcategoria}</td>
                                             <td className="px-5 py-4">
                                                 <span className={cn('px-2 py-1 rounded-lg text-xs font-bold',
-                                                    j.estado === 'Disponible' ? 'bg-[#40C4AA]/10 text-[#40C4AA]' :
-                                                        j.estado === 'Vendido' ? 'bg-slate-100 text-slate-500' :
-                                                            'bg-yellow-100 text-yellow-600'
+                                                    j.estado === 'Disponible' ? 'bg-[#40C4AA]/10 text-[#40C4AA]' : 'bg-slate-100 text-slate-500'
                                                 )}>{j.estado}</span>
                                             </td>
                                             <td className="px-5 py-4 text-sm text-slate-500">{j.tipoVenta}</td>
