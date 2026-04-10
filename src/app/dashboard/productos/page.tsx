@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '../components/Sidebar';
 import { Topbar } from '../components/Topbar';
 import { cn } from '@/src/shared/utils';
@@ -48,7 +49,27 @@ export default function ProductosPage() {
     const [selectedProducto, setSelectedProducto] = useState<Producto | null>(null);
     const [editingProducto, setEditingProducto] = useState<Producto | null>(null);
     const [showNuevoProducto, setShowNuevoProducto] = useState(false);
+    const router = useRouter();
     const [imgIndex, setImgIndex] = useState(0);
+
+    const addToCart = (producto: Producto) => {
+        try {
+            const existing: any[] = JSON.parse(localStorage.getItem('cart_items') || '[]');
+            const found = existing.find((c: any) => c.id === producto.id);
+            if (!found) {
+                existing.push({
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    precio: Number(producto.precio ?? producto.costo ?? 0),
+                    costo: Number(producto.costo ?? 0),
+                    categoria: 'Ropa',
+                    imagen: producto.imagen || '',
+                });
+                localStorage.setItem('cart_items', JSON.stringify(existing));
+            }
+            router.push('/dashboard/ventas');
+        } catch { router.push('/dashboard/ventas'); }
+    };
 
     const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido', 'En_subasta'];
 
@@ -61,9 +82,11 @@ export default function ProductosPage() {
             imagenUrl = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : '';
         } catch { imagenUrl = ''; }
 
-        // Capitalise first letter and replace underscores with spaces
-        const rawEstado: string = (raw.estado ?? 'disponible').replace(/_/g, ' ');
-        const estado = (rawEstado.charAt(0).toUpperCase() + rawEstado.slice(1).toLowerCase()) as Producto['estado'];
+        // Normalize estado keeping underscores so 'en_subasta' → 'En_subasta'
+        const rawEstado: string = (raw.estado ?? 'disponible').toLowerCase();
+        const estado: Producto['estado'] =
+            rawEstado === 'en_subasta' ? 'En_subasta' :
+            rawEstado === 'vendido'    ? 'Vendido'    : 'Disponible';
 
         return {
             id: raw.id,
@@ -263,6 +286,7 @@ export default function ProductosPage() {
                     imgIndex={imgIndex}
                     setImgIndex={setImgIndex}
                     onClose={() => setSelectedProducto(null)}
+                    onAddToCart={addToCart}
                     onEdit={() => {
                         setEditingProducto(selectedProducto);
                         setSelectedProducto(null);
@@ -285,8 +309,8 @@ export default function ProductosPage() {
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 
-function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit }:
-    { producto: Producto; imgIndex: number; setImgIndex: (i: number) => void; onClose: () => void; onEdit: () => void }) {
+function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit, onAddToCart }:
+    { producto: Producto; imgIndex: number; setImgIndex: (i: number) => void; onClose: () => void; onEdit: () => void; onAddToCart: (p: Producto) => void }) {
     const images = producto.imagen ? [producto.imagen] : [];
 
     return (
@@ -379,9 +403,9 @@ function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit
                             {producto.estado === 'Disponible' && (
                                 <button
                                     className="w-full py-3.5 rounded-xl bg-[#FF0080] hover:bg-[#FF0080]/90 text-white font-bold tracking-wide transition-colors"
-                                    onClick={onClose}
+                                    onClick={() => onAddToCart(producto)}
                                 >
-                                    Registrar venta
+                                    🛒 Agregar al carrito
                                 </button>
                             )}
                             <button

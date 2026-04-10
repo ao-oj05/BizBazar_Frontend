@@ -20,21 +20,33 @@ interface Joya {
     costo: number;
     tipoVenta: 'Directa';
     categoria: string;
+    lote: string;
+    loteId: string;
 }
 
 const normalize = (s: string) =>
     (s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]; onClose: () => void; onSave: (j: Joya) => void }) {
+interface JoyaToEdit {
+    id: string;
+    nombre: string;
+    codigo: string;
+    subcategoria: string;
+    imagen: string;
+    loteId: string;
+    costo: number;
+}
+
+export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: LoteBasico[]; onClose: () => void; onSave: (j: Joya) => void; joyaToEdit?: JoyaToEdit }) {
     const [form, setForm] = useState({
-        nombre: '',
+        nombre: joyaToEdit?.nombre || '',
         descripcion: '',
         subcategoria_id: '',
-        lote_id: '',
-        costo_base: '',
-        codigo_custom: '',
+        lote_id: joyaToEdit?.loteId || '',
+        costo_base: joyaToEdit?.costo?.toString() || '',
+        codigo_custom: joyaToEdit?.codigo || '',
         tipo_venta: 'directa',
-        imagenUrl: ''
+        imagenUrl: joyaToEdit?.imagen || ''
     });
 
     const [isSaving, setIsSaving] = useState(false);
@@ -50,15 +62,18 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
         const fetchSubs = async () => {
             setLoadingCats(true);
             try {
-                // Use ?tipo=Joyería so the backend filters directly
                 const res = await fetch('/api/configuracion/categorias?tipo=Joyer%C3%ADa');
                 if (res.ok) {
                     const json = await res.json();
-                    // Backend returns { success: true, data: [...] } OR a plain array
                     const all: Subcategoria[] = Array.isArray(json) ? json : (json.data ?? []);
-                    // Client-side fallback filter in case the backend didn't filter by tipo
                     const filtered = all.filter(s => normalize(s.tipo) === 'joyeria');
-                    setSubcategorias(filtered.length > 0 ? filtered : all);
+                    const finalSubs = filtered.length > 0 ? filtered : all;
+                    setSubcategorias(finalSubs);
+                    // If editing, match subcategory by name
+                    if (joyaToEdit?.subcategoria) {
+                        const match = finalSubs.find(s => s.nombre === joyaToEdit.subcategoria);
+                        if (match) setForm(prev => ({ ...prev, subcategoria_id: match.id }));
+                    }
                 }
             } catch (e) {
                 console.error('Error fetching subcategorias joyería:', e);
@@ -67,7 +82,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
             }
         };
         fetchSubs();
-    }, []);
+    }, [joyaToEdit]);
 
     useEffect(() => {
         // Auto-calculate cost based on lote for parity with Clothing logic
@@ -123,17 +138,20 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
 
     const handleSave = async () => {
         setErrorMessage('');
-        if (!form.nombre || !form.subcategoria_id || !form.costo_base || !form.lote_id) return;
+        if (!form.nombre || !form.subcategoria_id || !form.costo_base) return;
+        if (!joyaToEdit && !form.lote_id) return;
         setIsSaving(true);
         try {
             const finalCodigo = form.codigo_custom.trim()
                 ? form.codigo_custom.trim()
-                : 'BIZ-' + Date.now().toString().slice(-3);
+                : joyaToEdit?.codigo || ('BIZ-' + Date.now().toString().slice(-3));
 
             const subcategoriaNombre = subcategorias.find(s => s.id === form.subcategoria_id)?.nombre || '';
 
-            const res = await fetch('/api/productos', {
-                method: 'POST',
+            const endpoint = joyaToEdit ? `/api/productos/${joyaToEdit.id}` : '/api/productos';
+            const method = joyaToEdit ? 'PUT' : 'POST';
+
+            const res = await fetch(endpoint, {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     codigo: finalCodigo,
@@ -165,7 +183,9 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                     precio: rawJoya.precio || null,
                     costo: Number(rawJoya.costo_base || rawJoya.costo || form.costo_base),
                     tipoVenta: 'Directa',
-                    categoria: rawJoya.categoria || 'joyeria'
+                    categoria: rawJoya.categoria || 'joyeria',
+                    lote: rawJoya.lote_nombre || rawJoya.lote || '',
+                    loteId: rawJoya.lote_id || rawJoya.loteId || form.lote_id,
                 };
 
 
@@ -187,14 +207,14 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
         }
     };
 
-    const canSave = !isSaving && !!form.nombre && !!form.subcategoria_id && !!form.costo_base && !!form.lote_id;
+    const canSave = !isSaving && !!form.nombre && !!form.subcategoria_id && !!form.costo_base && (!joyaToEdit ? !!form.lote_id : true);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-left">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden">
                           {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 bg-[#29AFFF]">
-                    <h2 className="text-base font-bold text-white tracking-tight">Agregar nuevo producto - Joyería</h2>
+                    <h2 className="text-base font-bold text-white tracking-tight">{joyaToEdit ? 'Editar producto - Joyería' : 'Agregar nuevo producto - Joyería'}</h2>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-white/20 hover:bg-white/30 text-white rounded-full transition-all">
                         <X className="w-4 h-4" />
                     </button>

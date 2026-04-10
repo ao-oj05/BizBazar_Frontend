@@ -52,8 +52,6 @@ export default function VentasPage() {
         const fetchProductos = async () => {
             setIsLoading(true);
             try {
-                // Cargar productos de ropa y joyería disponibles para venta
-                // El endpoint /api/productos consolida ambos, y el estado debe ser 'disponible' en minúscula
                 const res = await fetch('/api/productos?estado=disponible');
                 const data = res.ok ? await res.json() : [];
 
@@ -70,6 +68,27 @@ export default function VentasPage() {
                 });
 
                 setItems(allItems);
+
+                // Read items added via "Agregar al carrito" from product/jewelry pages
+                try {
+                    const stored = localStorage.getItem('cart_items');
+                    if (stored) {
+                        const toAdd: ProductoVenta[] = JSON.parse(stored);
+                        if (toAdd.length > 0) {
+                            setCart(prev => {
+                                const updated = [...prev];
+                                toAdd.forEach(item => {
+                                    if (!updated.find(c => c.item.id === item.id)) {
+                                        updated.push({ item, qty: 1 });
+                                    }
+                                });
+                                return updated;
+                            });
+                        }
+                        localStorage.removeItem('cart_items');
+                    }
+                } catch { /* ignore */ }
+
             } catch (error) {
                 console.error('Error al cargar productos para venta:', error);
             } finally {

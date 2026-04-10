@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '../components/Sidebar';
 import { Topbar } from '../components/Topbar';
 import { cn } from '@/src/shared/utils';
@@ -20,6 +21,8 @@ interface Joya {
     costo: number;
     tipoVenta: 'Directa';
     categoria: string;
+    lote: string;
+    loteId: string;
 }
 
 type FilterTab = 'Todos' | EstadoJoya;
@@ -42,9 +45,30 @@ export default function JoyeriaPage() {
     const [lotes, setLotes] = useState<Lote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedJoya, setSelectedJoya] = useState<Joya | null>(null);
+    const [editingJoya, setEditingJoya] = useState<Joya | null>(null);
     const [showNuevaJoya, setShowNuevaJoya] = useState(false);
     const [isUploadingDetalle, setIsUploadingDetalle] = useState(false);
     const detalleFileRef = useRef<HTMLInputElement>(null);
+    const router = useRouter();
+
+    const addToCart = (joya: Joya) => {
+        try {
+            const existing: any[] = JSON.parse(localStorage.getItem('cart_items') || '[]');
+            const found = existing.find((c: any) => c.id === joya.id);
+            if (!found) {
+                existing.push({
+                    id: joya.id,
+                    nombre: joya.nombre,
+                    precio: Number(joya.precio ?? joya.costo ?? 0),
+                    costo: Number(joya.costo ?? 0),
+                    categoria: 'Joyería',
+                    imagen: joya.imagen || '',
+                });
+                localStorage.setItem('cart_items', JSON.stringify(existing));
+            }
+            router.push('/dashboard/ventas');
+        } catch { router.push('/dashboard/ventas'); }
+    };
 
     const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido'];
 
@@ -70,6 +94,8 @@ export default function JoyeriaPage() {
             costo: Number(raw.costo_base ?? raw.costo ?? 0),
             tipoVenta: 'Directa',
             categoria: raw.categoria ?? 'joyeria',
+            lote: raw.lote_nombre ?? raw.lote ?? '',
+            loteId: raw.lote_id ?? raw.loteId ?? '',
         };
     };
 
@@ -206,7 +232,9 @@ export default function JoyeriaPage() {
                                         <h3 className="font-bold text-slate-800 text-sm leading-tight">{j.nombre}</h3>
                                         <div className="mt-auto flex items-center justify-between pt-2 border-t border-slate-50">
                                             <span className="text-xs text-slate-400 font-medium">{j.subcategoria}</span>
-                                            {j.precio ? <span className="font-bold text-[#29AFFF] text-sm">${j.precio}</span> : <span className="text-xs text-slate-300">Sin precio</span>}
+                                            {(j.precio || j.costo)
+                                                ? <span className="font-bold text-[#29AFFF] text-sm">${j.precio ?? j.costo}</span>
+                                                : <span className="text-xs text-slate-300">Sin precio</span>}
                                         </div>
                                     </div>
                                 </div>
@@ -317,6 +345,12 @@ export default function JoyeriaPage() {
                                     )}
                                 </div>
 
+                                {/* Lote origen */}
+                                <div className="flex flex-col gap-1 w-full mt-2">
+                                    <span className="text-xs font-medium text-slate-400">Lote origen</span>
+                                    <span className="text-[15px] font-bold text-[#1E293B]">{selectedJoya.lote || '—'}</span>
+                                </div>
+
                                 {/* Costo Individual */}
                                 <div className="flex flex-col gap-1 w-full mt-4">
                                     <span className="text-xs font-medium text-slate-400">Costo individual</span>
@@ -338,19 +372,18 @@ export default function JoyeriaPage() {
                                 {/* Spacer to push buttons to the bottom */}
                                 <div className="flex-1 w-full"></div>
 
-                                {/* Actions */}
                                 <div className="flex flex-col gap-3 w-full mt-6">
                                     {selectedJoya.estado === 'Disponible' && (
                                         <button
                                             className="w-full py-3.5 rounded-xl bg-[#40C4AA] hover:bg-[#38b098] text-white font-bold tracking-wide transition-colors"
-                                            onClick={() => setSelectedJoya(null)}
+                                            onClick={() => { const j = selectedJoya; setSelectedJoya(null); addToCart(j); }}
                                         >
-                                            Registrar venta
+                                            🛒 Agregar al carrito
                                         </button>
                                     )}
                                     <button
                                         className="w-full py-3.5 rounded-xl border-2 border-[#29AFFF] text-[#29AFFF] bg-white hover:bg-[#29AFFF]/5 font-bold tracking-wide transition-colors"
-                                        onClick={() => setSelectedJoya(null)}
+                                        onClick={() => { setEditingJoya(selectedJoya); setSelectedJoya(null); }}
                                     >
                                         Editar joyería
                                     </button>
@@ -368,6 +401,15 @@ export default function JoyeriaPage() {
                     lotes={lotes}
                     onClose={() => setShowNuevaJoya(false)}
                     onSave={j => { setJoyas(prev => [...prev, j]); setShowNuevaJoya(false); }}
+                />
+            )}
+            {/* Editar Joya Modal */}
+            {editingJoya && (
+                <NuevaJoyaModal
+                    lotes={lotes}
+                    joyaToEdit={editingJoya}
+                    onClose={() => setEditingJoya(null)}
+                    onSave={() => { fetchJoyas(); setEditingJoya(null); }}
                 />
             )}
         </div>

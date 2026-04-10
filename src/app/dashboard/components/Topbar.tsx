@@ -1,6 +1,5 @@
 'use client';
-import { Search, Bell, User, Settings, LogOut } from "lucide-react";
-import { Input } from "@/src/shared/components/ui/input";
+import { Bell, User, Settings, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
@@ -49,13 +48,6 @@ export function Topbar() {
             </div>
 
             <div className="flex items-center gap-6">
-                <div className="relative w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                    <Input
-                        placeholder="Buscar..."
-                        className="pl-10 bg-slate-50 border-none focus-visible:ring-1 rounded-lg"
-                    />
-                </div>
 
                 <Link href="/dashboard/notificaciones" className="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
                     <Bell className="w-5 h-5" />
