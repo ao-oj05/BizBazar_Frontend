@@ -382,7 +382,6 @@ export function NuevaJoyaModal({ lotes, onClose, onSave }: { lotes: LoteBasico[]
                             </div>
                         )}
                     </div>
-                </div>
 
                 {/* Footer */}
                 <div className="px-8 py-6 border-t border-slate-50 flex gap-4 bg-white/50 backdrop-blur-sm">
