@@ -18,7 +18,7 @@ import Link from "next/link";
 
 interface Notification {
     id: string;
-    type: 'Stock Bajo' | 'Venta' | 'Subasta' | 'Lote' | 'Ganancia' | 'Sistema';
+    type: 'Stock Bajo' | 'Venta' | 'Lote' | 'Ganancia' | 'Sistema';
     title: string;
     description: string;
     time: string;
@@ -48,16 +48,7 @@ const mockNotifications: Notification[] = [
         linkUrl: "/dashboard/ventas",
         unread: true
     },
-    {
-        id: "3",
-        type: "Subasta",
-        title: "Nueva puja en Collar Vintage Esmeralda",
-        description: "Se recibió una puja de $4,200 en la subasta del Collar Vintage Esmeralda. La puja anterior era $4,000.",
-        time: "Hace 2h",
-        linkText: "Ver subasta →",
-        linkUrl: "/dashboard/subastas",
-        unread: true
-    },
+
     {
         id: "4",
         type: "Lote",
@@ -88,16 +79,7 @@ const mockNotifications: Notification[] = [
         linkUrl: "/dashboard/joyeria",
         unread: false
     },
-    {
-        id: "7",
-        type: "Subasta",
-        title: "Subasta finalizada: Pulsera Oro Rosa",
-        description: "La subasta de 'Pulsera Oro Rosa 18k' finalizó con puja ganadora de $8,500. Ganancia: $2,500.",
-        time: "Hace 22h",
-        linkText: "Ver subasta →",
-        linkUrl: "/dashboard/subastas",
-        unread: false
-    },
+
     {
         id: "8",
         type: "Venta",
@@ -162,12 +144,7 @@ const getTypeStyles = (type: Notification['type']) => {
                 wrapperClass: "bg-pink-50 text-[#F9007A]",
                 badgeClass: "bg-pink-50 text-[#F9007A]"
             };
-        case 'Subasta':
-            return {
-                icon: Gavel,
-                wrapperClass: "bg-blue-50 text-blue-500",
-                badgeClass: "bg-blue-50 text-blue-500"
-            };
+
         case 'Lote':
             return {
                 icon: Package,
@@ -207,7 +184,6 @@ export default function NotificacionesPage() {
         'Todas': notifications.length,
         'Stock Bajo': notifications.filter(n => n.type === 'Stock Bajo').length,
         'Ventas': notifications.filter(n => n.type === 'Venta').length,
-        'Subastas': notifications.filter(n => n.type === 'Subasta').length,
         'Lotes': notifications.filter(n => n.type === 'Lote').length,
         'Ganancias': notifications.filter(n => n.type === 'Ganancia').length,
         'Sistema': notifications.filter(n => n.type === 'Sistema').length,
@@ -271,7 +247,7 @@ export default function NotificacionesPage() {
                                     {key === 'Todas' && <Bell className="w-4 h-4" />}
                                     {key === 'Stock Bajo' && <AlertTriangle className="w-4 h-4" />}
                                     {key === 'Ventas' && <ShoppingCart className="w-4 h-4" />}
-                                    {key === 'Subastas' && <Gavel className="w-4 h-4" />}
+
                                     {key === 'Lotes' && <Package className="w-4 h-4" />}
                                     {key === 'Ganancias' && <TrendingUp className="w-4 h-4" />}
                                     {key === 'Sistema' && <Info className="w-4 h-4" />}
@@ -348,7 +324,6 @@ export default function NotificacionesPage() {
                     <div className="flex flex-wrap items-center justify-between text-xs font-bold text-slate-400 px-2 gap-4">
                         <span>Mostrando {filteredNotifications.length} de {notifications.length} notificaciones</span>
                         <div className="flex items-center gap-4">
-                            <span className="flex items-center gap-1.5"><Gavel className="w-3.5 h-3.5 text-[#38bdf8]" /> {filterCounts['Subastas']} subastas</span>
                             <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-red-400" /> {filterCounts['Stock Bajo']} alertas</span>
                         </div>
                     </div>

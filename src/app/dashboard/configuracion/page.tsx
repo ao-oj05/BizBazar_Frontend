@@ -289,12 +289,7 @@ function AjustesGeneralesTab() {
     return (
         <div className="flex flex-col gap-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Incremento mínimo en subastas ($)</label>
-                    <input type="number" className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/30 placeholder-slate-300"
-                        placeholder="10" value={form.incrementoMinimo} onChange={e => setForm(f => ({ ...f, incrementoMinimo: e.target.value }))} />
-                    <span className="text-xs text-slate-400">Monto mínimo para registrar una puja.</span>
-                </div>
+
                 <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Moneda</label>
                     <select className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/30 bg-white"

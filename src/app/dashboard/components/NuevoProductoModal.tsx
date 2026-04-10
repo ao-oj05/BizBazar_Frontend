@@ -28,10 +28,10 @@ interface Producto {
     lote: string;
     loteId: string;
     imagen: string;
-    estado: 'Disponible' | 'Vendido' | 'En subasta';
+    estado: 'Disponible' | 'Vendido';
     precio: number | null;
     costo: number;
-    tipoVenta: 'Directa' | 'Subasta';
+    tipoVenta: 'Directa';
     categoria: string;
 }
 
@@ -44,7 +44,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
         descripcion: '', // the frontend Producto interface doesn't store descripcion currently, so starting empty
         subcategoria_id: '', // this needs to be matched asynchronously once subcategories load
         lote_id: productoToEdit?.loteId || '', 
-        tipo_venta: productoToEdit?.tipoVenta === 'Subasta' ? 'subasta' : 'directa', 
+        tipo_venta: 'directa', 
         costo_base: productoToEdit?.costo?.toString() || '', 
         imagenUrl: productoToEdit?.imagen || '' 
     });

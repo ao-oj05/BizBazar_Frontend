@@ -21,7 +21,7 @@ interface Lote {
     recuperado: number;
     estado: 'Activo' | 'Cerrado';
     tipo: string;
-    productos: { nombre: string; estado: 'Vendido' | 'Disponible' | 'En subasta'; precio: number | null; ganancia: number | null }[];
+    productos: { nombre: string; estado: 'Vendido' | 'Disponible'; precio: number | null; ganancia: number | null }[];
 }
 
 export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSave: (lote: Lote) => void }) {

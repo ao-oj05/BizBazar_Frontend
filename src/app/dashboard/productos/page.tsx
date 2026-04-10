@@ -10,7 +10,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type EstadoProducto = 'Disponible' | 'Vendido' | 'En subasta';
+type EstadoProducto = 'Disponible' | 'Vendido';
 
 interface Producto {
     id: string;
@@ -23,7 +23,7 @@ interface Producto {
     estado: EstadoProducto;
     precio: number | null;
     costo: number;
-    tipoVenta: 'Directa' | 'Subasta';
+    tipoVenta: 'Directa';
     categoria: string;
 }
 
@@ -50,7 +50,7 @@ export default function ProductosPage() {
     const [showNuevoProducto, setShowNuevoProducto] = useState(false);
     const [imgIndex, setImgIndex] = useState(0);
 
-    const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido', 'En subasta'];
+    const filterTabs: FilterTab[] = ['Todos', 'Disponible', 'Vendido'];
 
     // Map raw backend row → frontend Producto shape
     const mapProducto = (raw: any): Producto => {
@@ -237,9 +237,7 @@ export default function ProductosPage() {
                                             <td className="px-5 py-4 text-sm text-slate-500">{p.subcategoria}</td>
                                             <td className="px-5 py-4">
                                                 <span className={cn('px-2 py-1 rounded-lg text-xs font-bold',
-                                                    p.estado === 'Disponible' ? 'bg-[#FF0080]/10 text-[#FF0080]' :
-                                                        p.estado === 'Vendido' ? 'bg-slate-100 text-slate-500' :
-                                                            'bg-yellow-100 text-yellow-600'
+                                                    p.estado === 'Disponible' ? 'bg-[#FF0080]/10 text-[#FF0080]' : 'bg-slate-100 text-slate-500'
                                                 )}>{p.estado}</span>
                                             </td>
                                             <td className="px-5 py-4 text-sm font-bold text-slate-800">${Number(p.precio ?? p.costo ?? 0).toFixed(0)}</td>

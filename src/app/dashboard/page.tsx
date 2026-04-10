@@ -115,20 +115,6 @@ export default function DashboardPage() {
                 });
             }
 
-            // 2. Subastas activas (>= 1 subasta)
-            const enSubastaCount = parsedProductos.filter((p: any) => 
-                p.estado?.toLowerCase() === 'en subasta' || p.estado?.toLowerCase() === 'en_subasta'
-            ).length;
-            
-            if (enSubastaCount >= 1) {
-                newAlerts.push({
-                    id: 'alert-subastas',
-                    title: 'Subastas activas',
-                    description: `${enSubastaCount} productos`,
-                    type: 'warning'
-                });
-            }
-
             // Keep any backend alerts if they happen to exist
             if (backendData.alerts) {
                 newAlerts.push(...backendData.alerts);

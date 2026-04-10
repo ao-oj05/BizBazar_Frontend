@@ -14,7 +14,7 @@ import { Button } from '@/src/shared/components/ui/button';
 
 interface Producto {
     nombre: string;
-    estado: 'Vendido' | 'Disponible' | 'En subasta';
+    estado: 'Vendido' | 'Disponible';
     precio: number | null;
     ganancia: number | null;
     costo_base?: number | null;
@@ -63,14 +63,7 @@ function RecoveryBar({ recuperado, inversion }: { recuperado: number; inversion:
     );
 }
 
-function AuctionDot() {
-    return (
-        <span className="relative inline-flex h-2 w-2 ml-1">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-400" />
-        </span>
-    );
-}
+
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 
@@ -191,9 +184,7 @@ function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () 
                                                     <td className="py-4 px-2 font-medium text-slate-700">{p.nombre}</td>
                                                     <td className="py-4 px-2">
                                                         <span className={cn('px-3.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center justify-center',
-                                                            p.estado === 'Vendido' ? 'bg-slate-100 text-slate-500' :
-                                                            p.estado === 'Disponible' ? 'bg-[#FF007F]/10 text-[#FF007F]' :
-                                                            'bg-sky-100 text-sky-500'
+                                                            p.estado === 'Vendido' ? 'bg-slate-100 text-slate-500' : 'bg-[#FF007F]/10 text-[#FF007F]'
                                                         )}>
                                                             {p.estado}
                                                         </span>
@@ -295,7 +286,7 @@ export default function LotesPage() {
         return matchSearch && matchEstado && matchCategoria && matchDesde && matchHasta;
     }), [lotes, search, estadoFilter, categoriaFilter, fechaDesde, fechaHasta]);
 
-    const hasAuction = (lote: Lote) => lote.productos.some(p => p.estado === 'En subasta');
+
 
     return (
         <div className="min-h-screen bg-slate-50 flex">
@@ -440,7 +431,7 @@ export default function LotesPage() {
                                                 <td className="px-6 py-5">
                                                     <span className={cn('inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold', lote.estado === 'Activo' ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-slate-100 text-slate-500 border border-slate-200')}>
                                                         {lote.estado}
-                                                        {lote.estado === 'Activo' && hasAuction(lote) && <AuctionDot />}
+                                                        {lote.estado === 'Activo' && <span className="bg-[#FF007F]/10 text-[#FF007F] text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">ACTIVO</span>}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-5">

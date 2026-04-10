@@ -14,7 +14,7 @@ type ReportTab = 'Diario' | 'Por rango' | 'Por lote' | 'Por categoría' | 'Inven
 interface VentaReporte {
     hora: string;
     producto: string;
-    tipo: 'Directa' | 'Subasta';
+    tipo: 'Directa';
     precio: string;
     ganancia: string;
 }
@@ -34,7 +34,6 @@ interface ReporteRangoResponse {
     totalVendido: string;
     totalGanancia: string;
     ventasDirectas: string;
-    subastas: string;
     periodo: string;
     ventas: VentaReporte[];
 }
@@ -151,8 +150,6 @@ function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) =>
                 <MetricCard title="Ventas Ropa" value={data?.ventasRopa ?? 0} icon={Package} valueColor="text-[#40C4AA]" />
                 <MetricCard title="Ventas Joyería" value={data?.ventasJoyeria ?? 0} icon={Gem} valueColor="text-primary" />
                 <MetricCard title="Total Vendido" value={data?.totalVendido ?? '$0'} icon={TrendingUp} valueColor="text-[#40C4AA]" />
-                <MetricCard title="Total Ganancia" value={data?.totalGanancia ?? '$0'} icon={TrendingUp} valueColor="text-[#EAB308]" />
-                <MetricCard title="Subastas Cerradas" value={data?.subastasCerradas ?? 0} valueColor="text-primary" />
                 <MetricCard title="Productos Agregados" value={data?.productosAgregados ?? 0} icon={Package} valueColor="text-[#40C4AA]" />
             </div>
             {/* Sales Table */}
@@ -173,7 +170,7 @@ function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) =>
                             <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
                                 <td className="py-4 text-xs font-semibold text-slate-500">{r.hora}</td>
                                 <td className="py-4 text-sm font-bold text-slate-800">{r.producto}</td>
-                                <td className="py-4"><span className={cn("text-[10px] font-bold px-2 py-1 rounded-md", r.tipo === 'Subasta' ? "bg-[#FF9DAA]/10 text-[#FF8A9B]" : "bg-[#40C4AA]/10 text-[#40C4AA]")}>{r.tipo}</span></td>
+                                <td className="py-4"><span className="text-[10px] font-bold px-2 py-1 rounded-md bg-[#40C4AA]/10 text-[#40C4AA]">{r.tipo}</span></td>
                                 <td className="py-4 text-sm font-bold text-slate-800">{r.precio}</td>
                                 <td className="py-4 text-sm font-bold text-[#EAB308]">{r.ganancia}</td>
                             </tr>
@@ -214,8 +211,7 @@ function PorRangoTab({ onExportReady }: { onExportReady: (exportFn: () => void) 
                 rows: [
                     ["Total Vendido", data?.totalVendido ?? '$0'],
                     ["Total Ganancia", data?.totalGanancia ?? '$0'],
-                    ["Ventas Directas", data?.ventasDirectas ?? '$0'],
-                    ["Subastas", data?.subastas ?? '$0']
+                    ["Ventas Directas", data?.ventasDirectas ?? '$0']
                 ],
                 filename: `Reporte_Rango_${desde || 'inicio'}_${hasta || 'fin'}`
             });
@@ -244,7 +240,6 @@ function PorRangoTab({ onExportReady }: { onExportReady: (exportFn: () => void) 
                     <MetricCard title="Total Vendido" value={data?.totalVendido ?? '$0'} valueColor="text-[#40C4AA]" />
                     <MetricCard title="Total Ganancia" value={data?.totalGanancia ?? '$0'} valueColor="text-[#EAB308]" />
                     <MetricCard title="Ventas Directas" value={data?.ventasDirectas ?? '$0'} valueColor="text-[#40C4AA]" />
-                    <MetricCard title="Subastas" value={data?.subastas ?? '$0'} valueColor="text-primary" />
                 </div>
             )}
         </div>
@@ -332,7 +327,7 @@ function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => vo
 // ─── Inventario Actual Tab ────────────────────────────────────────────────────
 
 function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
-    const [estado, setEstado] = useState<'Disponible' | 'En subasta' | 'Vendido'>('Disponible');
+    const [estado, setEstado] = useState<'Disponible' | 'Vendido'>('Disponible');
     const [data, setData] = useState<ReporteInventarioResponse | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -372,12 +367,12 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                 <MetricCard title="Ganancia Proyectada" value={data?.gananciaProyectada ?? '$0'} valueColor="text-[#EAB308]" />
             </div>
             <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm border border-slate-100 p-1.5 self-start">
-                {(['Disponible', 'En subasta', 'Vendido'] as const).map(e => (
+                {(['Disponible', 'Vendido'] as const).map(e => (
                     <button key={e} onClick={() => setEstado(e)}
                         className={cn("px-5 py-2 text-sm font-bold rounded-lg transition-colors",
                             estado === e ? "bg-[#40C4AA] text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"
                         )}>
-                        {e === 'En subasta' ? 'En subasta' : e}
+                        {e}
                     </button>
                 ))}
             </div>
