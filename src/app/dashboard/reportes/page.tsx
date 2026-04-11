@@ -9,68 +9,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 type ReportTab = 'Diario' | 'Por rango' | 'Por lote' | 'Por categoría' | 'Inventario actual';
 
-// ─── Shared types ─────────────────────────────────────────────────────────────
-
-interface VentaReporte {
-    hora: string;
-    producto: string;
-    tipo: 'Directa';
-    precio: string;
-    ganancia: string;
-}
-
-interface ReporteDiarioResponse {
-    ventasRopa: number;
-    ventasJoyeria: number;
-    totalVendido: string;
-    totalGanancia: string;
-    subastasCerradas: number;
-    productosAgregados: number;
-    ventas: VentaReporte[];
-}
-
-interface ReporteRangoResponse {
-    totalVentas: number;
-    totalVendido: string;
-    totalGanancia: string;
-    ventasDirectas: string;
-    periodo: string;
-    ventas: VentaReporte[];
-}
-
-interface ReporteCategoriaResponse {
-    categoria: string;
-    totalVendido: string;
-    totalDisponible: number;
-    ingresos: string;
-    ganancia: string;
-    cantidadProductos: number;
-    precioPromedio: string;
-    productos: {
-        id: string;
-        nombre: string;
-        tipoVenta: string;
-        precio: number;
-        estado: string;
-    }[];
-}
-
-interface ReporteInventarioResponse {
-    totalProductos: number;
-    valorInventario: string;
-    costoTotal: string;
-    gananciaProyectada: string;
-    articulos: {
-        id: string;
-        nombre: string;
-        lote: string;
-        estado: string;
-        costo: number;
-        precio: number | null;
-        imagen?: string;
-    }[];
-}
-
 // ─── Metric Card ─────────────────────────────────────────────────────────────
 
 function MetricCard({ title, value, icon: Icon, valueColor }: { title: string; value: string | number; icon?: React.ElementType; valueColor?: string }) {
@@ -92,8 +30,8 @@ function MetricCard({ title, value, icon: Icon, valueColor }: { title: string; v
 function LoadingState() {
     return (
         <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-sm">Cargando reporte...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-[#40C4AA]" />
+            <p className="text-sm font-bold">Cargando datos reales...</p>
         </div>
     );
 }
@@ -103,14 +41,44 @@ function LoadingState() {
 function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
     const today = new Date().toLocaleDateString('en-CA');
     const [fecha, setFecha] = useState(today);
-    const [data, setData] = useState<ReporteDiarioResponse | null>(null);
+    const [data, setData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
             const res = await fetch(`/api/reportes/diario?fecha=${fecha}`);
-            if (res.ok) setData(await res.json());
+            if (res.ok) {
+                const json = await res.json();
+                const d = json.data || json;
+                
+                // Map the backend structure to our frontend expectations
+                const mappedVentas: any[] = [];
+                (d.ventas || []).forEach((v: any) => {
+                    const hora = new Date(v.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    (v.items || []).forEach((i: any) => {
+                        mappedVentas.push({
+                            hora,
+                            producto: i.producto_nombre || 'Producto',
+                            tipo: v.tipo || 'Directa',
+                            precio: `$${parseFloat(i.precio_venta || 0).toFixed(2)}`,
+                            ganancia: `$${parseFloat(i.ganancia || 0).toFixed(2)}`
+                        });
+                    });
+                });
+
+                const ventasRopa = (d.por_categoria || []).find((c:any) => c.categoria === 'ropa')?.cantidad || 0;
+                const ventasJoyeria = (d.por_categoria || []).find((c:any) => c.categoria === 'joyeria')?.cantidad || 0;
+
+                setData({
+                    ventasRopa,
+                    ventasJoyeria,
+                    totalVendido: `$${parseFloat(d.resumen?.total_ingresos || 0).toFixed(2)}`,
+                    totalGanancia: `$${parseFloat(d.resumen?.total_ganancia || 0).toFixed(2)}`,
+                    totalVentas: d.resumen?.total_ventas || 0,
+                    ventas: mappedVentas
+                });
+            }
         } catch (e) { console.error(e); }
         finally { setIsLoading(false); }
     }, [fecha]);
@@ -124,7 +92,7 @@ function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) =>
                 subtitle: `Resumen de operaciones del día`,
                 dateRange: fecha,
                 columns: ["Hora", "Producto", "Tipo", "Precio", "Ganancia"],
-                rows: (data?.ventas ?? []).map((v) => [v.hora, v.producto, v.tipo, v.precio, v.ganancia]),
+                rows: (data?.ventas ?? []).map((v:any) => [v.hora, v.producto, v.tipo, v.precio, v.ganancia]),
                 filename: `Reporte_Diario_${fecha}`
             });
         });
@@ -140,21 +108,21 @@ function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) =>
         <div className="flex flex-col gap-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
                 <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-primary" />
+                    <Calendar className="w-5 h-5 text-[#40C4AA]" />
                     <input type="date" value={fecha} max={today}
                         onChange={e => setFecha(e.target.value)}
-                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/20" />
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <MetricCard title="Ventas Ropa" value={data?.ventasRopa ?? 0} icon={Package} valueColor="text-[#40C4AA]" />
-                <MetricCard title="Ventas Joyería" value={data?.ventasJoyeria ?? 0} icon={Gem} valueColor="text-primary" />
-                <MetricCard title="Total Vendido" value={data?.totalVendido ?? '$0'} icon={TrendingUp} valueColor="text-[#40C4AA]" />
-                <MetricCard title="Productos Agregados" value={data?.productosAgregados ?? 0} icon={Package} valueColor="text-[#40C4AA]" />
+                <MetricCard title="Ventas Ropa (Items)" value={data?.ventasRopa ?? 0} icon={Package} valueColor="text-[#40C4AA]" />
+                <MetricCard title="Ventas Joyería (Items)" value={data?.ventasJoyeria ?? 0} icon={Gem} valueColor="text-[#FF0080]" />
+                <MetricCard title="Ingresos del Día" value={data?.totalVendido ?? '$0.00'} icon={TrendingUp} valueColor="text-[#22c55e]" />
+                <MetricCard title="Ganancia Neta" value={data?.totalGanancia ?? '$0.00'} icon={Diamond} valueColor="text-[#EAB308]" />
             </div>
             {/* Sales Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 overflow-hidden">
-                <h3 className="text-sm font-bold text-slate-800 mb-4">Ventas de hoy</h3>
+                <h3 className="text-sm font-bold text-slate-800 mb-4">Detalle de operaciones del día</h3>
                 <table className="w-full">
                     <thead className="border-b border-slate-100">
                         <tr>
@@ -165,14 +133,14 @@ function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) =>
                     </thead>
                     <tbody>
                         {(data?.ventas ?? []).length === 0 ? (
-                            <tr><td colSpan={5} className="py-10 text-center text-slate-400 text-sm">Sin ventas para esta fecha.</td></tr>
-                        ) : (data?.ventas ?? []).map((r, i) => (
-                            <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                            <tr><td colSpan={5} className="py-10 text-center text-slate-400 text-sm font-medium">No hay ventas registradas para esta fecha.</td></tr>
+                        ) : (data?.ventas ?? []).map((r:any, i:number) => (
+                            <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
                                 <td className="py-4 text-xs font-semibold text-slate-500">{r.hora}</td>
                                 <td className="py-4 text-sm font-bold text-slate-800">{r.producto}</td>
-                                <td className="py-4"><span className="text-[10px] font-bold px-2 py-1 rounded-md bg-[#40C4AA]/10 text-[#40C4AA]">{r.tipo}</span></td>
-                                <td className="py-4 text-sm font-bold text-slate-800">{r.precio}</td>
-                                <td className="py-4 text-sm font-bold text-[#EAB308]">{r.ganancia}</td>
+                                <td className="py-4"><span className="text-[10px] font-bold px-2 py-1 rounded-md bg-[#40C4AA]/10 text-[#40C4AA] uppercase tracking-wider">{r.tipo}</span></td>
+                                <td className="py-4 text-sm font-black text-slate-800">{r.precio}</td>
+                                <td className="py-4 text-sm font-black text-[#EAB308]">{r.ganancia}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -188,15 +156,31 @@ function PorRangoTab({ onExportReady }: { onExportReady: (exportFn: () => void) 
     const today = new Date().toLocaleDateString('en-CA');
     const [desde, setDesde] = useState(today);
     const [hasta, setHasta] = useState(today);
-    const [data, setData] = useState<ReporteRangoResponse | null>(null);
+    const [data, setData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchData = async () => {
         if (!desde || !hasta) return;
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/reportes/rango?desde=${desde}&hasta=${hasta}`);
-            if (res.ok) setData(await res.json());
+            const res = await fetch(`/api/ventas`);
+            const json = await res.json();
+            const allVentas = Array.isArray(json) ? json : (json.data || []);
+            
+            const filtered = allVentas.filter((v:any) => {
+                const vDate = new Date(v.fecha || v.created_at).toISOString().split('T')[0];
+                return vDate >= desde && vDate <= hasta;
+            });
+            
+            const totalVendido = filtered.reduce((acc:number, v:any) => acc + parseFloat(v.total_venta || 0), 0);
+            const totalGanancia = filtered.reduce((acc:number, v:any) => acc + parseFloat(v.ganancia_total || 0), 0);
+            
+            setData({
+                totalVentas: filtered.length, 
+                totalVendido: `$${totalVendido.toFixed(2)}`, 
+                totalGanancia: `$${totalGanancia.toFixed(2)}`,
+                ventasDirectas: `$${totalVendido.toFixed(2)}`
+            });
         } catch (e) { console.error(e); }
         finally { setIsLoading(false); }
     };
@@ -209,9 +193,9 @@ function PorRangoTab({ onExportReady }: { onExportReady: (exportFn: () => void) 
                 dateRange: (desde && hasta) ? `${desde} al ${hasta}` : 'Rango no especificado',
                 columns: ["Métrica", "Valor"],
                 rows: [
-                    ["Total Vendido", data?.totalVendido ?? '$0'],
-                    ["Total Ganancia", data?.totalGanancia ?? '$0'],
-                    ["Ventas Directas", data?.ventasDirectas ?? '$0']
+                    ["Operaciones (Tickets)", data?.totalVentas ?? '0'],
+                    ["Total Vendido", data?.totalVendido ?? '$0.00'],
+                    ["Ganancia Neta", data?.totalGanancia ?? '$0.00'],
                 ],
                 filename: `Reporte_Rango_${desde || 'inicio'}_${hasta || 'fin'}`
             });
@@ -226,20 +210,20 @@ function PorRangoTab({ onExportReady }: { onExportReady: (exportFn: () => void) 
         <div className="flex flex-col gap-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex items-center gap-6 flex-wrap">
                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-500 uppercase">Desde:</span>
-                    <input type="date" value={desde} onChange={e => setDesde(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Desde:</span>
+                    <input type="date" value={desde} onChange={e => setDesde(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/20" />
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-500 uppercase">Hasta:</span>
-                    <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Hasta:</span>
+                    <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/20" />
                 </div>
-                <button onClick={fetchData} disabled={!desde || !hasta} className="px-4 py-1.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 disabled:opacity-40">Consultar</button>
+                <button onClick={fetchData} disabled={!desde || !hasta} className="px-5 py-2 bg-[#40C4AA] text-white text-sm font-bold rounded-lg hover:bg-[#40C4AA]/90 disabled:opacity-40 shadow-md shadow-teal-200 transition-colors">Consultar Datos Reales</button>
             </div>
             {isLoading ? <LoadingState /> : (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <MetricCard title="Total Vendido" value={data?.totalVendido ?? '$0'} valueColor="text-[#40C4AA]" />
-                    <MetricCard title="Total Ganancia" value={data?.totalGanancia ?? '$0'} valueColor="text-[#EAB308]" />
-                    <MetricCard title="Ventas Directas" value={data?.ventasDirectas ?? '$0'} valueColor="text-[#40C4AA]" />
+                    <MetricCard title="Operaciones (Tickets)" value={data?.totalVentas ?? '0'} valueColor="text-slate-800" />
+                    <MetricCard title="Total Ingresos" value={data?.totalVendido ?? '$0.00'} valueColor="text-[#22c55e]" />
+                    <MetricCard title="Ganancia Neta" value={data?.totalGanancia ?? '$0.00'} valueColor="text-[#EAB308]" />
                 </div>
             )}
         </div>
@@ -250,14 +234,38 @@ function PorRangoTab({ onExportReady }: { onExportReady: (exportFn: () => void) 
 
 function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
     const [tipo, setTipo] = useState<'Ropa' | 'Joyería'>('Ropa');
-    const [data, setData] = useState<ReporteCategoriaResponse | null>(null);
+    const [data, setData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/reportes/categoria?tipo=${tipo}`);
-            if (res.ok) setData(await res.json());
+            const res = await fetch(`/api/productos`);
+            const json = await res.json();
+            const allItems = Array.isArray(json) ? json : (json.data || []);
+            
+            const catItems = allItems.filter((p:any) => {
+                const pCat = (p.categoria || p.tipo || '').toLowerCase();
+                const isJoya = pCat.includes('joy') || pCat.normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'joyeria';
+                return tipo === 'Ropa' ? !isJoya : isJoya;
+            });
+            
+            const disponibles = catItems.filter((p:any) => !p.estado || p.estado.toLowerCase() === 'disponible' || p.estado.toLowerCase() === 'en_subasta');
+            const vendidos = catItems.filter((p:any) => p.estado && p.estado.toLowerCase() === 'vendido');
+            
+            const ingresos = vendidos.reduce((acc:number, p:any) => acc + parseFloat(p.precio_venta || p.precio || 0), 0);
+            const costos = vendidos.reduce((acc:number, p:any) => acc + parseFloat(p.costo_base || p.costo || 0), 0);
+            
+            setData({
+                totalDisponible: disponibles.length,
+                totalVendido: vendidos.length,
+                ingresos: `$${ingresos.toFixed(2)}`,
+                ganancia: `$${(ingresos - costos).toFixed(2)}`,
+                productos: vendidos.sort((a:any, b:any) => parseFloat(b.precio_venta || b.precio || 0) - parseFloat(a.precio_venta || a.precio || 0)).slice(0, 10).map((p:any) => ({
+                    id: p.id, nombre: p.nombre, estado: p.estado || 'Vendido', precio: parseFloat(p.precio_venta || p.precio || 0)
+                }))
+            });
+            
         } catch (e) { console.error(e); }
         finally { setIsLoading(false); }
     }, [tipo]);
@@ -270,8 +278,8 @@ function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => vo
                 title: "Reporte por Categoría",
                 subtitle: `Ventas y top productos`,
                 category: tipo,
-                columns: ["Producto", "Ventas", "Total"],
-                rows: (data?.productos ?? []).map((p) => [p.nombre, 1, `$${p.precio}`]),
+                columns: ["Producto", "Total"],
+                rows: (data?.productos ?? []).map((p:any) => [p.nombre, `$${p.precio}`]),
                 filename: `Reporte_Categoria_${tipo}`
             });
         });
@@ -283,11 +291,11 @@ function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => vo
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 flex items-center gap-2 max-w-xs">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-1.5 flex items-center gap-1.5 max-w-xs">
                 {(['Ropa', 'Joyería'] as const).map(t => (
                     <button key={t} onClick={() => setTipo(t)}
-                        className={cn("flex-1 py-1.5 text-sm font-bold rounded-lg transition-colors",
-                            tipo === t ? "bg-[#40C4AA] text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"
+                        className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all",
+                            tipo === t ? "bg-[#40C4AA] text-white shadow-md shadow-teal-200" : "text-slate-500 hover:bg-slate-50"
                         )}>
                         {t}
                     </button>
@@ -296,24 +304,29 @@ function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => vo
             {isLoading ? <LoadingState /> : (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <MetricCard title="Total Disponible" value={data?.totalDisponible ?? 0} valueColor="text-[#40C4AA]" />
-                        <MetricCard title="Total Vendido" value={data?.totalVendido ?? 0} valueColor="text-slate-800" />
-                        <MetricCard title="Ingresos" value={data?.ingresos ?? '$0'} valueColor="text-[#40C4AA]" />
-                        <MetricCard title="Ganancia" value={data?.ganancia ?? '$0'} valueColor="text-[#EAB308]" />
+                        <MetricCard title="Stock Disponible" value={data?.totalDisponible ?? 0} valueColor="text-slate-800" />
+                        <MetricCard title="Unidades Vendidas" value={data?.totalVendido ?? 0} valueColor="text-[#22c55e]" />
+                        <MetricCard title="Ingresos Totales" value={data?.ingresos ?? '$0.00'} valueColor="text-[#22c55e]" />
+                        <MetricCard title="Ganancia Neta" value={data?.ganancia ?? '$0.00'} valueColor="text-[#EAB308]" />
                     </div>
                     {/* Top Products */}
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                        <h3 className="text-sm font-bold text-slate-800 mb-6">Top productos más vendidos</h3>
+                        <h3 className="text-sm font-bold text-slate-800 mb-6">Top productos más rentables ({tipo})</h3>
                         <div className="flex flex-col gap-4">
                             {(data?.productos ?? []).length === 0 ? (
-                                <p className="text-slate-400 text-sm text-center py-6">Sin datos disponibles.</p>
-                            ) : (data?.productos ?? []).map((i, idx) => (
-                                <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-4 last:border-0 last:pb-0">
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-800">{i.nombre}</p>
-                                        <p className="text-xs text-slate-400 font-medium">{i.estado}</p>
+                                <p className="text-slate-400 text-sm font-medium text-center py-6">No hay datos de ventas en esta categoría aún.</p>
+                            ) : (data?.productos ?? []).map((i:any, idx:number) => (
+                                <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-4 last:border-0 last:pb-0 hover:bg-slate-50/50 p-2 rounded-xl transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-400">
+                                            #{idx + 1}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-800">{i.nombre}</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#22c55e]">{i.estado}</p>
+                                        </div>
                                     </div>
-                                    <span className="text-sm font-bold text-[#EAB308]">${i.precio}</span>
+                                    <span className="text-base font-black text-[#EAB308]">${i.precio.toFixed(2)}</span>
                                 </div>
                             ))}
                         </div>
@@ -327,15 +340,45 @@ function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => vo
 // ─── Inventario Actual Tab ────────────────────────────────────────────────────
 
 function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
-    const [estado, setEstado] = useState<'Disponible' | 'Vendido'>('Disponible');
-    const [data, setData] = useState<ReporteInventarioResponse | null>(null);
+    const [estado, setEstado] = useState<'Disponible' | 'Vendido' | 'En subasta'>('Disponible');
+    const [data, setData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/reportes/inventario?estado=${estado}`);
-            if (res.ok) setData(await res.json());
+            const res = await fetch(`/api/productos`);
+            const json = await res.json();
+            const allItems = Array.isArray(json) ? json : (json.data || []);
+            
+            const targetStatus = estado === 'En subasta' ? 'en_subasta' : estado.toLowerCase();
+            const filtered = allItems.filter((p:any) => (p.estado || 'disponible').toLowerCase() === targetStatus);
+            
+            const costoTotal = filtered.reduce((acc:number, p:any) => acc + parseFloat(p.costo_base || p.costo || 0), 0);
+            const valorInventario = filtered.reduce((acc:number, p:any) => acc + parseFloat(p.precio_venta || p.precio || p.costo_base || p.costo || 0), 0);
+            
+            setData({
+                totalProductos: filtered.length,
+                costoTotal: `$${costoTotal.toFixed(2)}`,
+                valorInventario: `$${valorInventario.toFixed(2)}`,
+                gananciaProyectada: `$${(valorInventario - costoTotal).toFixed(2)}`,
+                articulos: filtered.map((p:any) => {
+                    let img = '';
+                    try {
+                        const imgs = typeof p.imagenes === 'string' ? JSON.parse(p.imagenes) : (p.imagenes || []);
+                        img = Array.isArray(imgs) ? imgs[0] : (p.imagen || '');
+                    } catch { img = p.imagen || ''; }
+                    return {
+                        id: p.id,
+                        nombre: p.nombre,
+                        lote: p.lote_nombre || p.lote,
+                        estado: p.estado,
+                        costo: parseFloat(p.costo_base || p.costo || 0),
+                        precio: parseFloat(p.precio_venta || p.precio || p.costo_base || p.costo || 0),
+                        imagen: img
+                    }
+                })
+            });
         } catch (e) { console.error(e); }
         finally { setIsLoading(false); }
     }, [estado]);
@@ -347,8 +390,8 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
             generatePDFReport({
                 title: "Reporte de Inventario Actual",
                 subtitle: `Estado: ${estado}`,
-                columns: ["Producto", "Precio"],
-                rows: (data?.articulos ?? []).map((p) => [p.nombre, p.precio ? `$${p.precio}` : '—']),
+                columns: ["Producto", "Lote", "Precio Asignado/Venta"],
+                rows: (data?.articulos ?? []).map((p:any) => [p.nombre, p.lote || '—', p.precio ? `$${p.precio}` : '—']),
                 filename: `Reporte_Inventario_${estado}`
             });
         });
@@ -361,41 +404,49 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
     return (
         <div className="flex flex-col gap-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <MetricCard title="Total Productos" value={data?.totalProductos ?? 0} valueColor="text-slate-800" />
-                <MetricCard title="Valor Inventario" value={data?.valorInventario ?? '$0'} valueColor="text-[#40C4AA]" />
-                <MetricCard title="Costo Total" value={data?.costoTotal ?? '$0'} valueColor="text-primary" />
-                <MetricCard title="Ganancia Proyectada" value={data?.gananciaProyectada ?? '$0'} valueColor="text-[#EAB308]" />
+                <MetricCard title="Volumen (Items)" value={data?.totalProductos ?? 0} valueColor="text-slate-800" />
+                <MetricCard title="Costo Invertido" value={data?.costoTotal ?? '$0.00'} valueColor="text-[#FF0080]" />
+                <MetricCard title="Valor Asignado/Cobrado" value={data?.valorInventario ?? '$0.00'} valueColor="text-[#22c55e]" />
+                <MetricCard title="Margen/Aporte Neto" value={data?.gananciaProyectada ?? '$0.00'} valueColor="text-[#EAB308]" />
             </div>
-            <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm border border-slate-100 p-1.5 self-start">
-                {(['Disponible', 'Vendido'] as const).map(e => (
+            
+            <div className="flex items-center gap-1.5 bg-white rounded-2xl shadow-sm border border-slate-100 p-1.5 self-start">
+                {(['Disponible', 'En subasta', 'Vendido'] as const).map(e => (
                     <button key={e} onClick={() => setEstado(e)}
-                        className={cn("px-5 py-2 text-sm font-bold rounded-lg transition-colors",
-                            estado === e ? "bg-[#40C4AA] text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"
+                        className={cn("px-6 py-2.5 text-sm font-bold rounded-xl transition-all",
+                            estado === e ? (
+                                e === 'Disponible' ? "bg-[#FF0080] text-white shadow-md shadow-pink-200" :
+                                e === 'En subasta' ? "bg-[#FACC15] text-white shadow-md shadow-yellow-200" :
+                                "bg-[#40C4AA] text-white shadow-md shadow-teal-200"
+                            ) : "text-slate-500 hover:bg-slate-50"
                         )}>
                         {e}
                     </button>
                 ))}
             </div>
+            
             {isLoading ? <LoadingState /> : (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                         {(data?.articulos ?? []).length === 0 ? (
                             <div className="col-span-full py-16 text-center text-slate-400">
-                                <p className="text-sm">No hay productos en este estado.</p>
+                                <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                <p className="text-sm font-bold uppercase tracking-wider">No hay productos en este estado.</p>
                             </div>
-                        ) : (data?.articulos ?? []).map((p, i) => (
-                            <div key={p.id ?? i} className="flex flex-col gap-2 group">
-                                <div className="aspect-square bg-slate-100 rounded-xl overflow-hidden">
+                        ) : (data?.articulos ?? []).map((p:any, i:number) => (
+                            <div key={p.id ?? i} className="flex flex-col gap-3 group bg-slate-50 rounded-xl p-2 hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200">
+                                <div className="aspect-square bg-slate-200 rounded-lg overflow-hidden relative">
                                     {p.imagen ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-slate-300"><Package className="w-6 h-6" /></div>
+                                        <div className="w-full h-full flex items-center justify-center text-slate-400 font-black text-xs uppercase tracking-widest bg-slate-200 border border-slate-300/50">Sin Foto</div>
                                     )}
                                 </div>
-                                <div>
-                                    <h4 className="text-sm font-bold text-slate-800 truncate">{p.nombre}</h4>
-                                    <p className="text-xs font-semibold text-slate-500 mt-0.5">{p.precio ? `$${p.precio}` : '—'}</p>
+                                <div className="px-1 pb-1 flex flex-col items-center text-center">
+                                    <h4 className="text-[13px] font-bold text-slate-800 line-clamp-1 mb-1">{p.nombre}</h4>
+                                    <p className="text-sm font-black text-slate-700">{p.precio ? `$${p.precio.toFixed(2)}` : '—'}</p>
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase mt-2 bg-white px-2 py-0.5 rounded shadow-sm">{p.lote || 'Sin Lote'}</span>
                                 </div>
                             </div>
                         ))}
@@ -524,12 +575,12 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
                 <MetricCard 
                     title="Inversión Total" 
                     value={`$${totalInversion.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`} 
-                    valueColor="text-[#E84E4E]" 
+                    valueColor="text-[#FF0080]" 
                 />
                 <MetricCard 
                     title="Total Recuperado" 
                     value={`$${totalRecuperado.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`} 
-                    valueColor="text-[#40C4AA]" 
+                    valueColor="text-[#22c55e]" 
                 />
                 <MetricCard 
                     title="Recuperación Promedio" 
@@ -544,12 +595,12 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} />
-                            <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} />
-                            <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                            <Legend iconType="square" wrapperStyle={{fontSize: '12px', paddingTop: '20px'}} />
-                            <Bar dataKey="inversion" name="Inversión + gastos" fill="#FF8A9B" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="recuperado" name="Recuperado" fill="#40C4AA" radius={[4, 4, 0, 0]} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b', fontWeight:'bold'}} />
+                            <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b', fontWeight:'bold'}} />
+                            <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: 'bold'}} />
+                            <Legend iconType="square" wrapperStyle={{fontSize: '12px', paddingTop: '20px', fontWeight:'bold'}} />
+                            <Bar dataKey="inversion" name="Inversión + Gastos" fill="#FF0080" radius={[6, 6, 0, 0]} />
+                            <Bar dataKey="recuperado" name="Recuperado (Ventas)" fill="#22c55e" radius={[6, 6, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -564,33 +615,33 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
                         <div key={d.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                                 <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0", 
-                                    d.fullName.toLowerCase().includes('joy') ? 'bg-blue-50 text-blue-400' : 'bg-[#FF9DAA]/10 text-[#FF8A9B]'
+                                    d.fullName.toLowerCase().includes('joy') ? 'bg-[#FF0080]/10 text-[#FF0080]' : 'bg-[#FF0080]/10 text-[#FF0080]'
                                 )}>
                                     {d.fullName.toLowerCase().includes('joy') ? <Diamond className="w-6 h-6" /> : <Tag className="w-6 h-6" />}
                                 </div>
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
                                         <h4 className="text-sm font-bold text-slate-800">{d.fullName}</h4>
-                                        <span className="text-[10px] font-semibold text-slate-400">{d.name}</span>
-                                        <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full uppercase", 
-                                            isClosed ? "bg-slate-100 text-slate-500" : "bg-[#FF9DAA]/10 text-[#FF8A9B]"
+                                        <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-2 rounded-md">{d.name}</span>
+                                        <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider", 
+                                            isClosed ? "bg-slate-100 text-slate-400" : "bg-[#FF0080]/10 text-[#FF0080]"
                                         )}>
                                             {d.estado}
                                         </span>
                                     </div>
-                                    <span className="text-xs font-semibold text-slate-400 mt-0.5">{d.details}</span>
+                                    <span className="text-xs font-semibold text-slate-500 mt-1 block">{d.details}</span>
                                     {/* Vendidos & Ganancia row */}
-                                    <div className="flex items-center gap-4 mt-1.5">
-                                        <span className="text-xs text-slate-500">
-                                            <span className="font-bold text-slate-700">{d.vendidos}</span> vendidos de <span className="font-bold text-slate-700">{d.totalProductos}</span>
+                                    <div className="flex items-center gap-4 mt-2">
+                                        <span className="text-[11px] text-slate-500 font-medium">
+                                            <span className="font-black text-slate-800">{d.vendidos}</span> vendidos de <span className="font-black text-slate-800">{d.totalProductos}</span>
                                         </span>
                                         {d.recuperado > 0 && (
-                                            <span className="text-xs font-semibold text-[#40C4AA]">
+                                            <span className="text-[11px] font-black tracking-wider text-[#22c55e]">
                                                 +${d.recuperado.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} recuperado
                                             </span>
                                         )}
                                         {d.ganancia > 0 && (
-                                            <span className="text-xs font-semibold text-[#EAB308]">
+                                            <span className="text-[11px] font-black tracking-wider text-[#EAB308]">
                                                 +${d.ganancia.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ganancia
                                             </span>
                                         )}
@@ -600,12 +651,12 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
 
                             <div className="w-full md:w-1/3 flex flex-col gap-1 items-end">
                                 <div className="flex justify-between w-full md:justify-end gap-2 text-xs font-bold">
-                                    <span className="text-slate-800">{d.porcentaje}%</span>
-                                    <span className="text-slate-400 font-medium">recuperado</span>
+                                    <span className="text-slate-800 font-black">{d.porcentaje}%</span>
+                                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">recuperado</span>
                                 </div>
-                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
                                     <div 
-                                        className={cn("h-full transition-all duration-1000", isClosed || d.porcentaje >= 100 ? "bg-[#40C4AA]" : "bg-[#FF1970]")}
+                                        className={cn("h-full transition-all duration-1000", isClosed || d.porcentaje >= 100 ? "bg-[#22c55e]" : "bg-[#FF0080]")}
                                         style={{ width: `${progressValue}%` }}
                                     />
                                 </div>
@@ -653,7 +704,7 @@ export default function ReportesPage() {
                         <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
                             {tabs.map(t => (
                                 <button key={t.id} onClick={() => setActiveTab(t.id)}
-                                    className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
+                                    className={cn("flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-black uppercase tracking-wider transition-all whitespace-nowrap",
                                         activeTab === t.id ? "bg-[#40C4AA] text-white shadow-md shadow-teal-200" : "text-slate-500 hover:bg-slate-50"
                                     )}>
                                     <t.icon className={cn("w-4 h-4", activeTab === t.id ? "text-white" : "text-slate-400")} />
@@ -664,12 +715,12 @@ export default function ReportesPage() {
                         <button
                             onClick={() => exportFn?.()}
                             disabled={!exportFn}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-[#40C4AA] hover:bg-[#40C4AA]/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-200 transition-colors disabled:opacity-50">
-                            <Download className="w-4 h-4" /> Exportar
+                            className="flex items-center gap-2 px-6 py-3 bg-[#FF0080] hover:bg-[#FF0080]/90 text-white rounded-xl text-sm font-black uppercase tracking-wider shadow-lg shadow-pink-200 transition-colors disabled:opacity-50">
+                            <Download className="w-4 h-4" /> Exportar a PDF
                         </button>
                     </div>
 
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {activeTab === 'Diario' && <DiarioTab onExportReady={handleExportReady} />}
                         {activeTab === 'Por rango' && <PorRangoTab onExportReady={handleExportReady} />}
                         {activeTab === 'Por categoría' && <PorCategoriaTab onExportReady={handleExportReady} />}
