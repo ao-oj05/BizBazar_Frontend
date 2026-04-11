@@ -73,21 +73,56 @@ function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () 
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`/api/lotes/${initialLote.id}`)
-            .then(res => res.json())
-            .then(json => {
-                const fetched = json.data || json;
+        const loadDetailData = async () => {
+            setIsLoading(true);
+            try {
+                const [resLote, resVentas] = await Promise.all([
+                    fetch(`/api/lotes/${initialLote.id}`),
+                    fetch('/api/ventas')
+                ]);
+                
+                const jsonLote = await resLote.json();
+                const jsonVentas = await resVentas.json();
+                
+                const fetchedLote = jsonLote.data || jsonLote;
+                const allVentas = Array.isArray(jsonVentas) ? jsonVentas : jsonVentas.data || [];
+                
+                const enrichedProducts = (Array.isArray(fetchedLote.productos) ? fetchedLote.productos : []).map((p: any) => {
+                    const pid = p.id || p._id;
+                    const isVendido = p.estado?.toLowerCase() === 'vendido';
+                    
+                    let realPrecioVenta = p.precio_venta ?? p.precio ?? null;
+                    
+                    // Si está vendido, buscamos el precio REAL en la tabla de ventas
+                    if (isVendido) {
+                        for (const v of allVentas) {
+                            const foundSaleItem = (v.items || []).find((vi: any) => (vi.productoId || vi.producto_id) === pid);
+                            if (foundSaleItem) {
+                                realPrecioVenta = Number(foundSaleItem.precio || foundSaleItem.precio_venta || realPrecioVenta);
+                                break;
+                            }
+                        }
+                    }
+
+                    return {
+                        ...p,
+                        precio: realPrecioVenta,
+                        costo_base: p.costo_base ?? p.costo
+                    };
+                });
+
                 setLoteData({
                     ...initialLote,
-                    productos: Array.isArray(fetched.productos) ? fetched.productos.map((p: any) => ({
-                        ...p,
-                        precio: p.precio_venta ?? p.precio,
-                        costo_base: p.costo_base ?? p.costo
-                    })) : []
+                    productos: enrichedProducts
                 });
-            })
-            .catch(err => console.error('Error fetching lote details:', err))
-            .finally(() => setIsLoading(false));
+            } catch (err) {
+                console.error('Error fetching lote details or sales:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadDetailData();
     }, [initialLote.id]);
 
     const activeLote = loteData || initialLote;
@@ -95,8 +130,8 @@ function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () 
     const safeInversion = Number(activeLote.inversion) || 0;
     const safePiezas = Number(activeLote.piezas) || 1; // Prevent division by 0
     
-    // Compute dynamic recuperado from sold products if we have products loaded
-    const calcRecuperado = activeLote.productos.filter(p => p.estado?.toLowerCase() === 'vendido').reduce((acc, p) => acc + Number(p.precio ?? p.costo_base ?? 0), 0);
+    // Compute dynamic recuperado from sold products using matched sale prices
+    const calcRecuperado = activeLote.productos.filter(p => p.estado?.toLowerCase() === 'vendido').reduce((acc, p) => acc + Number(p.precio || 0), 0);
     const safeRecuperado = (loteData && activeLote.productos.length > 0) ? calcRecuperado : (Number(initialLote.recuperado) || 0);
 
     const costoPieza = (safeInversion / safePiezas).toFixed(2);
@@ -190,8 +225,8 @@ function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () 
                                             <tr><td colSpan={4} className="py-6 text-center text-slate-400 text-sm">Sin productos registrados.</td></tr>
                                         ) : activeLote.productos.map((p: any, i: number) => {
                                             const isVendido = p.estado?.toLowerCase() === 'vendido';
-                                            const pPrecio = Number(p.precio ?? p.costo_base ?? 0);
-                                            const pGanancia = (isVendido && p.precio) ? Number(p.precio) - Number(p.costo_base ?? 0) : null;
+                                            const pPrecio = Number(p.precio || 0);
+                                            const pGanancia = (isVendido && p.precio !== null && p.precio !== undefined) ? Number(p.precio) - Number(p.costo_base || 0) : null;
                                             
                                             return (
                                                 <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
@@ -203,7 +238,7 @@ function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () 
                                                             {p.estado}
                                                         </span>
                                                     </td>
-                                                    <td className="py-4 px-2 text-slate-700 font-semibold">{pPrecio ? `$${pPrecio.toFixed(0)}` : '-'}</td>
+                                                    <td className="py-4 px-2 text-slate-700 font-semibold">{ (isVendido && p.precio != null) ? `$${Number(p.precio).toFixed(0)}` : '-'}</td>
                                                     <td className="py-4 px-2">
                                                         {pGanancia != null
                                                             ? <span className="font-bold text-[#FACC15]">${pGanancia.toFixed(0)}</span>
