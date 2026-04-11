@@ -148,7 +148,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: 
 
             const subcategoriaNombre = subcategorias.find(s => s.id === form.subcategoria_id)?.nombre || '';
 
-            const endpoint = joyaToEdit ? `/api/productos/${joyaToEdit.id}` : '/api/productos';
+            const endpoint = joyaToEdit ? `/api/joyeria/${joyaToEdit.id}` : '/api/joyeria';
             const method = joyaToEdit ? 'PUT' : 'POST';
 
             const res = await fetch(endpoint, {
