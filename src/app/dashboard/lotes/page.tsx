@@ -96,7 +96,7 @@ function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () 
     const safePiezas = Number(activeLote.piezas) || 1; // Prevent division by 0
     
     // Compute dynamic recuperado from sold products if we have products loaded
-    const calcRecuperado = activeLote.productos.filter(p => p.estado === 'Vendido').reduce((acc, p) => acc + Number(p.precio ?? p.costo_base ?? 0), 0);
+    const calcRecuperado = activeLote.productos.filter(p => p.estado?.toLowerCase() === 'vendido').reduce((acc, p) => acc + Number(p.precio ?? p.costo_base ?? 0), 0);
     const safeRecuperado = (loteData && activeLote.productos.length > 0) ? calcRecuperado : (Number(initialLote.recuperado) || 0);
 
     const costoPieza = (safeInversion / safePiezas).toFixed(2);
@@ -112,8 +112,9 @@ function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () 
                 <div className="flex items-center justify-between px-8 py-5 bg-[#FF007F]">
                     <div className="flex items-center gap-3">
                         <h2 className="text-2xl font-bold text-white">{activeLote.nombre}</h2>
-                        <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold">
-                            Ropa
+                        <span className={cn("px-3 py-1 rounded-full text-white text-xs font-semibold capitalize", 
+                            activeLote.tipo?.toLowerCase() === 'ropa' ? "bg-white/20" : "bg-blue-400/30")}>
+                            {activeLote.tipo?.toLowerCase() === 'joyeria' ? 'Joyería' : 'Ropa'}
                         </span>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-white/80 hover:text-white transition-colors">
@@ -188,15 +189,16 @@ function DetalleModal({ lote: initialLote, onClose }: { lote: Lote; onClose: () 
                                         {activeLote.productos.length === 0 ? (
                                             <tr><td colSpan={4} className="py-6 text-center text-slate-400 text-sm">Sin productos registrados.</td></tr>
                                         ) : activeLote.productos.map((p: any, i: number) => {
+                                            const isVendido = p.estado?.toLowerCase() === 'vendido';
                                             const pPrecio = Number(p.precio ?? p.costo_base ?? 0);
-                                            const pGanancia = (p.estado === 'Vendido' && p.precio) ? Number(p.precio) - Number(p.costo_base ?? 0) : null;
+                                            const pGanancia = (isVendido && p.precio) ? Number(p.precio) - Number(p.costo_base ?? 0) : null;
                                             
                                             return (
                                                 <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
                                                     <td className="py-4 px-2 font-medium text-slate-700">{p.nombre}</td>
                                                     <td className="py-4 px-2">
-                                                        <span className={cn('px-3.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center justify-center',
-                                                            p.estado === 'Vendido' ? 'bg-slate-100 text-slate-500' : 'bg-[#FF007F]/10 text-[#FF007F]'
+                                                        <span className={cn('px-3.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center justify-center capitalize',
+                                                            isVendido ? 'bg-slate-100 text-slate-500' : 'bg-[#FF007F]/10 text-[#FF007F]'
                                                         )}>
                                                             {p.estado}
                                                         </span>
