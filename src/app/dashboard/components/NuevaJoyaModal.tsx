@@ -148,7 +148,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: 
 
             const subcategoriaNombre = subcategorias.find(s => s.id === form.subcategoria_id)?.nombre || '';
 
-            const endpoint = joyaToEdit ? `/api/joyeria/${joyaToEdit.id}` : '/api/joyeria';
+            const endpoint = joyaToEdit ? `/api/productos/${joyaToEdit.id}` : '/api/productos';
             const method = joyaToEdit ? 'PUT' : 'POST';
 
             const res = await fetch(endpoint, {
@@ -159,17 +159,13 @@ export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: 
                     nombre: form.nombre,
                     descripcion: form.descripcion,
                     categoria: 'joyeria',
-                    subcategoria: form.subcategoria_id,
+                    subcategoria: subcategoriaNombre,
                     subcategoria_id: form.subcategoria_id,
-                    subcategoriaId: form.subcategoria_id,
                     lote_id: form.lote_id,
-                    loteId: form.lote_id,
                     tipo_venta: 'directa',
-                    tipoVenta: 'directa',
                     premium: false,
                     estado: 'disponible',
                     costo_base: parseFloat(form.costo_base),
-                    costoBase: parseFloat(form.costo_base),
                     imagenes: form.imagenUrl ? [form.imagenUrl] : []
                 }),
             });
