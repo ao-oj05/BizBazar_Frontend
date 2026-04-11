@@ -152,6 +152,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: 
             const method = joyaToEdit ? 'PUT' : 'POST';
 
             const res = await fetch(endpoint, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     codigo: finalCodigo,
