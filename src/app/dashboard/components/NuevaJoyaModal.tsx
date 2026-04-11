@@ -161,9 +161,10 @@ export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: 
                     categoria: 'joyeria',
                     subcategoria: subcategoriaNombre,
                     subcategoria_id: form.subcategoria_id,
-                    lote_id: form.lote_id,
+                    lote_id: form.lote_id || (joyaToEdit?.loteId ?? ''),
                     tipo_venta: 'directa',
                     premium: false,
+                    estado: 'disponible',
                     costo_base: parseFloat(form.costo_base),
                     imagenes: form.imagenUrl ? [form.imagenUrl] : []
                 }),
