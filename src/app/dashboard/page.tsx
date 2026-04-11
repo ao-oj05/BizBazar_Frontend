@@ -209,15 +209,20 @@ export default function DashboardPage() {
                                             <tbody className="divide-y divide-slate-50">
                                                 {sales.length > 0 ? (
                                                     sales.map((sale: any, index) => {
-                                                        const saleId = sale.id?.toString().slice(-4).toUpperCase() || `00${index + 1}`;
-                                                        const saleTime = new Date(sale.created_at || sale.time || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-                                                        const isJoya = (sale.type || '').toLowerCase().includes('joyeria') || (sale.items?.[0]?.categoria_nombre || '').toLowerCase().includes('joyeria');
+                                                        const isJoya = (sale.tipo || sale.type || '').toLowerCase().includes('joyer') || (sale.items?.[0]?.producto_categoria || sale.items?.[0]?.categoria || '').toLowerCase().includes('joyer');
+                                                        
+                                                        // Fallback safely if codigo is not available, but real data should have it.
+                                                        const saleId = sale.codigo || (sale.id ? `V${sale.id.toString().slice(-4).toUpperCase()}` : `V00${index + 1}`);
+                                                        
+                                                        const productName = sale.items && sale.items.length > 0 
+                                                            ? sale.items.map((i:any) => i.producto_nombre || i.nombre).join(', ') 
+                                                            : (sale.product || 'Venta General');
                                                         
                                                         return (
-                                                            <tr key={sale.id} className="group hover:bg-slate-50 transition-colors">
-                                                                <td className="py-5 text-sm font-bold text-slate-800">V{saleId}</td>
+                                                            <tr key={sale.id || index} className="group hover:bg-slate-50 transition-colors">
+                                                                <td className="py-5 text-sm font-bold text-slate-800">{saleId}</td>
                                                                 <td className="py-5 text-sm font-medium text-slate-600">
-                                                                    {sale.product || (sale.items && sale.items.length > 0 ? sale.items.map((i:any)=>i.producto_nombre).join(', ') : 'Venta General')}
+                                                                    {productName}
                                                                 </td>
                                                                 <td className="py-5">
                                                                     <span className={cn(
@@ -227,8 +232,8 @@ export default function DashboardPage() {
                                                                         {!isJoya ? 'Ropa' : 'Joyería'}
                                                                     </span>
                                                                 </td>
-                                                                <td className="py-5 text-sm font-black text-slate-800">${(sale.items && sale.items.length > 0 ? (sale.items[0]?.precio || sale.items[0]?.costo_base || sale.items[0]?.costo) : 0) || sale.total || sale.precio_venta || sale.price || 0}</td>
-                                                                <td className="py-5 text-sm font-black text-[#EAB308]">${sale.ganancia_total || sale.profit || 0}</td>
+                                                                <td className="py-5 text-sm font-black text-slate-800">${sale.total_venta ?? sale.total ?? 0}</td>
+                                                                <td className="py-5 text-sm font-black text-[#EAB308]">${sale.ganancia_total ?? sale.profit ?? 0}</td>
                                                             </tr>
                                                         );
                                                     })
