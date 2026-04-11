@@ -44,7 +44,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
         descripcion: '', // the frontend Producto interface doesn't store descripcion currently, so starting empty
         subcategoria_id: '', // this needs to be matched asynchronously once subcategories load
         lote_id: productoToEdit?.loteId || '', 
-        tipo_venta: 'directa', 
+        tipo_venta: productoToEdit?.estado === 'En_subasta' ? 'subasta' : 'directa', 
         costo_base: productoToEdit?.costo?.toString() || '', 
         imagenUrl: productoToEdit?.imagen || '' 
     });
@@ -173,6 +173,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                     lote_id: form.lote_id,
                     tipo_venta: form.tipo_venta,
                     premium: form.tipo_venta === 'subasta', // Se marca como premium si es subasta
+                    estado: form.tipo_venta === 'subasta' ? 'en_subasta' : (productoToEdit?.estado === 'Vendido' ? 'vendido' : 'disponible'),
                     costo_base: form.costo_base ? parseFloat(form.costo_base) : 0,
                     imagenes: form.imagenUrl ? [form.imagenUrl] : [],
                     ...(usuario_id ? { usuario_id } : {}),
