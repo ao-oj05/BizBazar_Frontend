@@ -104,7 +104,7 @@ export default function JoyeriaPage() {
         try {
             const [resJ, resL] = await Promise.all([
                 fetch('/api/joyeria'),
-                fetch('/api/lotes'),
+                fetch('/api/lotes?tipo=joyeria'),
             ]);
             const dataJ = resJ.ok ? await resJ.json() : [];
             const dataL = resL.ok ? await resL.json() : [];
