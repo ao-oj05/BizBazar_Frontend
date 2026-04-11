@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Sidebar } from "../components/Sidebar";
 import { Topbar } from "../components/Topbar";
 import { cn } from "@/src/shared/utils";
-import { Plus, Loader2, Search } from "lucide-react";
+import { Plus, Loader2, Search, X, Trophy, DollarSign, User, Calculator } from "lucide-react";
 
 interface SubastaItem {
     id: string;
@@ -38,6 +38,7 @@ export default function SubastasPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [subastas, setSubastas] = useState<SubastaItem[]>([]);
     const [search, setSearch] = useState('');
+    const [subastaToClose, setSubastaToClose] = useState<SubastaItem | null>(null);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -137,9 +138,9 @@ export default function SubastasPage() {
                         filteredSubastas.length > 0 ? (
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
                                 {filteredSubastas.map(subasta => (
-                                    <div key={subasta.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-[#FACC15] transition-all overflow-hidden flex flex-col group cursor-pointer">
+                                    <div key={subasta.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-[#FACC15] transition-all overflow-hidden flex flex-col group curso-pointer">
                                         
-                                        {/* Image Area - standardized to h-52 exactly like products */}
+                                        {/* Image Area */}
                                         <div className="h-52 bg-slate-100 overflow-hidden relative shrink-0">
                                             {subasta.imagen ? (
                                                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -148,18 +149,18 @@ export default function SubastasPage() {
                                                 <div className="w-full h-full flex items-center justify-center text-slate-300 text-[10px] font-bold uppercase tracking-widest bg-slate-50">Sin Imagen</div>
                                             )}
                                             
-                                            {/* Top-left Code Pill */}
+                                            {/* Code Pill */}
                                             <div className="absolute top-3 left-3 px-2 py-1 rounded bg-white/90 text-[10px] font-black text-slate-500 backdrop-blur-sm z-20 shadow-sm">
                                                 {subasta.codigo}
                                             </div>
                                             
-                                            {/* Top-right State Pill (EN VIVO) */}
+                                            {/* State Pill */}
                                             <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-black shadow-sm z-20 bg-[#FACC15] text-white flex items-center gap-1.5">
                                                 <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                                                 {subasta.estado}
                                             </div>
 
-                                            {/* Type Pill bottom-left of image */}
+                                            {/* Type Pill */}
                                             <div className={cn("absolute bottom-3 left-3 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider z-20 shadow-sm backdrop-blur-md", 
                                                 subasta.tipo === 'Ropa' ? "text-[#40C4AA] bg-white/95" : "text-[#FF8A9B] bg-white/95"
                                             )}>
@@ -174,15 +175,20 @@ export default function SubastasPage() {
                                             </h3>
                                             
                                             <div className="mt-auto">
-                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Precio inicial</span>
-                                                <span className="text-[22px] font-black text-[#FACC15] leading-none">${subasta.precioInicial.toFixed(0)}</span>
-                                                
-                                                <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-50">
+                                                <div className="flex items-end justify-between mb-3">
+                                                    <div>
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Precio inicial</span>
+                                                        <span className="text-[20px] font-black text-[#FACC15] leading-none">${subasta.precioInicial.toFixed(0)}</span>
+                                                    </div>
                                                     <span className="text-[10px] font-bold text-slate-400">{subasta.tiempo}</span>
-                                                    <span className="text-[10px] font-black text-[#FACC15] bg-[#FACC15]/10 px-2.5 py-1.5 rounded-lg hover:bg-[#FACC15]/20 transition-colors">
-                                                        VER DETALLE
-                                                    </span>
                                                 </div>
+                                                
+                                                <button 
+                                                    onClick={() => setSubastaToClose(subasta)}
+                                                    className="w-full py-2.5 bg-[#FACC15] hover:bg-[#FACC15]/90 text-white font-black text-[11px] uppercase tracking-wider rounded-xl shadow-md shadow-yellow-400/20 transition-all active:scale-95"
+                                                >
+                                                    Cerrar subasta
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -210,6 +216,142 @@ export default function SubastasPage() {
                         </div>
                     )}
                 </main>
+            </div>
+
+            {subastaToClose && (
+                <CerrarSubastaModal 
+                    subasta={subastaToClose} 
+                    onClose={() => setSubastaToClose(null)} 
+                    onSuccess={() => fetchData()} 
+                />
+            )}
+        </div>
+    );
+}
+
+// ─── Modal Components ─────────────────────────────────────────────────────────
+
+function CerrarSubastaModal({ subasta, onClose, onSuccess }: { subasta: SubastaItem; onClose: () => void; onSuccess?: () => void }) {
+    const [precioFinal, setPrecioFinal] = useState<number | ''>('');
+    const [ganadora, setGanadora] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const costoBase = subasta.precioInicial;
+    const ganancia = (Number(precioFinal) || 0) - costoBase;
+
+    const handleCerrar = async () => {
+        if (!precioFinal || !ganadora.trim()) {
+            return alert("Por favor ingresa el precio final y el nombre de la ganadora.");
+        }
+        setIsSubmitting(true);
+        try {
+            const body = {
+                items: [{ producto_id: subasta.id, precio_venta: Number(precioFinal), tipo: subasta.tipo }],
+                cliente_nombre: ganadora.trim(),
+            };
+            const res = await fetch('/api/ventas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (res.ok) {
+                if (onSuccess) onSuccess();
+                onClose();
+            } else {
+                alert("Error al intentar cerrar la subasta.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error al cerrar subasta");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 overflow-hidden relative border border-slate-100">
+                
+                <button onClick={onClose} className="absolute right-4 top-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 text-white transition-colors">
+                    <X className="w-4 h-4" />
+                </button>
+
+                {/* Banner */}
+                <div className="bg-[#FACC15] p-8 text-center relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#EAB308] rounded-full blur-xl -ml-8 -mb-8"></div>
+                    
+                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/30 shadow-inner relative z-10">
+                        <Trophy className="w-8 h-8 text-white drop-shadow-md" />
+                    </div>
+                    <h2 className="text-2xl font-black text-white leading-tight relative z-10 drop-shadow-sm">Cerrar Subasta</h2>
+                    <p className="text-yellow-50 font-medium text-sm mt-1.5 relative z-10 opacity-90">{subasta.nombre}</p>
+                </div>
+
+                <div className="p-7 flex flex-col gap-5">
+                    {/* Costo Base */}
+                    <div className="bg-slate-50 p-4 rounded-xl flex items-center justify-between border border-slate-100/80 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm text-slate-400 border border-slate-100">
+                                <DollarSign className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Costo Base / Lote</p>
+                                <p className="text-lg font-black text-slate-700 leading-none mt-0.5">${costoBase.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Inputs */}
+                    <div className="flex flex-col gap-4 mt-1">
+                        <div>
+                            <label className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5">
+                                <User className="w-3.5 h-3.5 text-[#FACC15]" /> Nombre de la Ganadora
+                            </label>
+                            <input 
+                                type="text"
+                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#FACC15]/30 focus:border-[#FACC15] transition-all shadow-sm"
+                                placeholder="Ej. Ana García"
+                                value={ganadora}
+                                onChange={e => setGanadora(e.target.value)}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5">
+                                <DollarSign className="w-3.5 h-3.5 text-[#FACC15]" /> Precio Final Alcanzado
+                            </label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">$</span>
+                                <input 
+                                    type="number"
+                                    className="w-full pl-8 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xl font-black text-[#FACC15] focus:outline-none focus:ring-2 focus:ring-[#FACC15]/30 focus:border-[#FACC15] transition-all shadow-sm placeholder-[#FACC15]/30"
+                                    placeholder="0.00"
+                                    value={precioFinal}
+                                    onChange={e => setPrecioFinal(Number(e.target.value) || '')}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Ganancia Calculada */}
+                    <div className="mt-2 bg-[#40C4AA]/10 border border-[#40C4AA]/20 p-4 rounded-xl flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-2 text-[#40C4AA]">
+                            <Calculator className="w-5 h-5 bg-white rounded-md p-0.5 shadow-sm" />
+                            <span className="text-[11px] font-black uppercase tracking-wider">Ganancia Neta</span>
+                        </div>
+                        <span className="text-2xl font-black text-[#40C4AA] drop-shadow-sm">${ganancia > 0 ? ganancia.toFixed(2) : '0.00'}</span>
+                    </div>
+
+                    <button 
+                        onClick={handleCerrar}
+                        disabled={isSubmitting || !precioFinal || !ganadora.trim()}
+                        className="w-full mt-3 py-4 bg-[#FACC15] hover:bg-[#EAB308] disabled:opacity-50 disabled:hover:bg-[#FACC15] text-white font-black text-sm rounded-xl shadow-lg shadow-yellow-400/30 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                    >
+                        {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trophy className="w-5 h-5" />}
+                        {isSubmitting ? 'CERRANDO SUBASTA...' : 'CONFIRMAR Y CERRAR SUBASTA'}
+                    </button>
+                </div>
             </div>
         </div>
     );
