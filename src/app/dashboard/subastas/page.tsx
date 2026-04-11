@@ -16,6 +16,11 @@ interface SubastaItem {
     imagen: string;
 }
 
+interface SubastaFinalizada extends SubastaItem {
+    precioFinal: number;
+    ganadora: string;
+}
+
 function getTimeAgo(dateString: string) {
     if (!dateString) return 'Hace un momento';
     const date = new Date(dateString);
@@ -37,19 +42,28 @@ export default function SubastasPage() {
     const [activeTab, setActiveTab] = useState<'Activas' | 'Finalizadas'>('Activas');
     const [isLoading, setIsLoading] = useState(true);
     const [subastas, setSubastas] = useState<SubastaItem[]>([]);
+    const [subastasFinalizadas, setSubastasFinalizadas] = useState<SubastaFinalizada[]>([]);
     const [search, setSearch] = useState('');
     const [subastaToClose, setSubastaToClose] = useState<SubastaItem | null>(null);
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch('/api/productos');
-            const data = res.ok ? await res.json() : [];
-            const allItems = Array.isArray(data) ? data : data.data || [];
+            const [resProd, resVentas] = await Promise.all([
+                fetch('/api/productos'),
+                fetch('/api/ventas')
+            ]);
             
-            const filtrados = allItems.filter((p:any) => p.estado && p.estado.toLowerCase() === 'en_subasta');
+            const dataProd = resProd.ok ? await resProd.json() : [];
+            const dataVentas = resVentas.ok ? await resVentas.json() : [];
             
-            const formatizados: SubastaItem[] = filtrados.map((p: any) => {
+            const allItems = Array.isArray(dataProd) ? dataProd : dataProd.data || [];
+            const allVentas = Array.isArray(dataVentas) ? dataVentas : dataVentas.data || [];
+            
+            // 1. Activas
+            const filtradosActivos = allItems.filter((p:any) => p.estado && p.estado.toLowerCase() === 'en_subasta');
+            
+            const formatizadosActivos: SubastaItem[] = filtradosActivos.map((p: any) => {
                 const isJoya = (p.categoria || p.tipo || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'joyeria';
                 return {
                     id: p.id || p._id,
@@ -63,7 +77,44 @@ export default function SubastasPage() {
                 };
             });
             
-            setSubastas(formatizados);
+            setSubastas(formatizadosActivos);
+
+            // 2. Finalizadas
+            const filtradosFinalizados = allItems.filter((p:any) => p.estado && p.estado.toLowerCase() === 'vendido' && (p.tipo_venta === 'subasta' || p.premium === true || p.tipoVenta === 'Subasta'));
+            const formatizadosFinalizados: SubastaFinalizada[] = filtradosFinalizados.map((p: any) => {
+                const isJoya = (p.categoria || p.tipo || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'joyeria';
+                const pid = p.id || p._id;
+                
+                let precioVenta = Number(p.precio || p.costo_base || p.costo || 0);
+                let ganadora = 'Desconocido';
+                let closedTime = p.updated_at || p.fecha;
+
+                for (const v of allVentas) {
+                    const foundItem = (v.items || []).find((vi:any) => (vi.producto_id || vi.productoId) === pid);
+                    if (foundItem) {
+                        precioVenta = Number(foundItem.precio_venta || foundItem.precio || v.total || precioVenta);
+                        ganadora = v.cliente_nombre || ganadora;
+                        closedTime = v.created_at || v.fecha || closedTime;
+                        break;
+                    }
+                }
+
+                return {
+                    id: pid,
+                    tipo: isJoya ? 'Joyería' : 'Ropa',
+                    nombre: p.nombre || 'Sin nombre',
+                    codigo: p.codigo || 'S/N',
+                    precioInicial: Number(p.costo_base || p.costo || 0),
+                    precioFinal: precioVenta,
+                    ganadora: ganadora,
+                    estado: 'FINALIZADA',
+                    tiempo: getTimeAgo(closedTime),
+                    imagen: p.imagenes?.[0] || p.imagen || ''
+                };
+            });
+            
+            setSubastasFinalizadas(formatizadosFinalizados);
+
         } catch (error) {
             console.error("Error fetching subastas", error);
         } finally {
@@ -79,6 +130,13 @@ export default function SubastasPage() {
         !search || 
         s.nombre.toLowerCase().includes(search.toLowerCase()) || 
         s.codigo.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const filteredFinalizadas = subastasFinalizadas.filter(s => 
+        !search || 
+        s.nombre.toLowerCase().includes(search.toLowerCase()) || 
+        s.codigo.toLowerCase().includes(search.toLowerCase()) ||
+        s.ganadora.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -108,7 +166,7 @@ export default function SubastasPage() {
                                     activeTab === 'Finalizadas' ? "bg-[#FACC15] text-white shadow-md shadow-yellow-400/30" : "text-slate-500 hover:bg-slate-50"
                                 )}
                             >
-                                Finalizadas
+                                Finalizadas ({subastasFinalizadas.length})
                             </button>
                         </div>
 
@@ -210,10 +268,72 @@ export default function SubastasPage() {
                             </div>
                         )
                     ) : (
-                        <div className="flex flex-col items-center justify-center p-20 bg-white rounded-[24px] border border-slate-100 shadow-sm text-center">
-                            <h3 className="text-lg font-black text-slate-800 mb-1">Cero Subastas Finalizadas</h3>
-                            <p className="text-sm font-medium text-slate-500 max-w-sm">No existen registros de subastas terminadas aún.</p>
-                        </div>
+                        filteredFinalizadas.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+                                {filteredFinalizadas.map(subasta => (
+                                    <div key={subasta.id} className="bg-white rounded-xl border border-slate-200 shadow-sm transition-all overflow-hidden flex flex-col group opacity-90 hover:opacity-100 grayscale hover:grayscale-0">
+                                        
+                                        {/* Image Area */}
+                                        <div className="h-52 bg-slate-100 overflow-hidden relative shrink-0">
+                                            {subasta.imagen ? (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
+                                                <img src={subasta.imagen} alt={subasta.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-slate-300 text-[10px] font-bold uppercase tracking-widest bg-slate-50">Sin Imagen</div>
+                                            )}
+                                            
+                                            {/* Code Pill */}
+                                            <div className="absolute top-3 left-3 px-2 py-1 rounded bg-white/90 text-[10px] font-black text-slate-500 backdrop-blur-sm z-20 shadow-sm">
+                                                {subasta.codigo}
+                                            </div>
+                                            
+                                            {/* State Pill */}
+                                            <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-black shadow-sm z-20 bg-slate-700 text-white flex items-center gap-1.5">
+                                                {subasta.estado}
+                                            </div>
+
+                                            {/* Type Pill */}
+                                            <div className={cn("absolute bottom-3 left-3 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider z-20 shadow-sm backdrop-blur-md", 
+                                                subasta.tipo === 'Ropa' ? "text-[#40C4AA] bg-white/95" : "text-[#FF8A9B] bg-white/95"
+                                            )}>
+                                                {subasta.tipo}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Info Area */}
+                                        <div className="p-4 flex flex-col flex-1 bg-white">
+                                            <h3 className="font-bold text-slate-800 text-[15px] leading-tight mb-4 line-clamp-2" title={subasta.nombre}>
+                                                {subasta.nombre}
+                                            </h3>
+                                            
+                                            <div className="mt-auto">
+                                                <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-100">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                                                        <span className="text-[11px] font-black text-slate-600 truncate max-w[80px]">{subasta.ganadora}</span>
+                                                    </div>
+                                                    <span className="text-[16px] font-black text-slate-800 leading-none">${subasta.precioFinal.toFixed(0)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center p-20 bg-white rounded-[24px] border border-slate-100 shadow-sm text-center">
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                    <Trophy className="w-8 h-8 text-slate-300" />
+                                </div>
+                                <h3 className="text-lg font-black text-slate-800 mb-1">
+                                    {search ? "No se encontraron resultados" : "Cero Subastas Finalizadas"}
+                                </h3>
+                                <p className="text-sm font-medium text-slate-500 max-w-sm">
+                                    {search 
+                                        ? "No hay subastas finalizadas que coincidan con tu búsqueda."
+                                        : "No existen registros de subastas terminadas aún."}
+                                </p>
+                            </div>
+                        )
                     )}
                 </main>
             </div>
