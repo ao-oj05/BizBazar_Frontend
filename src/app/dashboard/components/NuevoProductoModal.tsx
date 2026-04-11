@@ -167,7 +167,7 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                     codigo: generatedCodigo,
                     nombre: form.nombre,
                     descripcion: form.descripcion,
-                    categoria: 'Ropa',
+                    categoria: 'ropa',
                     subcategoria: form.subcategoria_id,
                     subcategoria_id: form.subcategoria_id,
                     subcategoriaId: form.subcategoria_id,

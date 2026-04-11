@@ -158,7 +158,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: 
                     codigo: finalCodigo,
                     nombre: form.nombre,
                     descripcion: form.descripcion,
-                    categoria: 'Joyería',
+                    categoria: 'joyeria',
                     subcategoria: form.subcategoria_id,
                     subcategoria_id: form.subcategoria_id,
                     subcategoriaId: form.subcategoria_id,
