@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Sidebar } from "../components/Sidebar";
 import { Topbar } from "../components/Topbar";
 import { cn } from "@/src/shared/utils";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Search } from "lucide-react";
 
 interface SubastaItem {
     id: string;
