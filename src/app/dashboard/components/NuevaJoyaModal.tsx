@@ -148,7 +148,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: 
 
             const subcategoriaNombre = subcategorias.find(s => s.id === form.subcategoria_id)?.nombre || '';
 
-            const endpoint = joyaToEdit ? `/api/productos/${joyaToEdit.id}` : '/api/productos';
+            const endpoint = joyaToEdit ? `/api/joyeria/${joyaToEdit.id}` : '/api/joyeria';
             const method = joyaToEdit ? 'PUT' : 'POST';
 
             const res = await fetch(endpoint, {
@@ -290,7 +290,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: 
                                 >
                                     <option value=""></option>
                                     {lotes
-                                        .filter(l => !l.tipo || normalize(l.tipo) === 'joyeria')
+                                        .filter(l => normalize(l.tipo ?? '') === 'joyeria')
                                         .map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
                                 </select>
                             </div>
