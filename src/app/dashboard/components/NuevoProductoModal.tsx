@@ -188,6 +188,25 @@ export function NuevoProductoModal({ lotes, onClose, onSave, productoToEdit }:
                 const responseData: any = await res.json();
                 const nuevoProducto = responseData.data || responseData;
 
+                // If this is a new product set to subasta, do a follow-up PUT to ensure estado is 'en_subasta'
+                // (the backend may default to 'disponible' on POST)
+                if (!productoToEdit && form.tipo_venta === 'subasta' && nuevoProducto.id) {
+                    try {
+                        await fetch(`/api/productos/${nuevoProducto.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                estado: 'en_subasta',
+                                tipo_venta: 'subasta',
+                                tipoVenta: 'subasta',
+                                premium: true,
+                            }),
+                        });
+                    } catch (e) {
+                        console.error('Error updating product estado to en_subasta:', e);
+                    }
+                }
+
                 // Formatear el objeto para que coincida con la interfaz Producto
                 const prodParaGuardar: Producto = {
                     id: nuevoProducto.id,
