@@ -14,6 +14,7 @@ interface ProductoVenta {
     costo: number;
     categoria: Categoria;
     imagen: string;
+    lote: string;
 }
 
 interface RawProduct {
@@ -64,6 +65,7 @@ export default function VentasPage() {
                         costo: Number(p.costo_base || p.costo || 0),
                         categoria: isJoya ? 'Joyería' as Categoria : 'Ropa' as Categoria,
                         imagen: p.imagenes?.[0] || p.imagen || '',
+                        lote: p.lote_nombre || p.lote || '',
                     };
                 });
 
@@ -179,7 +181,8 @@ export default function VentasPage() {
                         precio: Number(p.precio || p.costo_base || 0), 
                         costo: Number(p.costo_base || p.costo || 0), 
                         categoria: isJoya ? 'Joyería' as Categoria : 'Ropa' as Categoria, 
-                        imagen: p.imagenes?.[0] || p.imagen || ''
+                        imagen: p.imagenes?.[0] || p.imagen || '',
+                        lote: p.lote_nombre || p.lote || '',
                     };
                 });
                 setItems(allItems);
@@ -318,7 +321,10 @@ export default function VentasPage() {
                                                                             <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-300">N/A</div>
                                                                         )}
                                                                     </div>
-                                                                    <span className="text-sm font-bold text-slate-800">{c.item.nombre}</span>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-sm font-bold text-slate-800">{c.item.nombre}</span>
+                                                                        {c.item.lote && <span className="text-[10px] text-slate-400">Lote: {c.item.lote}</span>}
+                                                                    </div>
                                                                 </div>
                                                             </td>
                                                             <td className="py-4">

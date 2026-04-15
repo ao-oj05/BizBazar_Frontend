@@ -63,6 +63,7 @@ export default function JoyeriaPage() {
                     costo: Number(joya.costo ?? 0),
                     categoria: 'Joyería',
                     imagen: joya.imagen || '',
+                    lote: joya.lote || '',
                 });
                 localStorage.setItem('cart_items', JSON.stringify(existing));
             }

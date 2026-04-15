@@ -295,7 +295,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: 
                                 >
                                     <option value=""></option>
                                     {lotes
-                                        .filter(l => !l.tipo || normalize(l.tipo) === 'joyeria')
+                                        .filter(l => normalize(l.tipo || '') === 'joyeria')
                                         .map(l => <option key={l.id} value={l.id}>{l.nombre} ({l.codigo})</option>)}
                                 </select>
                             </div>

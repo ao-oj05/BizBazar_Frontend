@@ -64,6 +64,7 @@ export default function ProductosPage() {
                     costo: Number(producto.costo ?? 0),
                     categoria: 'Ropa',
                     imagen: producto.imagen || '',
+                    lote: producto.lote || '',
                 });
                 localStorage.setItem('cart_items', JSON.stringify(existing));
             }
