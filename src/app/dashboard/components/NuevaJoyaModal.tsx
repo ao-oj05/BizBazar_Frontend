@@ -191,7 +191,7 @@ export function NuevaJoyaModal({ lotes, onClose, onSave, joyaToEdit }: { lotes: 
                     costo: Number(rawJoya.costo_base || rawJoya.costo || form.costo_base),
                     tipoVenta: 'Directa',
                     categoria: rawJoya.categoria || 'joyeria',
-                    lote: rawJoya.lote_nombre || rawJoya.lote || '',
+                    lote: rawJoya.lote_nombre || rawJoya.lote || lotes.find(l => l.id === form.lote_id)?.nombre || '',
                     loteId: rawJoya.lote_id || rawJoya.loteId || form.lote_id,
                 };
 
