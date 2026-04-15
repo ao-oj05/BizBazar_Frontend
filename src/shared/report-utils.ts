@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface PDFReportOptions {
@@ -20,7 +20,9 @@ export const generatePDFReport = ({
     rows,
     filename
 }: PDFReportOptions) => {
-    const doc = new jsPDF();
+    // Handling Next.js interop for jsPDF
+    const JS_PDF = typeof jsPDF === 'function' ? jsPDF : (jsPDF as any).jsPDF;
+    const doc = new JS_PDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // -- Header --
@@ -83,7 +85,7 @@ export const generatePDFReport = ({
     });
 
     // -- Footer --
-    const pageCount = doc.getNumberOfPages();
+    const pageCount = typeof doc.getNumberOfPages === 'function' ? doc.getNumberOfPages() : (doc as any).internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);

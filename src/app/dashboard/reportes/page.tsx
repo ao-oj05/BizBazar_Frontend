@@ -50,11 +50,14 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
             const json = await res.json();
             const allItems = Array.isArray(json) ? json : (json.data || []);
             
-            const targetStatus = estado === 'En subasta' ? 'en_subasta' : estado.toLowerCase();
-            const filtered = allItems.filter((p:any) => (p.estado || 'disponible').toLowerCase() === targetStatus);
+            const targetStatus = estado === 'En subasta' ? 'en_subasta' : estado.trim().toLowerCase();
+            const filtered = allItems.filter((p:any) => {
+                const currentStatus = (p.estado || 'disponible').toString().trim().toLowerCase();
+                return currentStatus === targetStatus;
+            });
             
-            const costoTotal = filtered.reduce((acc:number, p:any) => acc + parseFloat(p.costo_base || p.costo || 0), 0);
-            const valorInventario = filtered.reduce((acc:number, p:any) => acc + parseFloat(p.precio_venta || p.precio || p.costo_base || p.costo || 0), 0);
+            const costoTotal = filtered.reduce((acc:number, p:any) => acc + Number(p.costo_base ?? p.costo ?? 0), 0);
+            const valorInventario = filtered.reduce((acc:number, p:any) => acc + Number(p.precio_venta ?? p.precio ?? 0), 0);
             
             setData({
                 totalProductos: filtered.length,
@@ -72,8 +75,8 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                         nombre: p.nombre,
                         lote: p.lote_nombre || p.lote,
                         estado: p.estado,
-                        costo: parseFloat(p.costo_base || p.costo || 0),
-                        precio: parseFloat(p.precio_venta || p.precio || p.costo_base || p.costo || 0),
+                        costo: Number(p.costo_base ?? p.costo ?? 0),
+                        precio: Number(p.precio_venta ?? p.precio ?? 0),
                         imagen: img
                     }
                 })
