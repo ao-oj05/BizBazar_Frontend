@@ -104,10 +104,11 @@ function DatosNegocioTab() {
     const handleSave = async () => {
         setIsSaving(true);
         try {
+            const bodyPayload = { ...form, logo: form.logoUrl };
             const res = await fetch('/api/configuracion/negocio', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form),
+                body: JSON.stringify(bodyPayload),
             });
             if (res.ok) { 
                 setSaved(true); setTimeout(() => setSaved(false), 2500); 
