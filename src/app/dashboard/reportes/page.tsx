@@ -7,7 +7,7 @@ import { cn } from "@/src/shared/utils";
 import { BarChart3, Calendar, Download, PieChart, TrendingUp, Package, Gem, Layers, Loader2, Tag, Diamond } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-type ReportTab = 'Diario' | 'Por rango' | 'Por lote' | 'Por categoría' | 'Inventario actual';
+type ReportTab = 'Por lote' | 'Inventario actual';
 
 // ─── Metric Card ─────────────────────────────────────────────────────────────
 
@@ -32,307 +32,6 @@ function LoadingState() {
         <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-[#40C4AA]" />
             <p className="text-sm font-bold">Cargando datos reales...</p>
-        </div>
-    );
-}
-
-// ─── Diario Tab ───────────────────────────────────────────────────────────────
-
-function DiarioTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
-    const today = new Date().toLocaleDateString('en-CA');
-    const [fecha, setFecha] = useState(today);
-    const [data, setData] = useState<any>(null);
-    const [isLoading, setIsLoading] = useState(false);
-
-    const fetchData = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetch(`/api/reportes/diario?fecha=${fecha}`);
-            if (res.ok) {
-                const json = await res.json();
-                const d = json.data || json;
-                
-                // Map the backend structure to our frontend expectations
-                const mappedVentas: any[] = [];
-                (d.ventas || []).forEach((v: any) => {
-                    const hora = new Date(v.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    (v.items || []).forEach((i: any) => {
-                        mappedVentas.push({
-                            hora,
-                            producto: i.producto_nombre || 'Producto',
-                            tipo: v.tipo || 'Directa',
-                            precio: `$${parseFloat(i.precio_venta || 0).toFixed(2)}`,
-                            ganancia: `$${parseFloat(i.ganancia || 0).toFixed(2)}`
-                        });
-                    });
-                });
-
-                const ventasRopa = (d.por_categoria || []).find((c:any) => c.categoria === 'ropa')?.cantidad || 0;
-                const ventasJoyeria = (d.por_categoria || []).find((c:any) => c.categoria === 'joyeria')?.cantidad || 0;
-
-                setData({
-                    ventasRopa,
-                    ventasJoyeria,
-                    totalVendido: `$${parseFloat(d.resumen?.total_ingresos || 0).toFixed(2)}`,
-                    totalGanancia: `$${parseFloat(d.resumen?.total_ganancia || 0).toFixed(2)}`,
-                    totalVentas: d.resumen?.total_ventas || 0,
-                    ventas: mappedVentas
-                });
-            }
-        } catch (e) { console.error(e); }
-        finally { setIsLoading(false); }
-    }, [fecha]);
-
-    useEffect(() => { fetchData(); }, [fetchData]);
-
-    const handleExport = useCallback(() => {
-        import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
-            generatePDFReport({
-                title: "Reporte Diario de Ventas",
-                subtitle: `Resumen de operaciones del día`,
-                dateRange: fecha,
-                columns: ["Hora", "Producto", "Tipo", "Precio", "Ganancia"],
-                rows: (data?.ventas ?? []).map((v:any) => [v.hora, v.producto, v.tipo, v.precio, v.ganancia]),
-                filename: `Reporte_Diario_${fecha}`
-            });
-        });
-    }, [data, fecha]);
-
-    useEffect(() => {
-        onExportReady(handleExport);
-    }, [handleExport, onExportReady]);
-
-    if (isLoading) return <LoadingState />;
-
-    return (
-        <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
-                <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-[#40C4AA]" />
-                    <input type="date" value={fecha} max={today}
-                        onChange={e => setFecha(e.target.value)}
-                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/20" />
-                </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <MetricCard title="Ventas Ropa (Items)" value={data?.ventasRopa ?? 0} icon={Package} valueColor="text-[#40C4AA]" />
-                <MetricCard title="Ventas Joyería (Items)" value={data?.ventasJoyeria ?? 0} icon={Gem} valueColor="text-[#FF0080]" />
-                <MetricCard title="Ingresos del Día" value={data?.totalVendido ?? '$0.00'} icon={TrendingUp} valueColor="text-[#22c55e]" />
-                <MetricCard title="Ganancia Neta" value={data?.totalGanancia ?? '$0.00'} icon={Diamond} valueColor="text-[#EAB308]" />
-            </div>
-            {/* Sales Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 overflow-hidden">
-                <h3 className="text-sm font-bold text-slate-800 mb-4">Detalle de operaciones del día</h3>
-                <table className="w-full">
-                    <thead className="border-b border-slate-100">
-                        <tr>
-                            {['Hora', 'Producto', 'Tipo', 'Precio', 'Ganancia'].map(h => (
-                                <th key={h} className="text-left text-[10px] font-bold text-slate-400 uppercase pb-3">{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {(data?.ventas ?? []).length === 0 ? (
-                            <tr><td colSpan={5} className="py-10 text-center text-slate-400 text-sm font-medium">No hay ventas registradas para esta fecha.</td></tr>
-                        ) : (data?.ventas ?? []).map((r:any, i:number) => (
-                            <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
-                                <td className="py-4 text-xs font-semibold text-slate-500">{r.hora}</td>
-                                <td className="py-4 text-sm font-bold text-slate-800">{r.producto}</td>
-                                <td className="py-4"><span className="text-[10px] font-bold px-2 py-1 rounded-md bg-[#40C4AA]/10 text-[#40C4AA] uppercase tracking-wider">{r.tipo}</span></td>
-                                <td className="py-4 text-sm font-black text-slate-800">{r.precio}</td>
-                                <td className="py-4 text-sm font-black text-[#EAB308]">{r.ganancia}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-}
-
-// ─── Por Rango Tab ────────────────────────────────────────────────────────────
-
-function PorRangoTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
-    const today = new Date().toLocaleDateString('en-CA');
-    const [desde, setDesde] = useState(today);
-    const [hasta, setHasta] = useState(today);
-    const [data, setData] = useState<any>(null);
-    const [isLoading, setIsLoading] = useState(false);
-
-    const fetchData = async () => {
-        if (!desde || !hasta) return;
-        setIsLoading(true);
-        try {
-            const res = await fetch(`/api/ventas`);
-            const json = await res.json();
-            const allVentas = Array.isArray(json) ? json : (json.data || []);
-            
-            const filtered = allVentas.filter((v:any) => {
-                const vDate = new Date(v.fecha || v.created_at).toISOString().split('T')[0];
-                return vDate >= desde && vDate <= hasta;
-            });
-            
-            const totalVendido = filtered.reduce((acc:number, v:any) => acc + parseFloat(v.total_venta || 0), 0);
-            const totalGanancia = filtered.reduce((acc:number, v:any) => acc + parseFloat(v.ganancia_total || 0), 0);
-            
-            setData({
-                totalVentas: filtered.length, 
-                totalVendido: `$${totalVendido.toFixed(2)}`, 
-                totalGanancia: `$${totalGanancia.toFixed(2)}`,
-                ventasDirectas: `$${totalVendido.toFixed(2)}`
-            });
-        } catch (e) { console.error(e); }
-        finally { setIsLoading(false); }
-    };
-
-    const handleExport = useCallback(() => {
-        import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
-            generatePDFReport({
-                title: "Reporte de Ventas por Rango",
-                subtitle: "Resumen consolidado",
-                dateRange: (desde && hasta) ? `${desde} al ${hasta}` : 'Rango no especificado',
-                columns: ["Métrica", "Valor"],
-                rows: [
-                    ["Operaciones (Tickets)", data?.totalVentas ?? '0'],
-                    ["Total Vendido", data?.totalVendido ?? '$0.00'],
-                    ["Ganancia Neta", data?.totalGanancia ?? '$0.00'],
-                ],
-                filename: `Reporte_Rango_${desde || 'inicio'}_${hasta || 'fin'}`
-            });
-        });
-    }, [data, desde, hasta]);
-
-    useEffect(() => {
-        onExportReady(handleExport);
-    }, [handleExport, onExportReady]);
-
-    return (
-        <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex items-center gap-6 flex-wrap">
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Desde:</span>
-                    <input type="date" value={desde} onChange={e => setDesde(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/20" />
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Hasta:</span>
-                    <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/20" />
-                </div>
-                <button onClick={fetchData} disabled={!desde || !hasta} className="px-5 py-2 bg-[#40C4AA] text-white text-sm font-bold rounded-lg hover:bg-[#40C4AA]/90 disabled:opacity-40 shadow-md shadow-teal-200 transition-colors">Consultar Datos Reales</button>
-            </div>
-            {isLoading ? <LoadingState /> : (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <MetricCard title="Operaciones (Tickets)" value={data?.totalVentas ?? '0'} valueColor="text-slate-800" />
-                    <MetricCard title="Total Ingresos" value={data?.totalVendido ?? '$0.00'} valueColor="text-[#22c55e]" />
-                    <MetricCard title="Ganancia Neta" value={data?.totalGanancia ?? '$0.00'} valueColor="text-[#EAB308]" />
-                </div>
-            )}
-        </div>
-    );
-}
-
-// ─── Por Categoría Tab ────────────────────────────────────────────────────────
-
-function PorCategoriaTab({ onExportReady }: { onExportReady: (exportFn: () => void) => void }) {
-    const [tipo, setTipo] = useState<'Ropa' | 'Joyería'>('Ropa');
-    const [data, setData] = useState<any>(null);
-    const [isLoading, setIsLoading] = useState(false);
-
-    const fetchData = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetch(`/api/productos`);
-            const json = await res.json();
-            const allItems = Array.isArray(json) ? json : (json.data || []);
-            
-            const catItems = allItems.filter((p:any) => {
-                const pCat = (p.categoria || p.tipo || '').toLowerCase();
-                const isJoya = pCat.includes('joy') || pCat.normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'joyeria';
-                return tipo === 'Ropa' ? !isJoya : isJoya;
-            });
-            
-            const disponibles = catItems.filter((p:any) => !p.estado || p.estado.toLowerCase() === 'disponible' || p.estado.toLowerCase() === 'en_subasta');
-            const vendidos = catItems.filter((p:any) => p.estado && p.estado.toLowerCase() === 'vendido');
-            
-            const ingresos = vendidos.reduce((acc:number, p:any) => acc + parseFloat(p.precio_venta || p.precio || 0), 0);
-            const costos = vendidos.reduce((acc:number, p:any) => acc + parseFloat(p.costo_base || p.costo || 0), 0);
-            
-            setData({
-                totalDisponible: disponibles.length,
-                totalVendido: vendidos.length,
-                ingresos: `$${ingresos.toFixed(2)}`,
-                ganancia: `$${(ingresos - costos).toFixed(2)}`,
-                productos: vendidos.sort((a:any, b:any) => parseFloat(b.precio_venta || b.precio || 0) - parseFloat(a.precio_venta || a.precio || 0)).slice(0, 10).map((p:any) => ({
-                    id: p.id, nombre: p.nombre, estado: p.estado || 'Vendido', precio: parseFloat(p.precio_venta || p.precio || 0)
-                }))
-            });
-            
-        } catch (e) { console.error(e); }
-        finally { setIsLoading(false); }
-    }, [tipo]);
-
-    useEffect(() => { fetchData(); }, [fetchData]);
-
-    const handleExport = useCallback(() => {
-        import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
-            generatePDFReport({
-                title: "Reporte por Categoría",
-                subtitle: `Ventas y top productos`,
-                category: tipo,
-                columns: ["Producto", "Total"],
-                rows: (data?.productos ?? []).map((p:any) => [p.nombre, `$${p.precio}`]),
-                filename: `Reporte_Categoria_${tipo}`
-            });
-        });
-    }, [data, tipo]);
-
-    useEffect(() => {
-        onExportReady(handleExport);
-    }, [handleExport, onExportReady]);
-
-    return (
-        <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-1.5 flex items-center gap-1.5 max-w-xs">
-                {(['Ropa', 'Joyería'] as const).map(t => (
-                    <button key={t} onClick={() => setTipo(t)}
-                        className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all",
-                            tipo === t ? "bg-[#40C4AA] text-white shadow-md shadow-teal-200" : "text-slate-500 hover:bg-slate-50"
-                        )}>
-                        {t}
-                    </button>
-                ))}
-            </div>
-            {isLoading ? <LoadingState /> : (
-                <>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <MetricCard title="Stock Disponible" value={data?.totalDisponible ?? 0} valueColor="text-slate-800" />
-                        <MetricCard title="Unidades Vendidas" value={data?.totalVendido ?? 0} valueColor="text-[#22c55e]" />
-                        <MetricCard title="Ingresos Totales" value={data?.ingresos ?? '$0.00'} valueColor="text-[#22c55e]" />
-                        <MetricCard title="Ganancia Neta" value={data?.ganancia ?? '$0.00'} valueColor="text-[#EAB308]" />
-                    </div>
-                    {/* Top Products */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                        <h3 className="text-sm font-bold text-slate-800 mb-6">Top productos más rentables ({tipo})</h3>
-                        <div className="flex flex-col gap-4">
-                            {(data?.productos ?? []).length === 0 ? (
-                                <p className="text-slate-400 text-sm font-medium text-center py-6">No hay datos de ventas en esta categoría aún.</p>
-                            ) : (data?.productos ?? []).map((i:any, idx:number) => (
-                                <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-4 last:border-0 last:pb-0 hover:bg-slate-50/50 p-2 rounded-xl transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-400">
-                                            #{idx + 1}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-slate-800">{i.nombre}</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#22c55e]">{i.estado}</p>
-                                        </div>
-                                    </div>
-                                    <span className="text-base font-black text-[#EAB308]">${i.precio.toFixed(2)}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </>
-            )}
         </div>
     );
 }
@@ -671,9 +370,9 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function ReportesPage() {
+    export default function ReportesPage() {
     const [isCollapsed, setIsCollapsed] = useState(true);
-    const [activeTab, setActiveTab] = useState<ReportTab>('Diario');
+    const [activeTab, setActiveTab] = useState<ReportTab>('Por lote');
     const [exportFn, setExportFn] = useState<(() => void) | null>(null);
 
     const handleExportReady = useCallback((fn: () => void) => {
@@ -681,10 +380,7 @@ export default function ReportesPage() {
     }, []);
 
     const tabs: { id: ReportTab; icon: React.ElementType }[] = [
-        { id: 'Diario', icon: BarChart3 },
-        { id: 'Por rango', icon: Calendar },
         { id: 'Por lote', icon: Package },
-        { id: 'Por categoría', icon: PieChart },
         { id: 'Inventario actual', icon: Layers },
     ];
 
@@ -721,9 +417,6 @@ export default function ReportesPage() {
                     </div>
 
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {activeTab === 'Diario' && <DiarioTab onExportReady={handleExportReady} />}
-                        {activeTab === 'Por rango' && <PorRangoTab onExportReady={handleExportReady} />}
-                        {activeTab === 'Por categoría' && <PorCategoriaTab onExportReady={handleExportReady} />}
                         {activeTab === 'Por lote' && <PorLoteTab onExportReady={handleExportReady} />}
                         {activeTab === 'Inventario actual' && <InventarioActualTab onExportReady={handleExportReady} />}
                     </div>
