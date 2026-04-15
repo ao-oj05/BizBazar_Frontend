@@ -415,12 +415,14 @@ function DetalleProductoModal({ producto, imgIndex, setImgIndex, onClose, onEdit
                                     🛒 Agregar al carrito
                                 </button>
                             )}
-                            <button
-                                className="w-full py-3.5 rounded-xl border-2 border-[#FF0080] text-[#FF0080] bg-white hover:bg-pink-50/50 font-bold tracking-wide transition-colors"
-                                onClick={onEdit}
-                            >
-                                Editar producto
-                            </button>
+                            {producto.estado?.toLowerCase() !== 'vendido' && (
+                                <button
+                                    className="w-full py-3.5 rounded-xl border-2 border-[#FF0080] text-[#FF0080] bg-white hover:bg-pink-50/50 font-bold tracking-wide transition-colors"
+                                    onClick={onEdit}
+                                >
+                                    Editar producto
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -403,12 +403,14 @@ export default function JoyeriaPage() {
                                             🛒 Agregar al carrito
                                         </button>
                                     )}
-                                    <button
-                                        className="w-full py-3.5 rounded-xl border-2 border-[#29AFFF] text-[#29AFFF] bg-white hover:bg-[#29AFFF]/5 font-bold tracking-wide transition-colors"
-                                        onClick={() => { setEditingJoya(selectedJoya); setSelectedJoya(null); }}
-                                    >
-                                        Editar joyería
-                                    </button>
+                                    {selectedJoya.estado?.toLowerCase() !== 'vendido' && (
+                                        <button
+                                            className="w-full py-3.5 rounded-xl border-2 border-[#29AFFF] text-[#29AFFF] bg-white hover:bg-[#29AFFF]/5 font-bold tracking-wide transition-colors"
+                                            onClick={() => { setEditingJoya(selectedJoya); setSelectedJoya(null); }}
+                                        >
+                                            Editar joyería
+                                        </button>
+                                    )}
                                 </div>
 
                             </div>
