@@ -168,7 +168,7 @@ export default function ProductosPage() {
                                         className={cn('px-4 py-2 rounded-xl text-sm font-semibold transition-all',
                                             filterTab === tab ? 'bg-primary text-white shadow-sm shadow-primary/20' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                         )}>
-                                        {tab}
+                                        {tab === 'En_subasta' ? 'Subasta' : tab}
                                     </button>
                                 ))}
                             </div>
