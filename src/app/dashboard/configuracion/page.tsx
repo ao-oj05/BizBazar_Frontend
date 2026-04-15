@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Sidebar } from "../components/Sidebar";
 import { Topbar } from "../components/Topbar";
 import { cn } from "@/src/shared/utils";
-import { Store, ListTree, Settings as SettingsIcon, Plus, Trash2, Save, Loader2 } from "lucide-react";
+import { Store, ListTree, Settings as SettingsIcon, Plus, Trash2, Save, Loader2, Image as ImageIcon } from "lucide-react";
+import { useRef } from "react";
 
 type ConfigTab = 'Datos del Negocio' | 'Categorías' | 'Ajustes Generales';
 
@@ -71,10 +72,15 @@ export default function ConfiguracionPage() {
 // ─── Datos del Negocio ────────────────────────────────────────────────────────
 
 function DatosNegocioTab() {
-    const [form, setForm] = useState({ nombre: '', telefono: '', email: '', direccion: '' });
+    const [form, setForm] = useState({ nombre: '', telefono: '', email: '', direccion: '', logoUrl: '' });
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    
+    // Imagen
+    const [isUploading, setIsUploading] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         (async () => {
@@ -87,6 +93,7 @@ function DatosNegocioTab() {
                         telefono: data.telefono ?? '',
                         email: data.email ?? '',
                         direccion: data.direccion ?? '',
+                        logoUrl: data.logoUrl ?? data.logo ?? '',
                     });
                 }
             } catch (e) { console.error(e); }
@@ -102,16 +109,86 @@ function DatosNegocioTab() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(form),
             });
-            if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
+            if (res.ok) { 
+                setSaved(true); setTimeout(() => setSaved(false), 2500); 
+                // Disparar evento para que la Topbar se actualice
+                window.dispatchEvent(new Event('business_data_updated'));
+            }
         } catch (e) { console.error(e); }
         finally { setIsSaving(false); }
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) uploadFile(e.dataTransfer.files[0]);
+    };
+
+    const uploadFile = async (file: File) => {
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('imagen', file);
+            const res = await fetch('/api/uploads', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setForm(f => ({ ...f, logoUrl: data.data.url }));
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     if (isLoading) return <div className="flex items-center gap-3 text-slate-400"><Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm">Cargando...</span></div>;
 
     return (
         <div className="flex flex-col gap-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+            <div className="flex flex-col md:flex-row gap-8">
+                {/* Logo Uploader */}
+                <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Logo del negocio</label>
+                    <div
+                        onClick={() => fileInputRef.current?.click()}
+                        onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={handleDrop}
+                        className={cn(
+                            "w-full aspect-video md:aspect-square border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all overflow-hidden relative",
+                            isDragging
+                                ? "border-[#40C4AA] bg-teal-50"
+                                : form.logoUrl
+                                    ? "border-transparent"
+                                    : "border-[#40C4AA] bg-white hover:bg-teal-50/50"
+                        )}
+                        style={!form.logoUrl ? { borderColor: '#40C4AA', borderStyle: 'dashed' } : {}}
+                    >
+                        {isUploading ? (
+                            <Loader2 className="w-8 h-8 text-[#40C4AA] animate-spin" />
+                        ) : form.logoUrl ? (
+                            <>
+                                <img src={form.logoUrl} alt="Logo preview" className="w-full h-full object-contain p-2" />
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                    <span className="text-white text-[10px] font-bold bg-black/50 px-3 py-1.5 rounded-lg">Cambiar foto</span>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <ImageIcon className="w-10 h-10 text-[#40C4AA] mb-1" strokeWidth={1} />
+                                <div className="text-center px-4">
+                                    <p className="text-xs font-bold text-slate-600 leading-snug">Arrastra tu logo aquí</p>
+                                    <p className="text-[10px] text-slate-400 font-medium">JPG, PNG o WEBP</p>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0])} className="hidden" />
+                </div>
+
+                {/* Information Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
                 {[
                     { label: 'Nombre del negocio', key: 'nombre', placeholder: 'BizBazar' },
                     { label: 'Teléfono', key: 'telefono', placeholder: '+52 55 1234 5678' },
@@ -128,6 +205,7 @@ function DatosNegocioTab() {
                         />
                     </div>
                 ))}
+                </div>
             </div>
             <div className="flex items-center gap-4">
                 <button onClick={handleSave} disabled={isSaving}

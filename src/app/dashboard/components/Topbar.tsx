@@ -24,6 +24,20 @@ export function Topbar() {
     const pathname = usePathname();
     const title = routeTitles[pathname] || 'Dashboard';
 
+    const [negocio, setNegocio] = useState<{ nombre: string | null, logoUrl: string | null }>({ nombre: null, logoUrl: null });
+
+    const loadBusinessData = async () => {
+        try {
+            const res = await fetch('/api/configuracion/negocio');
+            if (res.ok) {
+                const data = await res.json();
+                setNegocio({ nombre: data.nombre || null, logoUrl: data.logoUrl || data.logo || null });
+            }
+        } catch (e) {
+            console.error('Error fetching business info:', e);
+        }
+    };
+
     useEffect(() => {
         const checkAlerts = async () => {
             try {
@@ -39,6 +53,11 @@ export function Topbar() {
             }
         };
         checkAlerts();
+        loadBusinessData();
+
+        const handleUpdate = () => loadBusinessData();
+        window.addEventListener('business_data_updated', handleUpdate);
+        return () => window.removeEventListener('business_data_updated', handleUpdate);
     }, [pathname]);
 
     return (
@@ -61,10 +80,14 @@ export function Topbar() {
                         onClick={() => setShowProfile(!showProfile)}
                         className="flex items-center gap-3 p-1 pr-3 hover:bg-slate-50 rounded-full transition-colors"
                     >
-                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-                            <User className="w-6 h-6" />
+                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden shadow-sm">
+                            {negocio.logoUrl ? (
+                                <img src={negocio.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="w-6 h-6" />
+                            )}
                         </div>
-                        <span className="text-sm font-semibold text-slate-700">Usuario</span>
+                        <span className="text-sm font-semibold text-slate-700">{negocio.nombre || 'Usuario'}</span>
                     </button>
 
                     <AnimatePresence>
