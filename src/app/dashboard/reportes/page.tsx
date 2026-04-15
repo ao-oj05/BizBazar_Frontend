@@ -203,34 +203,36 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
     });
 
     // Fallback: use vendidos from productos if ventas items don't have lote_id
-    const ventasRecuperadas = productos.filter(p => p.estado?.toLowerCase() === 'vendido');
+    const ventasRecuperadas = productos.filter((p: any) => p.estado?.toString().trim().toLowerCase() === 'vendido');
     const totalRecuperado = Object.values(recuperadoPorLote).reduce((s, r) => s + r.recuperado, 0)
-        || ventasRecuperadas.reduce((acc, p) => acc + (Number(p.precio_venta || p.precio) || 0), 0);
+        || ventasRecuperadas.reduce((acc: number, p: any) => acc + (Number(p.precio_venta || p.precio) || 0), 0);
 
     let recuperacionPromedio = 0;
     if (totalInversion > 0) recuperacionPromedio = Math.round((totalRecuperado / totalInversion) * 100);
 
     const chartData = React.useMemo(() => {
-        return lotes.map(lote => {
+        return lotes.map((lote: any) => {
             // Use real ventas data per lote if available
-            const loteVentas = recuperadoPorLote[lote.id];
+            const lotIdStr = String(lote.id);
+            const loteVentas = recuperadoPorLote[lote.id] || recuperadoPorLote[lotIdStr];
             let recuperadoLote = loteVentas?.recuperado ?? 0;
             let gananciaLote = loteVentas?.ganancia ?? 0;
 
             // Fallback: compute from productos if ventas don't have lote_id
             if (recuperadoLote === 0) {
-                const lotProducts = productos.filter(p => p.lote_id === lote.id);
+                const lotProducts = productos.filter((p: any) => String(p.lote_id || p.loteId) === lotIdStr);
                 recuperadoLote = lotProducts
-                    .filter(p => p.estado?.toLowerCase() === 'vendido')
-                    .reduce((acc, p) => acc + (Number(p.precio_venta || p.precio) || 0), 0);
+                    .filter((p: any) => p.estado?.toString().trim().toLowerCase() === 'vendido')
+                    .reduce((acc: number, p: any) => acc + (Number(p.precio_venta || p.precio) || 0), 0);
                 gananciaLote = lotProducts
-                    .filter(p => p.estado?.toLowerCase() === 'vendido')
-                    .reduce((acc, p) => acc + Math.max(0, (Number(p.precio_venta || p.precio) || 0) - (Number(p.costo_base || p.costo) || 0)), 0);
+                    .filter((p: any) => p.estado?.toString().trim().toLowerCase() === 'vendido')
+                    .reduce((acc: number, p: any) => acc + Math.max(0, (Number(p.precio_venta || p.precio) || 0) - (Number(p.costo_base || p.costo) || 0)), 0);
             }
 
             const inver = (Number(lote.precio_total || lote.inversion) || 0) + (Number(lote.gastos_adicionales) || 0);
-            const totalProductos = productos.filter(p => p.lote_id === lote.id).length;
-            const vendidosLote = productos.filter(p => p.lote_id === lote.id && p.estado?.toLowerCase() === 'vendido').length;
+            const lotProductsAll = productos.filter((p: any) => String(p.lote_id || p.loteId) === lotIdStr);
+            const totalProductos = lotProductsAll.length;
+            const vendidosLote = lotProductsAll.filter((p: any) => p.estado?.toString().trim().toLowerCase() === 'vendido').length;
 
             return {
                 id: lote.id,
