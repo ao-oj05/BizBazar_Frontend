@@ -86,14 +86,16 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
 
     const handleExport = useCallback(() => {
         import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
-            generatePDFReport({
-                title: "Reporte de Inventario Actual",
-                subtitle: `Estado: ${estado}`,
-                columns: ["Producto", "Lote", "Precio Asignado/Venta"],
-                rows: (data?.articulos ?? []).map((p:any) => [p.nombre, p.lote || '—', p.precio ? `$${p.precio}` : '—']),
-                filename: `Reporte_Inventario_${estado}`
-            });
-        });
+            try {
+                generatePDFReport({
+                    title: "Reporte de Inventario Actual",
+                    subtitle: `Estado: ${estado}`,
+                    columns: ["Producto", "Lote", "Precio Asignado/Venta"],
+                    rows: (data?.articulos ?? []).map((p:any) => [p.nombre, p.lote || '—', p.precio ? `$${p.precio}` : '—']),
+                    filename: `Reporte_Inventario_${estado}`
+                });
+            } catch (e: any) { alert("Error generating PDF: " + e.message); }
+        }).catch((e: any) => alert("Error importing PDF library: " + e.message));
     }, [data, estado]);
 
     useEffect(() => {
@@ -194,8 +196,12 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
     ventas.forEach(venta => {
         const items: any[] = venta.items || venta.productos || [];
         items.forEach((item: any) => {
-            const loteId = item.lote_id;
-            if (!loteId) return;
+            // Retrieve product to find lote_id if the sale item doesn't have it
+            const prodId = String(item.producto_id || item.id);
+            const foundProd = productos.find((p: any) => String(p.id) === prodId);
+            const loteId = String(item.lote_id || (foundProd ? foundProd.lote_id || foundProd.loteId : ''));
+            
+            if (!loteId || loteId === 'undefined' || loteId === 'null' || loteId === '') return;
             if (!recuperadoPorLote[loteId]) recuperadoPorLote[loteId] = { recuperado: 0, ganancia: 0 };
             recuperadoPorLote[loteId].recuperado += Number(item.precio_venta || item.precio || 0);
             recuperadoPorLote[loteId].ganancia += Number(item.ganancia || 0);
@@ -253,14 +259,16 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
 
     const handleExport = useCallback(() => {
         import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
-            generatePDFReport({
-                title: "Reporte de Inversión por Lote",
-                subtitle: "Resumen de recuperación",
-                columns: ["Lote", "Inversión", "Recuperado", "%", "Estado"],
-                rows: chartData.map((d: any) => [d.name, `$${d.inversion.toFixed(2)}`, `$${d.recuperado.toFixed(2)}`, `${d.porcentaje}%`, d.estado]),
-                filename: `Reporte_Lotes_${new Date().toLocaleDateString('en-CA')}`
-            });
-        });
+            try {
+                generatePDFReport({
+                    title: "Reporte de Inversión por Lote",
+                    subtitle: "Resumen de recuperación",
+                    columns: ["Lote", "Inversión", "Recuperado", "%", "Estado"],
+                    rows: chartData.map((d: any) => [d.name, `$${d.inversion.toFixed(2)}`, `$${d.recuperado.toFixed(2)}`, `${d.porcentaje}%`, d.estado]),
+                    filename: `Reporte_Lotes_${new Date().toLocaleDateString('en-CA')}`
+                });
+            } catch (e: any) { alert("Error generating PDF: " + e.message); }
+        }).catch(err => alert("Error importing PDF library: " + err.message));
     }, [chartData]);
 
     if (isLoading) return <LoadingState />;
