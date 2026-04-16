@@ -6,7 +6,7 @@ import { cn } from "@/src/shared/utils";
 import { Store, ListTree, Settings as SettingsIcon, Plus, Trash2, Save, Loader2, Image as ImageIcon } from "lucide-react";
 import { useRef } from "react";
 
-type ConfigTab = 'Datos del Negocio' | 'Categorías' | 'Ajustes Generales';
+type ConfigTab = 'Datos del Negocio' | 'Categorías';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -17,7 +17,6 @@ export default function ConfiguracionPage() {
     const tabs: { id: ConfigTab; icon: React.ElementType }[] = [
         { id: 'Datos del Negocio', icon: Store },
         { id: 'Categorías', icon: ListTree },
-        { id: 'Ajustes Generales', icon: SettingsIcon },
     ];
 
     return (
@@ -58,7 +57,6 @@ export default function ConfiguracionPage() {
                                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     {activeTab === 'Datos del Negocio' && <DatosNegocioTab />}
                                     {activeTab === 'Categorías' && <CategoriasTab />}
-                                    {activeTab === 'Ajustes Generales' && <AjustesGeneralesTab />}
                                 </div>
                             </div>
                         </div>
@@ -354,80 +352,3 @@ function CategoriasTab() {
     );
 }
 
-// ─── Ajustes Generales ────────────────────────────────────────────────────────
-
-function AjustesGeneralesTab() {
-    const [form, setForm] = useState({ incrementoMinimo: '', moneda: 'MXN (Peso Mexicano)', formatoCodigos: '' });
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
-
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await fetch('/api/configuracion/ajustes');
-                if (res.ok) {
-                    const data = await res.json();
-                    setForm({
-                        incrementoMinimo: data.incrementoMinimo ?? '',
-                        moneda: data.moneda ?? 'MXN',
-                        formatoCodigos: data.formatoCodigos ?? '',
-                    });
-                }
-            } catch (e) { console.error(e); }
-            finally { setIsLoading(false); }
-        })();
-    }, []);
-
-    const handleSave = async () => {
-        setIsSaving(true);
-        const safeBody = {
-            ...form,
-            incrementoMinimo: form.incrementoMinimo ? Number(form.incrementoMinimo) : 0,
-            formatoCodigos: form.formatoCodigos || 'LOTE-%d'
-        };
-
-        try {
-            const res = await fetch('/api/configuracion/ajustes', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(safeBody),
-            });
-            if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
-            else { console.error('Error saving:', await res.text()); }
-        } catch (e) { console.error(e); }
-        finally { setIsSaving(false); }
-    };
-
-    if (isLoading) return <div className="flex items-center gap-3 text-slate-400"><Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm">Cargando...</span></div>;
-
-    return (
-        <div className="flex flex-col gap-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Moneda</label>
-                    <select className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/30 bg-white"
-                        value={form.moneda} onChange={e => setForm(f => ({ ...f, moneda: e.target.value }))}>
-                        <option value="MXN">MXN (Peso Mexicano)</option>
-                        <option value="USD">USD (Dólar)</option>
-                    </select>
-                </div>
-                <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Formato de códigos</label>
-                    <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#40C4AA]/30 placeholder-slate-300"
-                        placeholder="LOT-001" value={form.formatoCodigos} onChange={e => setForm(f => ({ ...f, formatoCodigos: e.target.value }))} />
-                    <span className="text-xs text-slate-400">Ejemplo: LOT-001, LOTE-2025.</span>
-                </div>
-            </div>
-            <div className="flex items-center gap-4">
-                <button onClick={handleSave} disabled={isSaving}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#40C4AA] hover:bg-[#40C4AA]/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-200 transition-colors disabled:opacity-50">
-                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Guardar cambios
-                </button>
-                {saved && <span className="text-sm text-green-600 font-semibold">¡Guardado correctamente!</span>}
-            </div>
-        </div>
-    );
-}
