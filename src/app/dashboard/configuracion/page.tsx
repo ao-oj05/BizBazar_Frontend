@@ -119,8 +119,10 @@ function DatosNegocioTab() {
             });
             if (res.ok) { 
                 setSaved(true); setTimeout(() => setSaved(false), 2500); 
-                // Disparar evento para que la Topbar se actualice
-                window.dispatchEvent(new Event('business_data_updated'));
+                // Disparar evento con los datos para que Sidebar y Topbar se actualicen inmediatamente
+                window.dispatchEvent(new CustomEvent('business_data_updated', {
+                    detail: { nombre: form.nombre.trim() || 'Usuario', logoUrl: form.logoUrl }
+                }));
             } else {
                 const errorText = await res.text();
                 console.error("Backend Error on Save:", errorText);

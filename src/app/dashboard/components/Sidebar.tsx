@@ -50,7 +50,17 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
     useEffect(() => {
         loadBusinessData();
-        const handleUpdate = () => loadBusinessData();
+        const handleUpdate = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (detail?.nombre !== undefined || detail?.logoUrl !== undefined) {
+                setNegocio({
+                    nombre: detail.nombre || null,
+                    logoUrl: detail.logoUrl || null,
+                });
+            } else {
+                loadBusinessData();
+            }
+        };
         window.addEventListener('business_data_updated', handleUpdate);
         return () => window.removeEventListener('business_data_updated', handleUpdate);
     }, []);
