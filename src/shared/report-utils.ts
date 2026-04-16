@@ -9,6 +9,8 @@ interface PDFReportOptions {
     columns: string[];
     rows: (string | number)[][];
     filename: string;
+    chartImage?: string; // base64 PNG de la gráfica
+    metrics?: { label: string; value: string }[];
 }
 
 export const generatePDFReport = ({
@@ -18,7 +20,9 @@ export const generatePDFReport = ({
     category,
     columns,
     rows,
-    filename
+    filename,
+    chartImage,
+    metrics,
 }: PDFReportOptions) => {
     // Handling Next.js interop for jsPDF
     const JS_PDF = typeof jsPDF === 'function' ? jsPDF : (jsPDF as any).jsPDF;
@@ -59,6 +63,37 @@ export const generatePDFReport = ({
         doc.setTextColor(100);
         doc.text(`Categoría: ${category}`, 14, currentY);
         currentY += 6;
+    }
+
+    // -- Metrics Cards --
+    if (metrics && metrics.length > 0) {
+        currentY += 4;
+        const cardWidth = (pageWidth - 28 - (metrics.length - 1) * 4) / metrics.length;
+        metrics.forEach((m, i) => {
+            const x = 14 + i * (cardWidth + 4);
+            doc.setFillColor(245, 247, 250);
+            doc.roundedRect(x, currentY, cardWidth, 18, 3, 3, 'F');
+            doc.setFontSize(7);
+            doc.setTextColor(120);
+            doc.text(m.label.toUpperCase(), x + 4, currentY + 6);
+            doc.setFontSize(12);
+            doc.setTextColor(30);
+            doc.text(m.value, x + 4, currentY + 14);
+        });
+        currentY += 24;
+    }
+
+    // -- Chart Image --
+    if (chartImage) {
+        currentY += 2;
+        const imgWidth = pageWidth - 28;
+        const imgHeight = 70;
+        try {
+            doc.addImage(chartImage, 'PNG', 14, currentY, imgWidth, imgHeight);
+            currentY += imgHeight + 6;
+        } catch (e) {
+            console.error('Error adding chart image to PDF:', e);
+        }
     }
 
     // -- Table --
@@ -104,3 +139,4 @@ export const generatePDFReport = ({
 
     doc.save(`${filename}.pdf`);
 };
+

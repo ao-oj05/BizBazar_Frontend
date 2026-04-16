@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Sidebar } from "../components/Sidebar";
 import { Topbar } from "../components/Topbar";
 import { cn } from "@/src/shared/utils";
@@ -119,7 +119,11 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                 generatePDFReport({
                     title: "Reporte de Inventario Actual",
                     subtitle: `Filtro Activo: ${estado}`,
-                    category: `Disponible Mxn: ${data?.valorTotalDisponible} | Items Listos: ${data?.itemsDisponibles} | Subasta Mxn: ${data?.valorEnSubasta}`,
+                    metrics: [
+                        { label: 'Valor Total Disponible', value: data?.valorTotalDisponible || '$0.00' },
+                        { label: 'Items Disponibles', value: String(data?.itemsDisponibles || 0) },
+                        { label: 'En Subasta', value: data?.valorEnSubasta || '$0.00' },
+                    ],
                     columns: ["Producto", "Cant", "Lote", "Precio Indiv."],
                     rows: (data?.articulos ?? []).map((p:any) => [p.nombre, p.cantidad, p.lote || '—', p.precio ? `$${p.precio}` : '—']),
                     filename: `Reporte_Inventario_${estado}`
@@ -199,6 +203,7 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
     const [productos, setProductos] = useState<any[]>([]);
     const [ventas, setVentas] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const chartRef = useRef<HTMLDivElement>(null);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -291,19 +296,37 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lotes, productos, ventas, recuperadoPorLote]);
 
-    const handleExport = useCallback(() => {
-        import("@/src/shared/report-utils").then(({ generatePDFReport }) => {
+    const handleExport = useCallback(async () => {
+        let chartImage: string | undefined;
+        if (chartRef.current) {
             try {
-                generatePDFReport({
-                    title: "Reporte de Inversión por Lote",
-                    subtitle: "Resumen de recuperación",
-                    columns: ["Lote", "Inversión", "Recuperado", "%", "Estado"],
-                    rows: chartData.map((d: any) => [d.name, `$${d.inversion.toFixed(2)}`, `$${d.recuperado.toFixed(2)}`, `${d.porcentaje}%`, d.estado]),
-                    filename: `Reporte_Lotes_${new Date().toLocaleDateString('en-CA')}`
-                });
-            } catch (e: any) { alert("Error generating PDF: " + e.message); }
-        }).catch(err => alert("Error importing PDF library: " + err.message));
-    }, [chartData]);
+                const html2canvas = (await import('html2canvas')).default;
+                const canvas = await html2canvas(chartRef.current, { backgroundColor: '#ffffff', scale: 2 });
+                chartImage = canvas.toDataURL('image/png');
+            } catch (e) { console.error('Error capturing chart:', e); }
+        }
+        try {
+            const { generatePDFReport } = await import("@/src/shared/report-utils");
+            generatePDFReport({
+                title: "Reporte de Inversión por Lote",
+                subtitle: "Resumen de recuperación",
+                metrics: [
+                    { label: 'Total Lotes', value: String(lotes.length) },
+                    { label: 'Inversión Total', value: `$${totalInversion.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}` },
+                    { label: 'Total Recuperado', value: `$${totalRecuperado.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}` },
+                    { label: 'Recuperación Promedio', value: `${recuperacionPromedio}%` },
+                ],
+                chartImage,
+                columns: ["Lote", "Inversión", "Recuperado", "Ganancia", "%", "Vendidos", "Estado"],
+                rows: chartData.map((d: any) => [d.name, `$${d.inversion.toFixed(2)}`, `$${d.recuperado.toFixed(2)}`, `$${d.ganancia.toFixed(2)}`, `${d.porcentaje}%`, `${d.vendidos}/${d.totalProductos}`, d.estado]),
+                filename: `Reporte_Lotes_${new Date().toLocaleDateString('en-CA')}`
+            });
+        } catch (e: any) { alert("Error generating PDF: " + e.message); }
+    }, [chartData, lotes.length, totalInversion, totalRecuperado, recuperacionPromedio]);
+
+    useEffect(() => {
+        onExportReady(handleExport);
+    }, [handleExport, onExportReady]);
 
     if (isLoading) return <LoadingState />;
 
@@ -332,7 +355,7 @@ function PorLoteTab({ onExportReady }: { onExportReady: (exportFn: () => void) =
                 />
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center">
+            <div ref={chartRef} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center">
                 <h3 className="text-sm font-bold text-slate-800 self-start mb-6">Inversión vs Recuperado por lote</h3>
                 <div className="w-full h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
