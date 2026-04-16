@@ -510,7 +510,22 @@ export default function LotesPage() {
             {showNuevoLote && (
                 <NuevoLoteModal
                     onClose={() => setShowNuevoLote(false)}
-                    onSave={lote => { setLotes(prev => [...prev, lote]); setShowNuevoLote(false); }}
+                    onSave={(lote: any) => {
+                        const mapped = {
+                            id: lote.id,
+                            codigo: lote.codigo || '',
+                            nombre: lote.nombre || 'Lote sin nombre',
+                            fecha: lote.fecha_compra || lote.fecha || '',
+                            inversion: Number(lote.precio_total || lote.inversion) || 0,
+                            piezas: Number(lote.piezas_total || lote.piezas) || 0,
+                            recuperado: Number(lote.recuperado) || 0,
+                            estado: (lote.estado && lote.estado.toLowerCase() === 'cerrado') ? 'Cerrado' as const : 'Activo' as const,
+                            tipo: lote.tipo || 'ropa',
+                            productos: Array.isArray(lote.productos) ? lote.productos : []
+                        };
+                        setLotes(prev => [...prev, mapped]);
+                        setShowNuevoLote(false);
+                    }}
                 />
             )}
         </div>
