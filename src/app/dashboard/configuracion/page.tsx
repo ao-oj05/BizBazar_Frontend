@@ -104,7 +104,14 @@ function DatosNegocioTab() {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const bodyPayload = { ...form, logo: form.logoUrl };
+            const bodyPayload = { 
+                nombre: form.nombre.trim() || 'Usuario',
+                telefono: form.telefono || '+52 00 0000 0000',
+                email: form.email || 'contacto@bizbazar.com',
+                direccion: form.direccion || 'Sin dirección',
+                logoUrl: form.logoUrl,
+                logo: form.logoUrl 
+            };
             const res = await fetch('/api/configuracion/negocio', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -114,8 +121,15 @@ function DatosNegocioTab() {
                 setSaved(true); setTimeout(() => setSaved(false), 2500); 
                 // Disparar evento para que la Topbar se actualice
                 window.dispatchEvent(new Event('business_data_updated'));
+            } else {
+                const errorText = await res.text();
+                console.error("Backend Error on Save:", errorText);
+                alert("Error al guardar: " + errorText);
             }
-        } catch (e) { console.error(e); }
+        } catch (e: any) { 
+            console.error(e); 
+            alert("Error de conexión: " + e.message);
+        }
         finally { setIsSaving(false); }
     };
 
