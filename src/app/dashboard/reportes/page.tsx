@@ -56,11 +56,12 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                 return currentStatus === targetStatus;
             });
             
-            const costoTotal = filtered.reduce((acc:number, p:any) => acc + Number(p.costo_base ?? p.costo ?? 0), 0);
-            const valorInventario = filtered.reduce((acc:number, p:any) => acc + Number(p.precio_venta ?? p.precio ?? 0), 0);
+            const costoTotal = filtered.reduce((acc:number, p:any) => acc + (Number(p.costo_base ?? p.costo ?? 0) * Number(p.cantidad ?? p.piezas ?? p.stock ?? 1)), 0);
+            const valorInventario = filtered.reduce((acc:number, p:any) => acc + (Number(p.precio_venta ?? p.precio ?? 0) * Number(p.cantidad ?? p.piezas ?? p.stock ?? 1)), 0);
+            const sumVolumen = filtered.reduce((acc:number, p:any) => acc + Number(p.cantidad ?? p.piezas ?? p.stock ?? 1), 0);
             
             setData({
-                totalProductos: filtered.length,
+                totalProductos: sumVolumen,
                 costoTotal: `$${costoTotal.toFixed(2)}`,
                 valorInventario: `$${valorInventario.toFixed(2)}`,
                 gananciaProyectada: `$${(valorInventario - costoTotal).toFixed(2)}`,
@@ -70,6 +71,7 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                         const imgs = typeof p.imagenes === 'string' ? JSON.parse(p.imagenes) : (p.imagenes || []);
                         img = Array.isArray(imgs) ? imgs[0] : (p.imagen || '');
                     } catch { img = p.imagen || ''; }
+                    const qty = Number(p.cantidad ?? p.piezas ?? p.stock ?? 1);
                     return {
                         id: p.id,
                         nombre: p.nombre,
@@ -77,6 +79,7 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                         estado: p.estado,
                         costo: Number(p.costo_base ?? p.costo ?? 0),
                         precio: Number(p.precio_venta ?? p.precio ?? 0),
+                        cantidad: qty,
                         imagen: img
                     }
                 })
@@ -93,8 +96,8 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                 generatePDFReport({
                     title: "Reporte de Inventario Actual",
                     subtitle: `Estado: ${estado}`,
-                    columns: ["Producto", "Lote", "Precio Asignado/Venta"],
-                    rows: (data?.articulos ?? []).map((p:any) => [p.nombre, p.lote || '—', p.precio ? `$${p.precio}` : '—']),
+                    columns: ["Producto", "Cant", "Lote", "Precio Indiv."],
+                    rows: (data?.articulos ?? []).map((p:any) => [p.nombre, p.cantidad, p.lote || '—', p.precio ? `$${p.precio}` : '—']),
                     filename: `Reporte_Inventario_${estado}`
                 });
             } catch (e: any) { alert("Error generating PDF: " + e.message); }
@@ -145,6 +148,11 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                                         <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-slate-400 font-black text-xs uppercase tracking-widest bg-slate-200 border border-slate-300/50">Sin Foto</div>
+                                    )}
+                                    {p.cantidad > 1 && (
+                                        <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm backdrop-blur-md">
+                                            x{p.cantidad}
+                                        </div>
                                     )}
                                 </div>
                                 <div className="px-1 pb-1 flex flex-col items-center text-center">
