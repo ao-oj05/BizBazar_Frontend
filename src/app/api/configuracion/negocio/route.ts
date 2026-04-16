@@ -37,11 +37,25 @@ export async function PUT(req: NextRequest) {
         const authHeader = req.headers.get('authorization') || (token ? `Bearer ${token}` : null);
         const headersContent: Record<string, string> = { 'Content-Type': 'application/json' };
         if (authHeader) headersContent['Authorization'] = authHeader;
+        let enrichedBody = { ...body };
+        if (token) {
+            try {
+                const base64Payload = token.split('.')[1];
+                if (base64Payload) {
+                    const payload = JSON.parse(Buffer.from(base64Payload, 'base64url').toString('utf8'));
+                    if (payload?.id && !enrichedBody.usuario_id) {
+                        enrichedBody.usuario_id = payload.id;
+                    }
+                }
+            } catch (e) {
+                console.error("Error decoding token for usuario_id logic");
+            }
+        }
         
         const res = await fetch(`${API_URL}/api/configuracion/negocio`, {
             method: 'PUT',
             headers: headersContent,
-            body: JSON.stringify(body),
+            body: JSON.stringify(enrichedBody),
         });
         const data = await res.json();
         return NextResponse.json(data, { status: res.status });
