@@ -84,19 +84,33 @@ function DatosNegocioTab() {
 
     useEffect(() => {
         (async () => {
+            // Cargar datos guardados en localStorage primero
+            const cached = localStorage.getItem('bizbazar_negocio');
+            let cachedData: Record<string, string> = {};
+            if (cached) {
+                try { cachedData = JSON.parse(cached); } catch { /* ignore */ }
+            }
             try {
                 const res = await fetch('/api/configuracion/negocio');
                 if (res.ok) {
                     const data = await res.json();
                     setForm({
-                        nombre: data.nombre ?? '',
-                        telefono: data.telefono ?? '',
-                        email: data.email ?? '',
-                        direccion: data.direccion ?? '',
-                        logoUrl: data.logoUrl ?? data.logo ?? '',
+                        nombre: cachedData.nombre || data.nombre || '',
+                        telefono: cachedData.telefono || data.telefono || '',
+                        email: cachedData.email || data.email || '',
+                        direccion: cachedData.direccion || data.direccion || '',
+                        logoUrl: cachedData.logoUrl || data.logoUrl || data.logo || '',
                     });
+                } else if (cachedData.nombre || cachedData.logoUrl) {
+                    setForm(f => ({ ...f, ...cachedData }));
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+                // Si falla el API, usar datos de localStorage
+                if (cachedData.nombre || cachedData.logoUrl) {
+                    setForm(f => ({ ...f, ...cachedData }));
+                }
+            }
             finally { setIsLoading(false); }
         })();
     }, []);
@@ -119,9 +133,18 @@ function DatosNegocioTab() {
             });
             if (res.ok) { 
                 setSaved(true); setTimeout(() => setSaved(false), 2500); 
+                // Persistir en localStorage para que sobreviva recargas
+                const negocioData = { 
+                    nombre: form.nombre.trim() || 'Usuario', 
+                    logoUrl: form.logoUrl,
+                    telefono: form.telefono,
+                    email: form.email,
+                    direccion: form.direccion
+                };
+                localStorage.setItem('bizbazar_negocio', JSON.stringify(negocioData));
                 // Disparar evento con los datos para que Sidebar y Topbar se actualicen inmediatamente
                 window.dispatchEvent(new CustomEvent('business_data_updated', {
-                    detail: { nombre: form.nombre.trim() || 'Usuario', logoUrl: form.logoUrl }
+                    detail: { nombre: negocioData.nombre, logoUrl: negocioData.logoUrl }
                 }));
             } else {
                 const errorText = await res.text();

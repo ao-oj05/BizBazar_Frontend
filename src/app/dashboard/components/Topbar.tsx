@@ -27,11 +27,24 @@ export function Topbar() {
     const [negocio, setNegocio] = useState<{ nombre: string | null, logoUrl: string | null }>({ nombre: null, logoUrl: null });
 
     const loadBusinessData = async () => {
+        // Primero cargar de localStorage para mostrar inmediatamente
+        const cached = localStorage.getItem('bizbazar_negocio');
+        if (cached) {
+            try {
+                const c = JSON.parse(cached);
+                setNegocio({ nombre: c.nombre || null, logoUrl: c.logoUrl || null });
+            } catch { /* ignore */ }
+        }
+        // Luego intentar desde el API
         try {
             const res = await fetch('/api/configuracion/negocio?t=' + Date.now(), { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
-                setNegocio({ nombre: data.nombre || null, logoUrl: data.logoUrl || data.logo || null });
+                const nombre = data.nombre || null;
+                const logoUrl = data.logoUrl || data.logo || null;
+                if ((nombre || logoUrl) && !cached) {
+                    setNegocio({ nombre, logoUrl });
+                }
             }
         } catch (e) {
             console.error('Error fetching business info:', e);
