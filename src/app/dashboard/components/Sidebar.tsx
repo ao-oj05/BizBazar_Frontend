@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from "react";
 import {
     LayoutDashboard,
     Package,
@@ -33,6 +34,28 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     const pathname = usePathname();
+    const [negocio, setNegocio] = useState<{ nombre: string | null, logoUrl: string | null }>({ nombre: null, logoUrl: null });
+
+    const loadBusinessData = async () => {
+        try {
+            const res = await fetch('/api/configuracion/negocio');
+            if (res.ok) {
+                const data = await res.json();
+                setNegocio({ nombre: data.nombre || null, logoUrl: data.logoUrl || data.logo || null });
+            }
+        } catch (e) {
+            console.error('Error fetching business info:', e);
+        }
+    };
+
+    useEffect(() => {
+        loadBusinessData();
+        const handleUpdate = () => loadBusinessData();
+        window.addEventListener('business_data_updated', handleUpdate);
+        return () => window.removeEventListener('business_data_updated', handleUpdate);
+    }, []);
+
+    const displayName = negocio.nombre?.trim() ? negocio.nombre : "Usuario";
 
     return (
         <aside
@@ -48,11 +71,26 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 isCollapsed ? "justify-center" : "justify-start"
             )}>
                 {!isCollapsed ? (
-                    <h1 className="text-2xl font-bold tracking-tight animate-in fade-in duration-300">BizBazar</h1>
-                ) : (
-                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-                        <Menu className="w-6 h-6" />
+                    <div className="flex items-center gap-3 animate-in fade-in duration-300">
+                        {negocio.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={negocio.logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-cover bg-white" />
+                        ) : (
+                            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                                <span className="font-bold text-sm text-white">{displayName.charAt(0).toUpperCase()}</span>
+                            </div>
+                        )}
+                        <h1 className="text-xl font-bold tracking-tight line-clamp-1">{displayName}</h1>
                     </div>
+                ) : (
+                    negocio.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={negocio.logoUrl} alt="Logo" className="w-10 h-10 rounded-xl object-cover bg-white" />
+                    ) : (
+                        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                            <Menu className="w-6 h-6" />
+                        </div>
+                    )
                 )}
             </div>
 

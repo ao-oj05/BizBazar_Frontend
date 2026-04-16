@@ -191,10 +191,7 @@ function DatosNegocioTab() {
                 {/* Information Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
                 {[
-                    { label: 'Nombre del negocio', key: 'nombre', placeholder: 'BizBazar' },
-                    { label: 'Teléfono', key: 'telefono', placeholder: '+52 55 1234 5678' },
-                    { label: 'Correo electrónico', key: 'email', placeholder: 'contacto@bizbazar.com' },
-                    { label: 'Dirección', key: 'direccion', placeholder: 'Calle Principal 123' },
+                    { label: 'Nombre del negocio', key: 'nombre', placeholder: 'Usuario' },
                 ].map(f => (
                     <div key={f.key} className="flex flex-col gap-2">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{f.label}</label>
