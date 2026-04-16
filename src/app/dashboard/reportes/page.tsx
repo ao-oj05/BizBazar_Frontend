@@ -76,15 +76,18 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                 return currentStatus === targetStatus;
             });
             
-            const costoTotal = filtered.reduce((acc:number, p:any) => acc + (Number(p.costo_base ?? p.costoBase ?? p.costo ?? 0) * Number(p.cantidad ?? p.piezas ?? p.stock ?? 1)), 0);
-            const valorInventario = filtered.reduce((acc:number, p:any) => acc + (Number(p.precio_venta ?? p.precioVenta ?? p.precio ?? p.costo_base ?? p.costo ?? 0) * Number(p.cantidad ?? p.piezas ?? p.stock ?? 1)), 0);
-            const sumVolumen = filtered.reduce((acc:number, p:any) => acc + Number(p.cantidad ?? p.piezas ?? p.stock ?? 1), 0);
+            // Global Metrics Calculation
+            const dispItems = allItems.filter((p:any) => (p.estado || 'disponible').toString().trim().toLowerCase() === 'disponible');
+            const subItems = allItems.filter((p:any) => (p.estado || 'disponible').toString().trim().toLowerCase() === 'en_subasta');
+            
+            const valorTotalDisponible = dispItems.reduce((acc:number, p:any) => acc + (Number(p.precio_venta ?? p.precioVenta ?? p.precio ?? p.costo_base ?? p.costo ?? 0) * Number(p.cantidad ?? p.piezas ?? p.stock ?? 1)), 0);
+            const itemsDisponibles = dispItems.reduce((acc:number, p:any) => acc + Number(p.cantidad ?? p.piezas ?? p.stock ?? 1), 0);
+            const valorEnSubasta = subItems.reduce((acc:number, p:any) => acc + (Number(p.precio_venta ?? p.precioVenta ?? p.precio ?? p.costo_base ?? p.costo ?? 0) * Number(p.cantidad ?? p.piezas ?? p.stock ?? 1)), 0);
             
             setData({
-                totalProductos: sumVolumen,
-                costoTotal: `$${costoTotal.toFixed(2)}`,
-                valorInventario: `$${valorInventario.toFixed(2)}`,
-                gananciaProyectada: `$${(valorInventario - costoTotal).toFixed(2)}`,
+                valorTotalDisponible: `$${valorTotalDisponible.toFixed(2)}`,
+                itemsDisponibles: itemsDisponibles,
+                valorEnSubasta: `$${valorEnSubasta.toFixed(2)}`,
                 articulos: filtered.map((p:any) => {
                     let img = '';
                     try {
@@ -115,7 +118,8 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
             try {
                 generatePDFReport({
                     title: "Reporte de Inventario Actual",
-                    subtitle: `Estado: ${estado}`,
+                    subtitle: `Filtro Activo: ${estado}`,
+                    category: `Disponible Mxn: ${data?.valorTotalDisponible} | Items Listos: ${data?.itemsDisponibles} | Subasta Mxn: ${data?.valorEnSubasta}`,
                     columns: ["Producto", "Cant", "Lote", "Precio Indiv."],
                     rows: (data?.articulos ?? []).map((p:any) => [p.nombre, p.cantidad, p.lote || '—', p.precio ? `$${p.precio}` : '—']),
                     filename: `Reporte_Inventario_${estado}`
@@ -130,11 +134,10 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <MetricCard title="Volumen (Items)" value={data?.totalProductos ?? 0} valueColor="text-slate-800" />
-                <MetricCard title="Costo Invertido" value={data?.costoTotal ?? '$0.00'} valueColor="text-[#FF0080]" />
-                <MetricCard title="Valor Asignado/Cobrado" value={data?.valorInventario ?? '$0.00'} valueColor="text-[#22c55e]" />
-                <MetricCard title="Margen/Aporte Neto" value={data?.gananciaProyectada ?? '$0.00'} valueColor="text-[#EAB308]" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <MetricCard title="Valor Total Disponible" value={data?.valorTotalDisponible ?? '$0.00'} valueColor="text-[#22c55e]" />
+                <MetricCard title="Items Disponibles" value={data?.itemsDisponibles ?? '0'} valueColor="text-slate-800" />
+                <MetricCard title="En Subasta" value={data?.valorEnSubasta ?? '$0.00'} valueColor="text-[#FACC15]" />
             </div>
             
             <div className="flex items-center gap-1.5 bg-white rounded-2xl shadow-sm border border-slate-100 p-1.5 self-start">
