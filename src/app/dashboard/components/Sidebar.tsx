@@ -38,7 +38,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
     const loadBusinessData = async () => {
         try {
-            const res = await fetch('/api/configuracion/negocio');
+            const res = await fetch('/api/configuracion/negocio?t=' + Date.now(), { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 setNegocio({ nombre: data.nombre || null, logoUrl: data.logoUrl || data.logo || null });
