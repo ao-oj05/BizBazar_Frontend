@@ -52,7 +52,12 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
         if (!form.nombre || !form.piezas || !form.fecha || !form.precioTotal) return;
         setIsSaving(true);
         try {
-            const nombre = form.nombre.trim();
+            let nombre = form.nombre.trim();
+            const joyeriaRegex = /(joyer|anillo|collar|pulsera|dije|arete|reloj)/i;
+            if (tipoLote === 'joyeria' && !joyeriaRegex.test(nombre)) {
+                nombre += ' (Joyería)';
+            }
+            
             const codigo = nombre.replace(/\s+/g, '-').toUpperCase() + '-' + Date.now().toString().slice(-4);
             const usuario_id = getUsuarioId();
 
@@ -75,7 +80,8 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
 
             if (res.ok) {
                 const newLote = await res.json();
-                onSave(newLote.data || newLote);
+                const data = newLote.data || newLote;
+                onSave({ ...data, tipo: tipoLote });
             } else {
                 const errText = await res.text();
                 try {
