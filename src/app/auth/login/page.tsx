@@ -93,10 +93,6 @@ export default function LoginPage() {
                 </form>
 
                 <div className="mt-6 text-center space-y-4">
-                    <Link href="#" className="text-secondary text-sm hover:underline block">
-                        ¿Olvidaste tu contraseña?
-                    </Link>
-
                     <div className="pt-4 border-t border-slate-100 w-full">
                         <p className="text-slate-500 text-sm">
                             ¿No tienes cuenta?{" "}
