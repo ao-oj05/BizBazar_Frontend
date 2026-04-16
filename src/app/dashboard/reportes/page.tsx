@@ -46,9 +46,29 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/productos`);
-            const json = await res.json();
-            const allItems = Array.isArray(json) ? json : (json.data || []);
+            const [resP, resJ] = await Promise.all([
+                fetch(`/api/productos`),
+                fetch(`/api/joyeria`)
+            ]);
+            
+            const jsonP = resP.ok ? await resP.json() : [];
+            const jsonJ = resJ.ok ? await resJ.json() : [];
+            
+            const rawP = Array.isArray(jsonP) ? jsonP : (jsonP.data || []);
+            const rawJ = Array.isArray(jsonJ) ? jsonJ : (jsonJ.data || []);
+            
+            // Combinar y eliminar duplicados (si productos trae joyería sin precio por error)
+            const combined = [...rawJ, ...rawP];
+            const uniqueMap = new Map();
+            combined.forEach((item: any) => {
+                // Si la ID ya existe, preferir el objeto que tenga precio > 0
+                const exist = uniqueMap.get(item.id);
+                const itemPrice = Number(item.precio_venta ?? item.precio ?? item.precioVenta ?? 0);
+                if (!exist || itemPrice > 0) {
+                    uniqueMap.set(item.id, item);
+                }
+            });
+            const allItems = Array.from(uniqueMap.values());
             
             const targetStatus = estado === 'En subasta' ? 'en_subasta' : estado.trim().toLowerCase();
             const filtered = allItems.filter((p:any) => {
@@ -56,8 +76,8 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                 return currentStatus === targetStatus;
             });
             
-            const costoTotal = filtered.reduce((acc:number, p:any) => acc + (Number(p.costo_base ?? p.costo ?? 0) * Number(p.cantidad ?? p.piezas ?? p.stock ?? 1)), 0);
-            const valorInventario = filtered.reduce((acc:number, p:any) => acc + (Number(p.precio_venta ?? p.precio ?? 0) * Number(p.cantidad ?? p.piezas ?? p.stock ?? 1)), 0);
+            const costoTotal = filtered.reduce((acc:number, p:any) => acc + (Number(p.costo_base ?? p.costoBase ?? p.costo ?? 0) * Number(p.cantidad ?? p.piezas ?? p.stock ?? 1)), 0);
+            const valorInventario = filtered.reduce((acc:number, p:any) => acc + (Number(p.precio_venta ?? p.precioVenta ?? p.precio ?? p.costo_base ?? p.costo ?? 0) * Number(p.cantidad ?? p.piezas ?? p.stock ?? 1)), 0);
             const sumVolumen = filtered.reduce((acc:number, p:any) => acc + Number(p.cantidad ?? p.piezas ?? p.stock ?? 1), 0);
             
             setData({
@@ -77,8 +97,8 @@ function InventarioActualTab({ onExportReady }: { onExportReady: (exportFn: () =
                         nombre: p.nombre,
                         lote: p.lote_nombre || p.lote,
                         estado: p.estado,
-                        costo: Number(p.costo_base ?? p.costo ?? 0),
-                        precio: Number(p.precio_venta ?? p.precio ?? 0),
+                        costo: Number(p.costo_base ?? p.costoBase ?? p.costo ?? 0),
+                        precio: Number(p.precio_venta ?? p.precioVenta ?? p.precio ?? p.costo_base ?? p.costo ?? 0),
                         cantidad: qty,
                         imagen: img
                     }
