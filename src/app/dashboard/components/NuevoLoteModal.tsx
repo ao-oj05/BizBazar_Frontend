@@ -58,7 +58,10 @@ export function NuevoLoteModal({ onClose, onSave }: { onClose: () => void; onSav
                 nombre += ' (Joyería)';
             }
             
-            const codigo = nombre.replace(/\s+/g, '-').toUpperCase() + '-' + Date.now().toString().slice(-4);
+            let baseCodigo = nombre.replace(/\s+/g, '-').toUpperCase();
+            if (baseCodigo.length > 25) baseCodigo = baseCodigo.slice(0, 25);
+            if (baseCodigo.endsWith('-')) baseCodigo = baseCodigo.slice(0, 24);
+            const codigo = baseCodigo + '-' + Date.now().toString().slice(-4);
             const usuario_id = getUsuarioId();
 
             const res = await fetch('/api/lotes', {
